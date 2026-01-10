@@ -6,6 +6,8 @@ import { Weapon } from '../components/Weapon';
 import { Position } from '../components/Position';
 import { NPC } from '../components/NPC';
 import { Inventory } from '../components/Inventory';
+import { Item } from '../components/Item';
+import { Container } from '../components/Container';
 import { Server } from 'socket.io';
 import { Engine } from '../ecs/Engine';
 
@@ -157,10 +159,30 @@ export class CombatSystem extends System {
             return;
         }
 
-        // Check ammo for ranged weapons
+        // Check ammo for ranged weapons and reload if needed
         if (weapon.range > 0 && weapon.currentAmmo <= 0) {
-            this.io.to(attackerId).emit('message', `Your ${weapon.name} is out of ammo!`);
-            return;
+            // Try to find a magazine to reload
+            const magEntity = this.findMagazine(attacker, entities, weapon.ammoType || "9mm");
+
+            if (!magEntity) {
+                this.io.to(attackerId).emit('message', `Your ${weapon.name} is out of ammo and you have no magazines!`);
+                return;
+            }
+
+            // Reload from magazine
+            const magItem = magEntity.getComponent(Item);
+            if (magItem && magItem.quantity > 0) {
+                weapon.currentAmmo = weapon.magSize;
+                magItem.quantity--;
+
+                // Remove magazine entity if depleted
+                if (magItem.quantity <= 0) {
+                    this.removeFromContainer(attacker, magEntity.id, entities);
+                }
+
+                this.io.to(attackerId).emit('message', `<cmd>Reloading ${weapon.name}... [${magItem.quantity} mags left]</cmd>`);
+                return; // Reloading consumes the action
+            }
         }
 
         // Calculate sync bar parameters based on weapon and skills
@@ -257,6 +279,55 @@ export class CombatSystem extends System {
 
     private getEntityById(entities: Set<Entity>, id: string): Entity | undefined {
         return Array.from(entities).find(e => e.id === id);
+    }
+
+    private findMagazine(attacker: Entity, entities: Set<Entity>, ammoType: string): Entity | null {
+        const inventory = attacker.getComponent(Inventory);
+        if (!inventory) return null;
+
+        // Search through all equipment containers
+        for (const [slot, equipId] of inventory.equipment) {
+            const equip = this.getEntityById(entities, equipId);
+            const container = equip?.getComponent(Container);
+
+            if (container) {
+                for (const itemId of container.items) {
+                    const item = this.getEntityById(entities, itemId);
+                    const itemComp = item?.getComponent(Item);
+
+                    // Check if this is a magazine (contains "Mag" and the ammo type)
+                    if (itemComp && itemComp.name.includes("Mag") && itemComp.quantity > 0) {
+                        return item || null;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private removeFromContainer(attacker: Entity, itemId: string, entities: Set<Entity>): void {
+        const inventory = attacker.getComponent(Inventory);
+        if (!inventory) return;
+
+        // Find and remove from container
+        for (const [slot, equipId] of inventory.equipment) {
+            const equip = this.getEntityById(entities, equipId);
+            const container = equip?.getComponent(Container);
+
+            if (container) {
+                const index = container.items.indexOf(itemId);
+                if (index > -1) {
+                    container.items.splice(index, 1);
+                    const item = this.getEntityById(entities, itemId)?.getComponent(Item);
+                    if (item) {
+                        container.currentWeight -= item.weight;
+                    }
+                    this.engine.removeEntity(itemId);
+                    return;
+                }
+            }
+        }
     }
 
     update(entities: Set<Entity>, dt: number): void {

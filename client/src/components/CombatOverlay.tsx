@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SyncBarParams {
     speed: number;
@@ -22,17 +22,48 @@ interface CombatOverlayProps {
 export const CombatOverlay: React.FC<CombatOverlayProps> = ({ socket, onSyncBarUpdate }) => {
     const [isActive, setIsActive] = useState(false);
     const [combatData, setCombatData] = useState<CombatSyncData | null>(null);
-    const [cursorPosition, setCursorPosition] = useState(0);
-    const [direction, setDirection] = useState(1);
+
+    // Use refs for animation state to avoid re-renders
+    const cursorPositionRef = useRef(0);
+    const directionRef = useRef(1);
     const animationRef = useRef<number>();
     const lastTimeRef = useRef<number>(0);
+    const lastRenderedPosRef = useRef(-1);
+
+    // Memoize bar building function
+    const buildBar = useCallback((cursorPos: number, data: CombatSyncData): string => {
+        const barLength = data.syncBar.barLength;
+        const critZoneSize = data.syncBar.critZoneSize;
+        const critZoneCenter = barLength / 2;
+        const critZoneStart = Math.floor(critZoneCenter - critZoneSize / 2);
+        const critZoneEnd = Math.floor(critZoneCenter + critZoneSize / 2);
+
+        const hitMarker1 = Math.floor(barLength * 0.25);
+        const hitMarker2 = Math.floor(barLength * 0.75);
+
+        let bar = '[';
+        for (let i = 0; i < barLength; i++) {
+            if (i === cursorPos) {
+                bar += '*';
+            } else if (i >= critZoneStart && i <= critZoneEnd) {
+                bar += '=';
+            } else if (i === hitMarker1 || i === hitMarker2) {
+                bar += '|';
+            } else {
+                bar += '-';
+            }
+        }
+        bar += ']';
+        return bar;
+    }, []);
 
     useEffect(() => {
         const handleCombatSync = (data: CombatSyncData) => {
             setCombatData(data);
             setIsActive(true);
-            setCursorPosition(0);
-            setDirection(1);
+            cursorPositionRef.current = 0;
+            directionRef.current = 1;
+            lastRenderedPosRef.current = -1;
             lastTimeRef.current = performance.now();
         };
 
@@ -44,30 +75,41 @@ export const CombatOverlay: React.FC<CombatOverlayProps> = ({ socket, onSyncBarU
     }, [socket]);
 
     useEffect(() => {
-        if (!isActive || !combatData) return;
+        if (!isActive || !combatData) {
+            onSyncBarUpdate('');
+            return;
+        }
 
         const animate = (currentTime: number) => {
             const deltaTime = currentTime - lastTimeRef.current;
             lastTimeRef.current = currentTime;
 
-            setCursorPosition(prev => {
-                const speed = combatData.syncBar.speed;
-                const barLength = combatData.syncBar.barLength;
-                const jitter = combatData.syncBar.jitter;
+            const speed = combatData.syncBar.speed;
+            const barLength = combatData.syncBar.barLength;
+            const jitter = combatData.syncBar.jitter;
 
-                const jitterAmount = Math.random() < jitter ? (Math.random() - 0.5) * 2 : 0;
-                let newPos = prev + (direction * speed * deltaTime / 100) + jitterAmount;
+            // Update cursor position using ref
+            const jitterAmount = Math.random() < jitter ? (Math.random() - 0.5) * 2 : 0;
+            let newPos = cursorPositionRef.current + (directionRef.current * speed * deltaTime / 100) + jitterAmount;
 
-                if (newPos >= barLength) {
-                    newPos = barLength;
-                    setDirection(-1);
-                } else if (newPos <= 0) {
-                    newPos = 0;
-                    setDirection(1);
-                }
+            // Bounce at edges
+            if (newPos >= barLength) {
+                newPos = barLength;
+                directionRef.current = -1;
+            } else if (newPos <= 0) {
+                newPos = 0;
+                directionRef.current = 1;
+            }
 
-                return newPos;
-            });
+            cursorPositionRef.current = newPos;
+
+            // Only update the bar if cursor moved to a new integer position
+            const currentIntPos = Math.floor(newPos);
+            if (currentIntPos !== lastRenderedPosRef.current) {
+                lastRenderedPosRef.current = currentIntPos;
+                const bar = buildBar(currentIntPos, combatData);
+                onSyncBarUpdate(bar);
+            }
 
             animationRef.current = requestAnimationFrame(animate);
         };
@@ -79,7 +121,7 @@ export const CombatOverlay: React.FC<CombatOverlayProps> = ({ socket, onSyncBarU
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [isActive, combatData, direction]);
+    }, [isActive, combatData, onSyncBarUpdate, buildBar]);
 
     useEffect(() => {
         if (!isActive || !combatData) return;
@@ -98,12 +140,13 @@ export const CombatOverlay: React.FC<CombatOverlayProps> = ({ socket, onSyncBarU
                 const hitTolerance = 0.5;
 
                 let hitType: 'crit' | 'hit' | 'miss';
+                const currentPos = cursorPositionRef.current;
 
-                if (cursorPosition >= critZoneStart && cursorPosition <= critZoneEnd) {
+                if (currentPos >= critZoneStart && currentPos <= critZoneEnd) {
                     hitType = 'crit';
                 } else if (
-                    Math.abs(cursorPosition - hitMarkers[0]) < hitTolerance ||
-                    Math.abs(cursorPosition - hitMarkers[1]) < hitTolerance
+                    Math.abs(currentPos - hitMarkers[0]) < hitTolerance ||
+                    Math.abs(currentPos - hitMarkers[1]) < hitTolerance
                 ) {
                     hitType = 'hit';
                 } else {
@@ -126,42 +169,7 @@ export const CombatOverlay: React.FC<CombatOverlayProps> = ({ socket, onSyncBarU
         return () => {
             window.removeEventListener('keydown', handleKeyPress);
         };
-    }, [isActive, combatData, cursorPosition, socket, onSyncBarUpdate]);
-
-    useEffect(() => {
-        if (!isActive || !combatData) {
-            onSyncBarUpdate('');
-            return;
-        }
-
-        const barLength = combatData.syncBar.barLength;
-        const critZoneSize = combatData.syncBar.critZoneSize;
-        const critZoneCenter = barLength / 2;
-        const critZoneStart = Math.floor(critZoneCenter - critZoneSize / 2);
-        const critZoneEnd = Math.floor(critZoneCenter + critZoneSize / 2);
-
-        const hitMarker1 = Math.floor(barLength * 0.25);
-        const hitMarker2 = Math.floor(barLength * 0.75);
-
-        const cursorPos = Math.floor(cursorPosition);
-
-        // Build pure ASCII bar
-        let bar = '[';
-        for (let i = 0; i < barLength; i++) {
-            if (i === cursorPos) {
-                bar += '*';
-            } else if (i >= critZoneStart && i <= critZoneEnd) {
-                bar += '=';
-            } else if (i === hitMarker1 || i === hitMarker2) {
-                bar += '|';
-            } else {
-                bar += '-';
-            }
-        }
-        bar += ']';
-
-        onSyncBarUpdate(bar);
-    }, [isActive, combatData, cursorPosition, onSyncBarUpdate]);
+    }, [isActive, combatData, socket, onSyncBarUpdate]);
 
     return null;
 };

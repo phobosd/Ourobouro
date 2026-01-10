@@ -336,9 +336,11 @@ ${npcDescriptions}
                             const contentItem = this.getEntityById(entities, contentId);
                             const contentItemComp = contentItem?.getComponent(Item);
                             const name = contentItemComp?.name || "Unknown";
+                            const quantity = contentItemComp?.quantity || 1;
+                            const displayName = quantity > 1 ? `${name} (x${quantity})` : name;
                             const weight = contentItemComp?.weight.toFixed(1) + " lbs";
 
-                            output += `| ${name.padEnd(21)} | ${weight.padStart(21)} |\n`;
+                            output += `| ${displayName.padEnd(21)} | ${weight.padStart(21)} |\n`;
                         });
                     } else {
                         output += `| (Empty)               |                       |\n`;

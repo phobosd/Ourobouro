@@ -231,10 +231,17 @@ io.on('connection', (socket) => {
     player.addComponent(stats);
     player.addComponent(new CombatStats(100, 10, 5));
 
-    // Create Pants
+    // Create Shirt with pockets
+    const shirt = new Entity();
+    shirt.addComponent(new Item("Tactical Shirt", "A shirt with reinforced pockets.", 0.8));
+    shirt.addComponent(new Container(2.0)); // 2 slots worth ~2lbs
+    engine.addEntity(shirt);
+    inventory.equipment.set('torso', shirt.id);
+
+    // Create Pants with pockets
     const pants = new Entity();
     pants.addComponent(new Item("Cargo Pants", "Durable tactical pants with many pockets.", 1.5));
-    pants.addComponent(new Container(5.0)); // Pockets hold 5lbs
+    pants.addComponent(new Container(5.0)); // 5 slots worth ~5lbs
     engine.addEntity(pants);
     inventory.equipment.set('legs', pants.id);
 
@@ -245,12 +252,12 @@ io.on('connection', (socket) => {
     engine.addEntity(belt);
     inventory.equipment.set('waist', belt.id);
 
-    // Create Ammo (in Belt)
-    const ammo = new Entity();
-    ammo.addComponent(new Item("9mm Mag", "A standard magazine for a pistol.", 0.2));
-    engine.addEntity(ammo);
-    belt.getComponent(Container)?.items.push(ammo.id);
-    belt.getComponent(Container)!.currentWeight += 0.2;
+    // Create 10 Magazines (in Belt)
+    const mags = new Entity();
+    mags.addComponent(new Item("9mm Mag", "Standard pistol magazines.", 0.2, 10)); // Quantity: 10
+    engine.addEntity(mags);
+    belt.getComponent(Container)?.items.push(mags.id);
+    belt.getComponent(Container)!.currentWeight += 2.0; // 10 mags * 0.2 = 2.0
 
     // Create Pistol (in Right Hand)
     const pistol = new Entity();
