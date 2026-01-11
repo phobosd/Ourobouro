@@ -77,8 +77,12 @@
 }
 
 .text-room-desc {
-  color: #ffffff;
-  /* Changed to white */
+  color: #e0e0e0;
+  /* Bright white but not super bright */
+}
+
+.text-desc {
+  color: #e0e0e0;
 }
 
 .text-exits {
@@ -112,12 +116,38 @@
   font-style: italic;
 }
 
-.text-error {
-  color: #ff3333;
+.text-movement {
+  color: #ffaa00;
+  font-style: italic;
 }
 
-.text-speech {
-  color: #ffffff;
+.text-combat-hit {
+  color: #ff3300;
+  /* Red-Orange */
+  font-weight: bold;
+  text-shadow: 0 0 2px #ff3300;
+}
+
+.text-combat-miss {
+  color: #888888;
+  /* Grey */
+  font-style: italic;
+}
+
+.text-combat-death {
+  color: #ff0000;
+  /* Red */
+  font-weight: bold;
+  text-shadow: 0 0 5px #ff0000;
+  animation: pulse-red 1s infinite;
+}
+
+.text-level-up {
+  color: #00ff00;
+  /* Bright Green */
+  font-weight: bold;
+  text-shadow: 0 0 5px #00ff00;
+  animation: pulse 1s infinite;
 }
 
 .text-terminal {
@@ -168,6 +198,23 @@
 
   100% {
     opacity: 0.8;
+  }
+}
+
+@keyframes pulse-red {
+  0% {
+    opacity: 0.8;
+    text-shadow: 0 0 5px #ff0000;
+  }
+
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 15px #ff0000;
+  }
+
+  100% {
+    opacity: 0.8;
+    text-shadow: 0 0 5px #ff0000;
   }
 }
 

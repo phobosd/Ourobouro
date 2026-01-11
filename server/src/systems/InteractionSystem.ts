@@ -13,6 +13,8 @@ import { CombatStats } from '../components/CombatStats';
 import { Stance, StanceType } from '../components/Stance';
 import { Terminal } from '../components/Terminal';
 import { PrefabFactory } from '../factories/PrefabFactory';
+import { PuzzleObject } from '../components/PuzzleObject';
+import { Engine } from '../ecs/Engine';
 import { Server } from 'socket.io';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -23,6 +25,34 @@ export class InteractionSystem extends System {
     constructor(io: Server) {
         super();
         this.io = io;
+    }
+
+    private getEntityById(entities: Set<Entity>, id: string): Entity | undefined {
+        for (const entity of entities) {
+            if (entity.id === id) return entity;
+        }
+        return undefined;
+    }
+
+    private findRoomAt(entities: Set<Entity>, x: number, y: number): Entity | undefined {
+        return Array.from(entities).find(e => {
+            const pos = e.getComponent(Position);
+            return e.hasComponent(IsRoom) && pos && pos.x === x && pos.y === y;
+        });
+    }
+
+    private findNPCsAt(entities: Set<Entity>, x: number, y: number): Entity[] {
+        return Array.from(entities).filter(e => {
+            const pos = e.getComponent(Position);
+            return e.hasComponent(NPC) && pos && pos.x === x && pos.y === y;
+        });
+    }
+
+    private findItemsAt(entities: Set<Entity>, x: number, y: number): Entity[] {
+        return Array.from(entities).filter(e => {
+            const pos = e.getComponent(Position);
+            return e.hasComponent(Item) && pos && pos.x === x && pos.y === y;
+        });
     }
 
     update(entities: Set<Entity>, deltaTime: number): void {
@@ -67,6 +97,30 @@ export class InteractionSystem extends System {
                 return this.handleLookInContainer(entityId, containerName, entities);
             }
 
+            // Check for plural "busts" or "pedestals"
+            if (targetName.toLowerCase() === 'busts' || targetName.toLowerCase() === 'pedestals') {
+                const puzzleObjects = Array.from(entities).filter(e => {
+                    const pos = e.getComponent(Position);
+                    const p = e.getComponent(PuzzleObject);
+                    return pos && p && pos.x === playerPos.x && pos.y === playerPos.y;
+                });
+
+                if (puzzleObjects.length > 0) {
+                    let message = "<title>[Puzzle Objects]</title>\n";
+                    puzzleObjects.forEach(obj => {
+                        const desc = obj.getComponent(Description);
+                        if (desc) {
+                            message += `<item>- ${desc.title}</item>\n`;
+                        }
+                    });
+                    this.io.to(entityId).emit('message', message);
+                    return;
+                } else {
+                    this.io.to(entityId).emit('message', "You don't see any busts or pedestals here.");
+                    return;
+                }
+            }
+
             // Check for NPCs
             const npcsInRoom = this.findNPCsAt(entities, playerPos.x, playerPos.y);
             const targetNPC = npcsInRoom.find(npc => {
@@ -86,23 +140,58 @@ export class InteractionSystem extends System {
                 }
             }
 
-            // Check for other entities (Terminals, Objects)
+            // Check for other entities (Terminals, Objects, PuzzleObjects)
             const targetEntity = Array.from(entities).find(e => {
                 const pos = e.getComponent(Position);
                 const desc = e.getComponent(Description);
-                return pos && desc && pos.x === playerPos.x && pos.y === playerPos.y &&
-                    desc.title.toLowerCase().includes(targetName.toLowerCase());
+                // Check if name matches directly or if it's a "bust" and the name contains the specific type
+                return pos && desc && pos.x === playerPos.x && pos.y === playerPos.y && (
+                    desc.title.toLowerCase().includes(targetName.toLowerCase()) ||
+                    (targetName.toLowerCase() === 'bust' && desc.title.toLowerCase().includes('bust')) ||
+                    (targetName.toLowerCase() === 'table' && desc.title.toLowerCase().includes('table'))
+                );
             });
 
             if (targetEntity) {
                 const desc = targetEntity.getComponent(Description);
                 if (desc) {
-                    const message = `
-<title>[${desc.title}]</title>
-<desc>${desc.description}</desc>
-                    `.trim();
-                    this.io.to(entityId).emit('message', message);
+                    this.io.to(entityId).emit('message', desc.description);
                     return;
+                }
+            }
+
+            // Check inventory
+            const inventory = player.getComponent(Inventory);
+            if (inventory) {
+                const checkItem = (itemId: string): boolean => {
+                    const itemEntity = this.getEntityById(entities, itemId);
+                    if (!itemEntity) return false;
+                    const item = itemEntity.getComponent(Item);
+                    if (item && item.name.toLowerCase().includes(targetName.toLowerCase())) {
+                        const message = `
+<title>[${item.name}]</title>
+<desc>${item.description}</desc>
+<item-stats>Weight: ${item.weight}kg | Size: ${item.size}</item-stats>
+                        `.trim();
+                        this.io.to(entityId).emit('message', message);
+                        return true;
+                    }
+
+                    // Check inside container
+                    const container = itemEntity.getComponent(Container);
+                    if (container) {
+                        for (const subItemId of container.items) {
+                            if (checkItem(subItemId)) return true;
+                        }
+                    }
+                    return false;
+                };
+
+                if (inventory.leftHand && checkItem(inventory.leftHand)) return;
+                if (inventory.rightHand && checkItem(inventory.rightHand)) return;
+
+                for (const [slot, itemId] of inventory.equipment) {
+                    if (checkItem(itemId)) return;
                 }
             }
 
@@ -207,9 +296,7 @@ export class InteractionSystem extends System {
             terminalText = "\n<terminal>A Shop Terminal is here.</terminal>";
         }
 
-        const fullDescription = `
-<title>[${roomDesc.title}]</title>
-<desc>${roomDesc.description}</desc>${terminalText}
+        const fullDescription = `<title>[${roomDesc.title}]</title><desc>${roomDesc.description}</desc>${terminalText}
 <exits>Exits: ${exits.join(', ')}</exits>
 ${miniMap}
 ${itemDescriptions}
@@ -837,48 +924,7 @@ ${npcDescriptions}
         this.io.to(entityId).emit('score-data', { skills });
     }
 
-    private getEntityById(entities: Set<Entity>, id: string): Entity | undefined {
-        return Array.from(entities).find(e => e.id === id);
-    }
 
-    private findRoomAt(entities: Set<Entity>, x: number, y: number): Entity | undefined {
-        for (const entity of entities) {
-            if (entity.hasComponent(IsRoom)) {
-                const pos = entity.getComponent(Position);
-                if (pos && pos.x === x && pos.y === y) {
-                    return entity;
-                }
-            }
-        }
-        return undefined;
-    }
-
-    private findItemsAt(entities: Set<Entity>, x: number, y: number): Entity[] {
-        const items: Entity[] = [];
-        for (const entity of entities) {
-            if (entity.hasComponent(Item)) {
-                const pos = entity.getComponent(Position);
-                if (pos && pos.x === x && pos.y === y) {
-                    items.push(entity);
-                }
-            }
-        }
-        return items;
-    }
-
-    private findNPCsAt(entities: Set<Entity>, x: number, y: number): Entity[] {
-        const npcs: Entity[] = [];
-        for (const entity of entities) {
-            if (entity.hasComponent(NPC)) {
-                const pos = entity.getComponent(Position);
-                if (pos && pos.x === x && pos.y === y) {
-                    npcs.push(entity);
-
-                }
-            }
-        }
-        return npcs;
-    }
 
     handleRead(entityId: string, entities: Set<Entity>, targetName: string) {
         if (targetName.toLowerCase() === 'guide') {
@@ -947,7 +993,13 @@ ${npcDescriptions}
             });
             this.io.to(entityId).emit('message', "<system>You access the terminal...</system>");
         } else {
-            this.io.to(entityId).emit('message', "There's nothing to read on that.");
+            // If it's not a terminal, just show the description (e.g. for the table)
+            const desc = targetEntity.getComponent(Description);
+            if (desc) {
+                this.io.to(entityId).emit('message', desc.description);
+            } else {
+                this.io.to(entityId).emit('message', "There's nothing to read on that.");
+            }
         }
     }
 
@@ -1012,4 +1064,166 @@ ${npcDescriptions}
         }
         return null;
     }
+
+    handleTurn(entityId: string, entities: Set<Entity>, targetName: string, direction: string, engine: Engine) {
+        const player = this.getEntityById(entities, entityId);
+        if (!player) return;
+
+        const playerPos = player.getComponent(Position);
+        if (!playerPos) return;
+
+        // Find the target object in the room
+        const targetEntity = Array.from(entities).find(e => {
+            const pos = e.getComponent(Position);
+            const desc = e.getComponent(Description);
+            return pos && desc && pos.x === playerPos.x && pos.y === playerPos.y &&
+                desc.title.toLowerCase().includes(targetName.toLowerCase());
+        });
+
+        if (!targetEntity) {
+            this.io.to(entityId).emit('message', `You don't see ${targetName} here.`);
+            return;
+        }
+
+        const puzzleObj = targetEntity.getComponent(PuzzleObject);
+        if (!puzzleObj) {
+            this.io.to(entityId).emit('message', `You can't turn that.`);
+            return;
+        }
+
+        // Normalize direction
+        const validDirs = ['north', 'south', 'east', 'west'];
+        const dir = direction.toLowerCase();
+        if (!validDirs.includes(dir)) {
+            this.io.to(entityId).emit('message', `Invalid direction. Try north, south, east, or west.`);
+            return;
+        }
+
+        // Update Direction
+        puzzleObj.currentDirection = dir;
+
+        // Update Description
+        const desc = targetEntity.getComponent(Description);
+        if (desc) {
+            // Remove old direction text if present (assuming it ends with "It is currently facing...")
+            const baseDesc = desc.description.split(" It is currently facing")[0];
+            desc.description = `${baseDesc} It is currently facing ${dir.charAt(0).toUpperCase() + dir.slice(1)}.`;
+        }
+
+        this.io.to(entityId).emit('message', `<action>You turn the ${targetName} to face ${dir}.</action>`);
+
+        // Check Puzzle Completion
+        this.checkPuzzleCompletion(puzzleObj.puzzleId, entities, playerPos, engine, entityId);
+    }
+
+    private checkPuzzleCompletion(puzzleId: string, entities: Set<Entity>, pos: Position, engine: Engine, playerId: string) {
+        // Find all objects with this puzzleId
+        const puzzleObjects = Array.from(entities).filter(e => {
+            const p = e.getComponent(PuzzleObject);
+            return p && p.puzzleId === puzzleId;
+        });
+
+        // Check if all are correct
+        let allCorrect = true;
+        for (const obj of puzzleObjects) {
+            const p = obj.getComponent(PuzzleObject);
+            if (p && p.targetDirection && p.currentDirection !== p.targetDirection) {
+                allCorrect = false;
+                break;
+            }
+        }
+
+        if (allCorrect) {
+            // Check if already solved (to prevent infinite rewards)
+            const rewardInRoom = Array.from(entities).some(e => {
+                const item = e.getComponent(Item);
+                const p = e.getComponent(Position);
+                return item && item.name === "Platinum Hard Disk" && p && p.x === pos.x && p.y === pos.y;
+            });
+
+            // Check if player has the reward
+            const player = this.getEntityById(entities, playerId);
+            let playerHasReward = false;
+            if (player) {
+                const inventory = player.getComponent(Inventory);
+                if (inventory) {
+                    // Check hands
+                    if (inventory.leftHand) {
+                        const lItem = this.getEntityById(entities, inventory.leftHand);
+                        if (lItem?.getComponent(Item)?.name === "Platinum Hard Disk") playerHasReward = true;
+                    }
+                    if (inventory.rightHand) {
+                        const rItem = this.getEntityById(entities, inventory.rightHand);
+                        if (rItem?.getComponent(Item)?.name === "Platinum Hard Disk") playerHasReward = true;
+                    }
+                    // Check backpack/equipment
+                    if (!playerHasReward) {
+                        for (const [slot, itemId] of inventory.equipment) {
+                            const item = this.getEntityById(entities, itemId);
+                            if (item?.getComponent(Item)?.name === "Platinum Hard Disk") {
+                                playerHasReward = true;
+                                break;
+                            }
+                            // Check inside container (backpack)
+                            const container = item?.getComponent(Container);
+                            if (container) {
+                                for (const subId of container.items) {
+                                    const subItem = this.getEntityById(entities, subId);
+                                    if (subItem?.getComponent(Item)?.name === "Platinum Hard Disk") {
+                                        playerHasReward = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!rewardInRoom && !playerHasReward) {
+                this.io.to(playerId).emit('message', `<success>CLICK! You hear a mechanical latch unlock inside the stone table. A compartment slides open!</success>`);
+
+                // Update Table Description
+                const table = Array.from(entities).find(e => {
+                    const p = e.getComponent(Position);
+                    const d = e.getComponent(Description);
+                    return p && d && p.x === pos.x && p.y === pos.y && d.title === "Stone Table";
+                });
+
+                if (table) {
+                    const d = table.getComponent(Description);
+                    if (d) {
+                        d.description = "A heavy stone table with an open compartment revealing a shiny object. The inscription reads: 'The sun sets in the west, the rain falls to the mud, and the wind blows toward the dawn.'";
+                    }
+                }
+
+                // Spawn Reward
+                const reward = PrefabFactory.createItem("platinum_disk");
+                if (reward) {
+                    reward.addComponent(new Position(pos.x, pos.y));
+                    engine.addEntity(reward);
+                    entities.add(reward);
+                } else {
+                    console.error("Failed to create platinum_disk reward. Check items.csv and ItemRegistry.");
+                    this.io.to(playerId).emit('message', "<system>Error: Reward item not found in database.</system>");
+                }
+            } else {
+                this.io.to(playerId).emit('message', `<system>The mechanism clicks, but nothing happens. It seems the compartment is already open.</system>`);
+            }
+
+            // Reset Puzzle (Scramble Busts)
+            puzzleObjects.forEach(obj => {
+                const p = obj.getComponent(PuzzleObject);
+                const d = obj.getComponent(Description);
+                if (p && d) {
+                    p.currentDirection = 'north'; // Reset to default
+                    const baseDesc = d.description.split(" It is currently facing")[0];
+                    d.description = `${baseDesc} It is currently facing North.`;
+                }
+            });
+            this.io.to(playerId).emit('message', `<action>The busts mechanically whir and reset to their original positions.</action>`);
+        }
+    }
 }
+
+

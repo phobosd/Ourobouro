@@ -71,13 +71,13 @@ export class NPCSystem extends System {
             const name = npcComp ? npcComp.typeName : 'Something';
 
             // Broadcast leaving message to old room
-            this.broadcastToRoom(entities, pos.x, pos.y, `${name} has left to the ${move.name}.`);
+            this.broadcastToRoom(entities, pos.x, pos.y, `<movement>${name} has left to the ${move.name}.</movement>`);
 
             pos.x = newX;
             pos.y = newY;
 
             // Broadcast entering message to new room
-            this.broadcastToRoom(entities, pos.x, pos.y, `${name} has entered from the ${move.reverse}.`);
+            this.broadcastToRoom(entities, pos.x, pos.y, `<movement>${name} has entered from the ${move.reverse}.</movement>`);
         }
     }
 

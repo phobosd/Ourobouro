@@ -28,3 +28,4 @@ vibro_blade,"Vibro-Blade",blade,"A high-frequency oscillating sword.",2.0,Medium
 ammo_9mm,"Ammo (9mm)",ammo,"A box of 9mm ammunition.",0.5,Small,Legal,"50 rounds",20,item,
 ammo_12g,"Ammo (12g)",shells,"A box of shotgun shells.",0.8,Small,Legal,"10 shells",25,item,
 ammo_556,"Ammo (5.56)",ammo,"A box of 5.56mm rifle rounds.",0.6,Small,Restricted,"30 rounds",30,item,
+platinum_disk,"Platinum Hard Disk",disk,"A heavy, platinum-encased hard disk containing valuable data.",0.5,Small,Restricted,"Quest Item",5000,item,

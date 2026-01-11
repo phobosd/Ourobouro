@@ -52,6 +52,8 @@ engine.addSystem(movementSystem);
 engine.addSystem(interactionSystem);
 engine.addSystem(npcSystem);
 
+movementSystem.setInteractionSystem(interactionSystem);
+
 // Command Registry Setup
 const commandRegistry = new CommandRegistry();
 
@@ -60,15 +62,12 @@ const moveAndLook = (ctx: any, dir: 'n' | 's' | 'e' | 'w') => {
     const stance = player?.getComponent(Stance);
 
     if (stance && stance.current !== StanceType.Standing) {
-        // Let MovementSystem handle the error message, but don't look
+        // Let MovementSystem handle the error message
         ctx.systems.movement.queueMove(ctx.socketId, dir);
         return;
     }
 
     ctx.systems.movement.queueMove(ctx.socketId, dir);
-    setTimeout(() => {
-        ctx.systems.interaction.handleLook(ctx.socketId, new Set((ctx.engine as any)['entities'].values()));
-    }, 100);
 };
 
 commandRegistry.register({
@@ -201,6 +200,22 @@ commandRegistry.register({
             return;
         }
         ctx.systems.combat.handleAttack(ctx.socketId, targetName, new Set((ctx.engine as any)['entities'].values()));
+    }
+});
+
+commandRegistry.register({
+    name: 'turn',
+    aliases: ['rotate'],
+    description: 'Turn an object (Usage: turn <object> <direction>)',
+    execute: (ctx) => {
+        const args = ctx.args;
+        if (args.length < 2) {
+            ctx.io.to(ctx.socketId).emit('message', 'Usage: turn <object> <direction>');
+            return;
+        }
+        const direction = args.pop(); // Last arg is direction
+        const targetName = args.join(' '); // Rest is object name
+        ctx.systems.interaction.handleTurn(ctx.socketId, new Set((ctx.engine as any)['entities'].values()), targetName, direction, ctx.engine);
     }
 });
 

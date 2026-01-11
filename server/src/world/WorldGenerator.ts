@@ -8,6 +8,7 @@ import { NPC } from '../components/NPC';
 import { Shop } from '../components/Shop';
 import { CombatStats } from '../components/CombatStats';
 import { Terminal } from '../components/Terminal';
+import { PuzzleObject } from '../components/PuzzleObject';
 
 export class WorldGenerator {
     private engine: Engine;
@@ -106,6 +107,14 @@ export class WorldGenerator {
             layout[cy + 4][x] = 1; // Connect Park top-right to Main St vertical
         }
 
+        // Alchemist's Study (Hidden Room)
+        // Connected to Bits & Bytes (cx - 2, cy + 2) via a hidden passage? 
+        // Let's just connect it to the side street at (cx - 3, cy - 1) for now, or make it accessible from the shop.
+        // Let's put it at (cx + 3, cy - 1) connected to the side street (cx + 1, cy - 2) is a bit far.
+        // Let's put it off the East Main Street.
+        layout[cy][cx + 3] = 7; // Alchemist's Study
+        layout[cy][cx + 2] = 1; // Connecting street
+
         return layout;
     }
 
@@ -184,9 +193,36 @@ export class WorldGenerator {
         }
 
         // Randomly spawn NPCs
-        if (Math.random() > 0.7) {
+        if (Math.random() > 0.7 && type !== 7) { // No random NPCs in puzzle room
             this.spawnNPC(x, y, type);
         }
+
+        // Spawn Puzzle Objects for Alchemist's Study
+        if (type === 7) {
+            this.spawnPuzzleObjects(x, y);
+        }
+    }
+
+    private spawnPuzzleObjects(x: number, y: number) {
+        // Table with inscription
+        const table = new Entity();
+        table.addComponent(new Position(x, y));
+        table.addComponent(new Description("Stone Table", "A heavy stone table. The inscription reads: 'The sun sets in the west, the rain falls to the mud, and the wind blows toward the dawn.'"));
+        this.engine.addEntity(table);
+
+        // Busts
+        const createBust = (name: string, desc: string, targetDir: string | null) => {
+            const bust = new Entity();
+            bust.addComponent(new Position(x, y));
+            bust.addComponent(new Description(name, `${desc} It is currently facing North.`));
+            bust.addComponent(new PuzzleObject("alchemist_puzzle", "north", targetDir));
+            this.engine.addEntity(bust);
+        };
+
+        createBust("Ignis Bust", "A stone bust depicting a fiery figure.", "west");
+        createBust("Aqua Bust", "A stone bust depicting a flowing figure.", "south"); // 'Down' usually maps to South in 2D top-down or just 'down' if we support 3D directions. Let's assume South/Down mapping or just use 'south' as 'down' on a map. The hint says 'rain falls to the mud', mud is on the ground. Rain falls down. In a cardinal system, maybe South? Or literally 'down'? The prompt says 'Aqua must face Down'. I'll interpret 'Down' as 'South' for map logic, or I need to add 'up/down' support. Let's stick to cardinal directions for 'turn'. 'Rain falls to the mud' -> Mud is usually down. If the busts rotate N/S/E/W, 'Down' is impossible unless it's a special state. Let's assume the user means 'South' (bottom of map) or I should allow 'turn aqua down'. I'll support 'south' as the logical mapping for 'down' in this 2D context, or allow 'down' as a valid direction string.", "south");
+        createBust("Aura Bust", "A stone bust depicting a windy figure.", "east"); // Toward dawn -> East
+        createBust("Terra Bust", "A stone bust depicting a stoic figure.", null); // No specific target
     }
 
     private spawnNPC(x: number, y: number, type: number) {
@@ -300,26 +336,26 @@ export class WorldGenerator {
                 if (x < 10 && y < 10) {
                     return {
                         title: "Chrome & Steel",
-                        desc: "A high-end cybernetics shop. Display cases show off the latest neural links and limb replacements.",
+                        desc: "The air in Chrome & Steel is sterile, filtered to a crisp chill that smells faintly of ozone and antiseptic. Rows of pristine glass display cases line the walls, illuminated by harsh, clinical blue lighting that reflects off the polished chrome surfaces. Inside, the latest in cybernetic enhancements rest on velvet cushions—sleek neural interface decks with gold-plated connectors, hydraulic limb replacements that gleam with oil-slick iridescence, and ocular implants that seem to track your movement even when powered down. In the back, the rhythmic whir of a precision servo-arm suggests ongoing modifications. A faint hum permeates the room, the sound of high-voltage power running through top-tier hardware. This isn't just a shop; it's a showroom for the next stage of human evolution, where flesh is merely a suggestion and steel is the upgrade you didn't know you needed until now.",
                         shopData: { name: "Chrome & Steel", desc: "Cybernetics" }
                     };
                 } else if (x > 10 && y < 10) {
                     return {
                         title: "The Armory",
-                        desc: "Walls lined with plasma rifles and kinetic pistols. The air smells of gun oil.",
+                        desc: "Stepping into The Armory feels like walking into the belly of a war machine. The walls are reinforced with heavy industrial plating, covered from floor to ceiling with racks of lethal hardware. The scent of gun oil, spent casing brass, and cold iron hangs heavy in the stagnant air. Kinetic pistols with matte-black finishes sit alongside heavy plasma rifles that hum with suppressed energy. Crates of ammunition are stacked haphazardly in the corners, some pried open to reveal glimmering rows of high-caliber rounds. A workbench in the corner is cluttered with disassembled weapon parts, scattered springs, and cleaning rags stained dark with grease. The lighting is dim and amber, casting long, jagged shadows that make the weapons look like sleeping beasts waiting to be woken. Here, violence is a currency, and business is always booming.",
                         shopData: { name: "The Armory", desc: "Weapons" }
                     };
                 } else {
                     return {
                         title: "Bits & Bytes",
-                        desc: "A cluttered general store selling everything from nutrient paste to data shards.",
+                        desc: "Bits & Bytes is a chaotic explosion of sensory overload. The cramped space is packed floor-to-ceiling with shelves overflowing with the detritus of daily survival in the sprawl. Tangled wires hang from the ceiling like synthetic vines, dripping with blinking LEDs and data-charms. Bins of discounted nutrient paste tubes in questionable flavors sit next to stacks of second-hand data shards, their labels faded and peeling. The air is thick with the smell of stale recycled air, cheap plastic, and the faint, sweet tang of energy drinks. A flickering holographic ad for 'Real Water' buzzes intermittently near the counter, casting a glitchy green light over the eclectic merchandise. It’s a scavenger’s paradise, a place where you can find a replacement battery, a meal, or a lost memory, provided you have the credits and the patience to dig through the junk.",
                         shopData: { name: "Bits & Bytes", desc: "General Goods" }
                     };
                 }
             case 4: // Clinic
                 return {
                     title: "Doc's Clinic",
-                    desc: "A sterile white room that smells of antiseptic. A surgical bot hums in the corner.",
+                    desc: "Doc's Clinic is a jarring contrast to the grime of the streets outside. The automatic doors slide open with a pneumatic hiss, revealing a space that is aggressively, blindingly white. The smell of strong chemical antiseptic hits you immediately, burning the nostrils and masking the underlying copper tang of old blood. A surgical bot, its multi-jointed arms folded neatly, hums quietly in the corner, its optical sensors scanning you with cold indifference. The waiting area consists of a few uncomfortable plastic chairs, and a bio-monitor on the wall displays a flatline rhythm that hopefully isn't live. Behind a translucent partition, the silhouette of a medical gurney and the glint of surgical steel promise relief or reconstruction. It’s a place of last resorts, where the desperate come to be patched up, stitched together, or upgraded, leaving their pain—and their credits—on the operating table.",
                     shopData: { name: "Doc's Clinic", desc: "Medical Services" }
                 };
             case 5: // Club
@@ -331,6 +367,11 @@ export class WorldGenerator {
                 return {
                     title: "Synth-Park",
                     desc: "Artificial trees with fiber-optic leaves glow softly. The grass is a perfect, uniform green synthetic weave."
+                };
+            case 7: // Alchemist's Study
+                return {
+                    title: "The Alchemist's Study",
+                    desc: "A hidden chamber that smells of old parchment and ozone. In the center stands a stone table with an inscription. Four stone busts stand on pedestals in the corners."
                 };
             default:
                 return {

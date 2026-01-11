@@ -5,15 +5,21 @@ import { Description } from '../components/Description';
 import { IsRoom } from '../components/IsRoom';
 import { Stance, StanceType } from '../components/Stance';
 import { Server } from 'socket.io';
+import { InteractionSystem } from './InteractionSystem';
 
 export class MovementSystem extends System {
     private pendingMoves: Map<string, { x: number, y: number }>;
     private io: Server;
+    private interactionSystem?: InteractionSystem;
 
     constructor(io: Server) {
         super();
         this.pendingMoves = new Map();
         this.io = io;
+    }
+
+    setInteractionSystem(system: InteractionSystem) {
+        this.interactionSystem = system;
     }
 
     // Method to queue a move command from a player
@@ -55,7 +61,10 @@ export class MovementSystem extends System {
             if (targetRoom) {
                 pos.x = targetX;
                 pos.y = targetY;
-                // Optional: Emit event that player moved?
+                // Trigger look
+                if (this.interactionSystem) {
+                    this.interactionSystem.handleLook(entityId, entities);
+                }
             } else {
                 this.io.to(entityId).emit('message', "You can't go that way.");
             }

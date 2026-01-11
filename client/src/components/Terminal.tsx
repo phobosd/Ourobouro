@@ -169,14 +169,18 @@ export const Terminal: React.FC = () => {
             }
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            if (history.length > 0) {
+            if (e.ctrlKey) {
+                if (socket) socket.emit('command', 'north');
+            } else if (history.length > 0) {
                 const newIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
                 setHistoryIndex(newIndex);
                 setInputValue(history[newIndex]);
             }
         } else if (e.key === 'ArrowDown') {
             e.preventDefault();
-            if (historyIndex !== -1) {
+            if (e.ctrlKey) {
+                if (socket) socket.emit('command', 'south');
+            } else if (historyIndex !== -1) {
                 const newIndex = historyIndex + 1;
                 if (newIndex >= history.length) {
                     setHistoryIndex(-1);
@@ -186,6 +190,12 @@ export const Terminal: React.FC = () => {
                     setInputValue(history[newIndex]);
                 }
             }
+        } else if (e.key === 'ArrowLeft' && e.ctrlKey) {
+            e.preventDefault();
+            if (socket) socket.emit('command', 'west');
+        } else if (e.key === 'ArrowRight' && e.ctrlKey) {
+            e.preventDefault();
+            if (socket) socket.emit('command', 'east');
         } else if (e.key === 'Tab') {
             e.preventDefault();
 
