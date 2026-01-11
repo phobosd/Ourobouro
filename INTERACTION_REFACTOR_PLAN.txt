@@ -1,0 +1,51 @@
+# Refactoring Plan: InteractionSystem.ts
+
+## 1. Current State Assessment
+The `InteractionSystem` class has become a "God Class," violating the Single Responsibility Principle. It currently handles:
+- **Entity Queries:** Finding rooms, items, and NPCs (duplicated in `MovementSystem`).
+- **View Logic:** Constructing HTML/XML-like string responses for the client (e.g., `handleLook`).
+- **Inventory Management:** Logic for `get`, `drop`, `use`.
+- **Puzzle Logic:** Specific hardcoded rules for the Alchemist's Study.
+- **Commerce:** Shop terminal logic.
+- **Player State:** Stance changes.
+
+## 2. Objectives
+- **Decouple Logic:** Separate "finding things" from "doing things" and "describing things".
+- **Improve Reusability:** Make entity query helpers available to other systems.
+- **Enhance Readability:** Reduce the size of the main system file (currently ~1200 lines).
+- **Isolate Puzzle Logic:** Move specific puzzle rules out of the generic interaction handler.
+
+## 3. Proposed Architecture
+
+### A. Shared Utilities (`src/utils/WorldQuery.ts`)
+Extract the private helper methods into a static utility class.
+- `getEntityById(entities, id)`
+- `findRoomAt(entities, x, y)`
+- `findItemsAt(entities, x, y)`
+- `findNPCsAt(entities, x, y)`
+
+### B. Description Service (`src/services/DescriptionService.ts`)
+Move the string construction logic here. `InteractionSystem` should just ask for "Description of Room X" and get a string back.
+- `describeRoom(room, items, npcs)`
+- `describeItem(item)`
+- `describeNPC(npc)`
+
+### C. Puzzle Manager (`src/services/PuzzleManager.ts`)
+Encapsulate the puzzle rules.
+- `handleTurn(entity, direction)`
+- `checkPuzzleCompletion()`
+- This separates game-specific content (the puzzle solution) from the engine logic.
+
+### D. Inventory Handler (`src/logic/InventoryHandler.ts`)
+Extract `handleGet`, `handleDrop`, `handleUse` into a specialized handler to keep the main system clean.
+
+## 4. Execution Steps
+1.  **Create `WorldQuery`**: Move helper methods. Update `InteractionSystem` and `MovementSystem` to use it.
+2.  **Create `DescriptionService`**: Extract `handleLook` string generation logic.
+3.  **Extract Puzzle Logic**: Move `handleTurn` and `checkPuzzleCompletion` to a dedicated `PuzzleManager`.
+4.  **Refactor `InteractionSystem`**: Update the main class to delegate to these new services instead of implementing the logic directly.
+
+## 5. Benefits
+- **Testing**: Easier to test puzzle logic in isolation.
+- **Scalability**: Adding new puzzles won't clutter the main interaction loop.
+- **Consistency**: Centralized description logic ensures consistent formatting across commands.

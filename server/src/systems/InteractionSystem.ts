@@ -304,6 +304,7 @@ ${npcDescriptions}
     `.trim();
 
         this.io.to(entityId).emit('message', fullDescription);
+        this.sendRoomAutocompleteUpdate(entityId, entities);
     }
 
     handleMap(entityId: string, entities: Set<Entity>) {
@@ -717,6 +718,91 @@ ${npcDescriptions}
         });
     }
 
+    sendRoomAutocompleteUpdate(entityId: string, entities: Set<Entity>) {
+        const player = this.getEntityById(entities, entityId);
+        if (!player) return;
+
+        const playerPos = player.getComponent(Position);
+        if (!playerPos) return;
+
+        const objects: string[] = [];  // NPCs, terminals, puzzle objects (non-item entities)
+        const groundItems: string[] = []; // Items on the ground
+        const groundContainers: string[] = []; // Containers on the ground
+
+        // Find NPCs
+        const npcs = this.findNPCsAt(entities, playerPos.x, playerPos.y);
+        npcs.forEach(npc => {
+            const npcComp = npc.getComponent(NPC);
+            if (npcComp) {
+                objects.push(npcComp.typeName.toLowerCase());
+            }
+        });
+
+        // Find Terminals
+        const terminals = Array.from(entities).filter(e => {
+            const pos = e.getComponent(Position);
+            return e.hasComponent(Terminal) && pos && pos.x === playerPos.x && pos.y === playerPos.y;
+        });
+        terminals.forEach(terminal => {
+            const desc = terminal.getComponent(Description);
+            if (desc) {
+                objects.push(desc.title.toLowerCase());
+            }
+        });
+
+        // Find Puzzle Objects & Other Description entities (busts, tables, etc.)
+        const descEntities = Array.from(entities).filter(e => {
+            const pos = e.getComponent(Position);
+            const desc = e.getComponent(Description);
+            const hasItem = e.hasComponent(Item);
+            return pos && desc && !hasItem && pos.x === playerPos.x && pos.y === playerPos.y;
+        });
+        descEntities.forEach(entity => {
+            const desc = entity.getComponent(Description);
+            if (desc && !objects.includes(desc.title.toLowerCase())) {
+                objects.push(desc.title.toLowerCase());
+                // Also add shortened versions for common names
+                if (desc.title.includes('Bust')) {
+                    const bustType = desc.title.replace(' Bust', '').toLowerCase();
+                    if (!objects.includes(bustType)) {
+                        objects.push(bustType);
+                    }
+                    if (!objects.includes('bust')) {
+                        objects.push('bust');
+                    }
+                }
+                if (desc.title.includes('Table')) {
+                    if (!objects.includes('table')) {
+                        objects.push('table');
+                    }
+                }
+            }
+        });
+
+        // Find Ground Items & Containers
+        const items = this.findItemsAt(entities, playerPos.x, playerPos.y);
+        items.forEach(item => {
+            const itemComp = item.getComponent(Item);
+            const containerComp = item.getComponent(Container);
+
+            if (itemComp) {
+                groundItems.push(itemComp.name.toLowerCase());
+
+                // If it's also a container, add it to groundContainers
+                if (containerComp) {
+                    groundContainers.push(itemComp.name.toLowerCase());
+                }
+            }
+        });
+
+        this.io.to(entityId).emit('autocomplete-update', {
+            type: 'room',
+            objects: objects,
+            items: groundItems,
+            containers: groundContainers
+        });
+    }
+
     handleGlance(entityId: string, entities: Set<Entity>) {
         const player = this.getEntityById(entities, entityId);
         if (!player) return;
@@ -1091,6 +1177,13 @@ ${npcDescriptions}
             return;
         }
 
+        // Check if it's the Terra Bust (cannot be turned)
+        const desc = targetEntity.getComponent(Description);
+        if (desc && desc.title === "Terra Bust") {
+            this.io.to(entityId).emit('message', "The bust is fused to its base and cannot be turned.");
+            return;
+        }
+
         // Normalize direction
         const validDirs = ['north', 'south', 'east', 'west'];
         const dir = direction.toLowerCase();
@@ -1103,7 +1196,6 @@ ${npcDescriptions}
         puzzleObj.currentDirection = dir;
 
         // Update Description
-        const desc = targetEntity.getComponent(Description);
         if (desc) {
             // Remove old direction text if present (assuming it ends with "It is currently facing...")
             const baseDesc = desc.description.split(" It is currently facing")[0];
@@ -1112,8 +1204,23 @@ ${npcDescriptions}
 
         this.io.to(entityId).emit('message', `<action>You turn the ${targetName} to face ${dir}.</action>`);
 
+        // Atmospheric Hints for Wrong Directions
+        if (desc) {
+            if (desc.title === "Ignis Bust" && dir === "north") {
+                this.io.to(entityId).emit('message', "The ruby eyes of the bust catch the light, but it feels misplaced facing the north.");
+            } else if (desc.title === "Ignis Bust" && dir !== "west") {
+                // Generic hint for other wrong directions for Ignis? Or just leave it.
+            }
+
+            if (desc.title === "Aqua Bust" && dir !== "south") {
+                // Hint for Aqua?
+            }
+        }
+
         // Check Puzzle Completion
         this.checkPuzzleCompletion(puzzleObj.puzzleId, entities, playerPos, engine, entityId);
+
+
     }
 
     private checkPuzzleCompletion(puzzleId: string, entities: Set<Entity>, pos: Position, engine: Engine, playerId: string) {

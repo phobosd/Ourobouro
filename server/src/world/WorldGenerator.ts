@@ -207,22 +207,34 @@ export class WorldGenerator {
         // Table with inscription
         const table = new Entity();
         table.addComponent(new Position(x, y));
-        table.addComponent(new Description("Stone Table", "A heavy stone table. The inscription reads: 'The sun sets in the west, the rain falls to the mud, and the wind blows toward the dawn.'"));
+        table.addComponent(new Description("Stone Table", "The table is a monolithic slab of grey granite. A brass plate is bolted to the center, etched with elegant but fading script. It reads:\n\n\"The sun sets in the west, the rain falls to the mud, and the wind blows toward the dawn. Only when the elements find their gaze shall the hidden path be revealed.\""));
         this.engine.addEntity(table);
 
         // Busts
-        const createBust = (name: string, desc: string, targetDir: string | null) => {
+        const createBust = (name: string, desc: string, targetDir: string | null, initialDir: string = "north") => {
             const bust = new Entity();
             bust.addComponent(new Position(x, y));
-            bust.addComponent(new Description(name, `${desc} It is currently facing North.`));
-            bust.addComponent(new PuzzleObject("alchemist_puzzle", "north", targetDir));
+            bust.addComponent(new Description(name, `${desc} It is currently facing ${initialDir.charAt(0).toUpperCase() + initialDir.slice(1)}.`));
+            bust.addComponent(new PuzzleObject("alchemist_puzzle", initialDir, targetDir));
             this.engine.addEntity(bust);
         };
 
-        createBust("Ignis Bust", "A stone bust depicting a fiery figure.", "west");
-        createBust("Aqua Bust", "A stone bust depicting a flowing figure.", "south"); // 'Down' usually maps to South in 2D top-down or just 'down' if we support 3D directions. Let's assume South/Down mapping or just use 'south' as 'down' on a map. The hint says 'rain falls to the mud', mud is on the ground. Rain falls down. In a cardinal system, maybe South? Or literally 'down'? The prompt says 'Aqua must face Down'. I'll interpret 'Down' as 'South' for map logic, or I need to add 'up/down' support. Let's stick to cardinal directions for 'turn'. 'Rain falls to the mud' -> Mud is usually down. If the busts rotate N/S/E/W, 'Down' is impossible unless it's a special state. Let's assume the user means 'South' (bottom of map) or I should allow 'turn aqua down'. I'll support 'south' as the logical mapping for 'down' in this 2D context, or allow 'down' as a valid direction string.", "south");
-        createBust("Aura Bust", "A stone bust depicting a windy figure.", "east"); // Toward dawn -> East
-        createBust("Terra Bust", "A stone bust depicting a stoic figure.", null); // No specific target
+        createBust("Ignis Bust", "This bust depicts a man with wild, flickering hair and eyes made of polished rubies. He looks defiant.", "west");
+        createBust("Aqua Bust", "A serene woman with flowing robes that seem to ripple like waves. Her stone eyelids are closed in meditation.", "south");
+        createBust("Air Bust", "This bust is carved from a lighter, almost translucent marble. Her hair is swept back as if by a gale.", "east");
+
+        // Terra Bust - Special case: Fused to base, faces Down.
+        // We set targetDir to null or a special value to indicate it's part of the set but static?
+        // Actually, the puzzle logic checks if current == target. If target is null, it might ignore it or fail.
+        // The user says "Terra: Direction does not matter" in previous context, but here "He faces Down... cannot be turned".
+        // If it cannot be turned, we should probably set its target to its initial direction if we want it to count, or null if it doesn't matter.
+        // Previous logic: "Terra: Direction does not matter."
+        // Let's set targetDir to "down" and initial to "down" and ensure it can't be turned in InteractionSystem.
+        const terra = new Entity();
+        terra.addComponent(new Position(x, y));
+        terra.addComponent(new Description("Terra Bust", "A stout, bearded figure carved from heavy basalt. He faces Down, staring intently at the floor beneath his pedestal. Unlike the others, this bust is fused to its base and cannot be turned."));
+        terra.addComponent(new PuzzleObject("alchemist_puzzle", "down", "down"));
+        this.engine.addEntity(terra);
     }
 
     private spawnNPC(x: number, y: number, type: number) {
@@ -371,7 +383,7 @@ export class WorldGenerator {
             case 7: // Alchemist's Study
                 return {
                     title: "The Alchemist's Study",
-                    desc: "A hidden chamber that smells of old parchment and ozone. In the center stands a stone table with an inscription. Four stone busts stand on pedestals in the corners."
+                    desc: "The air here is thick with the scent of ozone and ancient, dried herbs. Shafts of dim, amber light filter through high, grime-streaked windows, illuminating millions of dust motes dancing in the stillness. In the center of the room sits a heavy stone table, its surface scarred by centuries of chemical spills. Arranged in a semi-circle around it are four life-sized stone busts mounted on heavy pedestals. The silence is absolute, broken only by the faint, rhythmic scratching of grit beneath your boots."
                 };
             default:
                 return {

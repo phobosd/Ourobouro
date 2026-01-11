@@ -287,7 +287,7 @@ export class CombatSystem extends System {
             combatLog += `\n[${weapon.currentAmmo}/${weapon.magSize} rounds remaining]`;
         }
 
-        combatLog += `</combat>`;
+        combatLog += `\n</combat>`;
 
         // Check if target is dead
         if (targetCombatStats.hp <= 0) {
