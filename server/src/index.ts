@@ -15,6 +15,7 @@ import { InteractionSystem } from './systems/InteractionSystem';
 import { NPCSystem } from './systems/NPCSystem';
 import { NPC } from './components/NPC';
 import { CombatSystem } from './systems/CombatSystem';
+import { CyberspaceSystem } from './systems/CyberspaceSystem';
 import { Inventory } from './components/Inventory';
 import { Item } from './components/Item';
 import { Container } from './components/Container';
@@ -54,11 +55,13 @@ const movementSystem = new MovementSystem(io, messageService);
 const interactionSystem = new InteractionSystem(io);
 const npcSystem = new NPCSystem(io, messageService);
 const combatSystem = new CombatSystem(engine, io, messageService);
+const cyberspaceSystem = new CyberspaceSystem(io, messageService);
 
 engine.addSystem(movementSystem);
 engine.addSystem(interactionSystem);
 engine.addSystem(npcSystem);
 engine.addSystem(combatSystem);
+engine.addSystem(cyberspaceSystem);
 
 movementSystem.setInteractionSystem(interactionSystem);
 
@@ -241,6 +244,20 @@ commandRegistry.register({
 });
 
 commandRegistry.register({
+    name: 'jack_in',
+    aliases: ['jackin', 'connect'],
+    description: 'Jack into the Matrix',
+    execute: (ctx) => (ctx.systems as any).cyberspace.handleJackIn(ctx.socketId, ctx.engine)
+});
+
+commandRegistry.register({
+    name: 'jack_out',
+    aliases: ['jackout', 'disconnect'],
+    description: 'Jack out of the Matrix',
+    execute: (ctx) => (ctx.systems as any).cyberspace.handleJackOut(ctx.socketId, ctx.engine)
+});
+
+commandRegistry.register({
     name: 'god',
     aliases: ['admin'],
     description: 'Admin commands (Usage: god spawn <rat|thug>)',
@@ -404,9 +421,9 @@ io.on('connection', (socket) => {
     stats.skills.set('Marksmanship (Heavy)', { name: 'Marksmanship (Heavy)', level: 1, uses: 0, maxUses: 10 });
 
     player.addComponent(stats);
-    player.addComponent(new CombatStats(100, 10, 5));
+    player.addComponent(new CombatStats(100, 10, 5, false));
     player.addComponent(new Stance(StanceType.Standing));
-    player.addComponent(new Credits(1000));
+    player.addComponent(new Credits(500, 1000)); // 500 New Yen, 1000 Credits
 
     // Create Shirt with pockets
     const shirt = new Entity();
@@ -465,7 +482,8 @@ io.on('connection', (socket) => {
                 movement: movementSystem,
                 interaction: interactionSystem,
                 npc: npcSystem,
-                combat: combatSystem
+                combat: combatSystem,
+                cyberspace: cyberspaceSystem
             },
             messageService: messageService
         });

@@ -1,16 +1,21 @@
 id,name,shortName,description,weight,size,legality,attributes,cost,type,extraData
-neural_deck,"Neural Deck (Mk.I)",deck,"A standard issue cyberdeck.",1.2,Small,Legal,"2 Slots for Programs; allows hacking.",1000,item,
+ono_sendai_cyberspace7,"Ono-Sendai Cyberspace 7",deck,"The gold standard in cyberdecks. Sleek polycarbon case with graphene heat-sinks.",1.0,Small,Legal,"4 Slots for Programs; +2 to Matrix Initiative.",5000,cyberware,"{""slot"":""neural"",""modifiers"":{""Matrix Initiative"":2}}"
+microsoft_hacking,"Microsoft (Hacking Skill-Chip)",chip,"A bio-plastic chip that slots into a neural port.",0.01,Tiny,Restricted,"Provides instant Hacking proficiency.",2000,cyberware,"{""slot"":""neural"",""modifiers"":{""Hacking"":2}}"
+modular_firearm,"Modular Firearm (Graphene)",pistol,"A customizable sidearm made of lightweight graphene.",1.5,Medium,Legal,"Highly adaptable kinetic weapon.",800,weapon,"{""damage"":18,""range"":25,""ammoType"":""9mm"",""magSize"":15}"
+monofilament_whip,"Mono-filament Whip",whip,"A molecularly sharp wire that can slice through polycarbon.",0.2,Small,Illegal,"Melee Weapon; ignores all armor.",3500,weapon,"{""damage"":45,""range"":3}"
+taser_prod,"Taser Prod",prod,"A high-voltage stun baton used by Turing Police.",1.0,Medium,Restricted,"Non-lethal stun weapon.",600,weapon,"{""damage"":10,""range"":1,""stun"":true}"
+neural_deck,"Neural Deck (Mk.I)",deck,"A standard issue cyberdeck.",1.2,Small,Legal,"2 Slots for Programs; allows hacking.",1000,cyberware,"{""slot"":""neural""}"
 data_chip,"Data Chip (Encrypted)",chip,"A secure storage chip.",0.05,Tiny,Variable,"Contains lore or mission data; requires 'Decrypt' skill.",50,item,
-optical_hud,"Optical Internal HUD",hud,"Retinal implant overlay.",0.0,Built-in,Legal,"Displays room exits and player health in real-time.",500,item,
+optical_hud,"Optical Internal HUD",hud,"Retinal implant overlay.",0.0,Built-in,Legal,"Displays room exits and player health in real-time.",500,cyberware,"{""slot"":""ocular""}"
 signal_jammer,"Signal Jammer",jammer,"A handheld radio jammer.",0.8,Small,Illegal,"Prevents 'Call for Backup' in the current room.",300,item,
 ext_drive,"External Hard Drive",drive,"High-capacity storage unit.",0.3,Small,Legal,"Used to extract 'Data Payloads' from servers.",150,item,
-exoskeleton_frame,"Exoskeleton Frame",exo,"A hydraulic frame that boosts strength.",15.0,Large,Restricted,"Increases carry capacity by 50lbs.",2500,item,
+exoskeleton_frame,"Exoskeleton Frame",exo,"A hydraulic frame that boosts strength.",15.0,Large,Restricted,"Increases carry capacity by 50lbs.",2500,cyberware,"{""slot"":""body""}"
 beer_can,"Beer Can",can,"An empty, crushed beer can.",0.1,Small,Legal,"Trash",0,item,
 medkit,"Medkit",medkit,"A standard medical kit.",2.0,Medium,Legal,"Heals 50 HP",100,item,
 stimpack,"Stimpack",stim,"A combat stimulant injector.",0.2,Tiny,Restricted,"Boosts AP for 3 turns",50,item,
 bandage,"Bandage",bandage,"A sterile bandage.",0.1,Tiny,Legal,"Stops bleeding",10,item,
 painkillers,"Painkillers",pills,"A bottle of pain relief pills.",0.1,Tiny,Legal,"Heals 10 HP over time",20,item,
-reflex_boost,"Reflex Boost",booster,"A synaptic accelerator.",0.1,Tiny,Illegal,"Increases initiative.",500,item,
+reflex_boost,"Reflex Boost",booster,"A synaptic accelerator.",0.1,Tiny,Illegal,"Increases initiative.",500,cyberware,"{""slot"":""neural""}"
 flatline_heal,"Flatline-Heal",injector,"An emergency resuscitation device.",1.0,Small,Restricted,"Revives a downed ally.",1000,item,
 flashlight,"Flashlight",light,"A heavy-duty tactical flashlight.",0.5,Small,Legal,"Illuminates dark areas",30,item,
 water_bottle,"Water Bottle",bottle,"A plastic water bottle.",0.5,Small,Legal,"Hydration",5,item,

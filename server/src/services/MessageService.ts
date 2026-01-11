@@ -41,4 +41,8 @@ export class MessageService {
     roomDesc(targetId: string, content: string, payload?: any) {
         this.send(targetId, MessageType.ROOM_DESC, content, payload);
     }
+
+    map(targetId: string, content: string, payload?: any) {
+        this.send(targetId, MessageType.MAP, content, payload);
+    }
 }

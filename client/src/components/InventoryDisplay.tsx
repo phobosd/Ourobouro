@@ -9,6 +9,10 @@ interface InventoryData {
     legs: string;
     waist: string;
     backpackContents: string[];
+    currency?: {
+        newYen: number;
+        credits: number;
+    };
 }
 
 interface Props {
@@ -75,7 +79,9 @@ export const InventoryDisplay: React.FC<Props> = ({ data }) => {
                 </div>
             </div>
             <div className="inv-border"></div>
-            <div className="inv-footer">GOLD: 0</div>
+            <div className="inv-footer">
+                ¥{data.currency?.newYen || 0} | {data.currency?.credits || 0} CREDITS
+            </div>
         </div>
     );
 };

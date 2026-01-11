@@ -150,6 +150,9 @@ export class CombatSystem extends System {
             return;
         }
 
+        // Set NPC to hostile when attacked
+        targetCombatStats.isHostile = true;
+
         // Get attacker's weapon and stats
         const attackerInventory = attacker.getComponent(Inventory);
         const attackerStats = attacker.getComponent(Stats);

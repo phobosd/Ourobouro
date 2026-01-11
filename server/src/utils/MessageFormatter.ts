@@ -38,6 +38,10 @@ export class MessageFormatter {
         return this.wrap('combat', content);
     }
 
+    static currency(newYen: number, credits: number): string {
+        return `<currency>¥${newYen} | ${credits} Credits</currency>`;
+    }
+
     static mapPlayer(content: string): string {
         return this.wrap('map-player', content);
     }

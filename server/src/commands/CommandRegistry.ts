@@ -3,6 +3,7 @@ import { MovementSystem } from '../systems/MovementSystem';
 import { InteractionSystem } from '../systems/InteractionSystem';
 import { NPCSystem } from '../systems/NPCSystem';
 import { CombatSystem } from '../systems/CombatSystem';
+import { CyberspaceSystem } from '../systems/CyberspaceSystem';
 import { Entity } from '../ecs/Entity';
 import { Logger } from '../utils/Logger';
 
@@ -11,6 +12,7 @@ export interface SystemRegistry {
     interaction: InteractionSystem;
     npc: NPCSystem;
     combat: CombatSystem;
+    cyberspace: CyberspaceSystem;
 }
 
 export interface IEngine {

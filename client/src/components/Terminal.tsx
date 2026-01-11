@@ -6,6 +6,7 @@ import { ScoreDisplay } from './ScoreDisplay';
 import { SheetDisplay } from './SheetDisplay';
 import { TerminalDisplay } from './TerminalDisplay';
 import { GuideOverlay } from './GuideOverlay';
+import { MapDisplay } from './MapDisplay';
 import './Terminal.css';
 
 
@@ -14,7 +15,7 @@ const SOCKET_URL = 'http://localhost:3000';
 interface TerminalLine {
     id: string;
     text: string;
-    type: 'output' | 'input' | 'system' | 'inventory' | 'score' | 'sheet' | 'terminal';
+    type: 'output' | 'input' | 'system' | 'inventory' | 'score' | 'sheet' | 'terminal' | 'map';
     data?: any;
 }
 
@@ -162,7 +163,7 @@ export const Terminal: React.FC = () => {
         'attack', 'kill', 'fight', 'read', 'scan',
         'god', 'admin', 'help', '?', 'map', 'm', 'sheet', 'stats', 'score', 'skills',
         'stow', 'put', 'swap', 'switch', 'use', 'sit', 'stand', 'st', 'lie', 'rest', 'sleep',
-        'turn', 'rotate'
+        'turn', 'rotate', 'jack_in', 'jack_out', 'jackin', 'jackout'
     ];
 
     const [completionState, setCompletionState] = useState<{
@@ -374,6 +375,8 @@ export const Terminal: React.FC = () => {
                             <ScoreDisplay data={line.data} />
                         ) : line.type === 'sheet' && line.data ? (
                             <SheetDisplay data={line.data} />
+                        ) : line.type === 'map' && line.data ? (
+                            <MapDisplay data={line.data} />
                         ) : (
                             parseMessage(line.text)
                         )}

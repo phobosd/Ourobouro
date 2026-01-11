@@ -15,6 +15,11 @@ import { PuzzleObject } from '../components/PuzzleObject';
 import { Credits } from '../components/Credits';
 import { Magazine } from '../components/Magazine';
 import { Weapon } from '../components/Weapon';
+import { IsCyberspace } from '../components/IsCyberspace';
+import { IsPersona } from '../components/IsPersona';
+import { IsICE } from '../components/IsICE';
+import { Atmosphere } from '../components/Atmosphere';
+import { Cyberware } from '../components/Cyberware';
 
 export class ComponentRegistry {
     private static components: Map<string, ComponentClass<any>> = new Map();
@@ -44,5 +49,10 @@ export class ComponentRegistry {
         this.register('Credits', Credits);
         this.register('Magazine', Magazine);
         this.register('Weapon', Weapon);
+        this.register('IsCyberspace', IsCyberspace);
+        this.register('IsPersona', IsPersona);
+        this.register('IsICE', IsICE);
+        this.register('Atmosphere', Atmosphere);
+        this.register('Cyberware', Cyberware);
     }
 }

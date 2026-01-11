@@ -106,8 +106,8 @@ export class InteractionSystem extends System {
         const playerPos = player.getComponent(Position);
         if (!playerPos) return;
 
-        const mapOutput = DescriptionService.generateFullMap(playerPos, engine);
-        this.messageService.info(entityId, mapOutput);
+        const mapData = DescriptionService.generateMapData(playerPos, engine);
+        this.messageService.map(entityId, '', mapData);
     }
 
 

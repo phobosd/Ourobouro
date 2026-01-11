@@ -234,3 +234,14 @@
 .terminal-output::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+.text-atmosphere {
+  color: #00ffaa;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.text-currency {
+  color: #ffff00;
+  font-weight: bold;
+}

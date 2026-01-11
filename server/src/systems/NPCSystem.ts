@@ -54,8 +54,8 @@ export class NPCSystem extends System {
     private moveRandomly(npc: Entity, pos: Position, engine: IEngine) {
         const npcComp = npc.getComponent(NPC);
 
-        // Don't move Giant Rats - they stay in place
-        if (npcComp && npcComp.typeName === 'Giant Rat') {
+        // Check if NPC is allowed to move
+        if (npcComp && !npcComp.canMove) {
             return;
         }
 

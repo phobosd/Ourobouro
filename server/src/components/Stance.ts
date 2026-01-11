@@ -3,7 +3,8 @@ import { Component } from '../ecs/Component';
 export enum StanceType {
     Standing = 'standing',
     Sitting = 'sitting',
-    Lying = 'lying'
+    Lying = 'lying',
+    Stasis = 'stasis'
 }
 
 export class Stance extends Component {

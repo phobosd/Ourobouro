@@ -3,10 +3,16 @@ import { Component } from '../ecs/Component';
 export class Credits extends Component {
     static type = 'Credits';
 
-    amount: number;
+    newYen: number;
+    credits: number;
 
-    constructor(amount: number = 0) {
+    constructor(newYen: number = 0, credits: number = 0) {
         super();
-        this.amount = amount;
+        this.newYen = newYen;
+        this.credits = credits;
     }
+
+    // For backward compatibility if needed, though we should migrate
+    get amount() { return this.credits; }
+    set amount(val: number) { this.credits = val; }
 }

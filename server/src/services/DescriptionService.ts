@@ -11,6 +11,7 @@ import { Inventory } from '../components/Inventory';
 import { WorldQuery } from '../utils/WorldQuery';
 import { MessageFormatter } from '../utils/MessageFormatter';
 import { IEngine } from '../commands/CommandRegistry';
+import { Atmosphere } from '../components/Atmosphere';
 
 export class DescriptionService {
     /**
@@ -36,8 +37,8 @@ export class DescriptionService {
             const npcComp = npc.getComponent(NPC);
             const combatStats = npc.getComponent(CombatStats);
             if (npcComp) {
-                // Enemies (with CombatStats) are red
-                if (combatStats) {
+                // Enemies (with CombatStats and isHostile) are red
+                if (combatStats && combatStats.isHostile) {
                     return `<enemy>${npcComp.typeName} is standing here.</enemy>`;
                 } else {
                     return MessageFormatter.npc(`${npcComp.typeName} is standing here.`);
@@ -60,16 +61,21 @@ export class DescriptionService {
         if (WorldQuery.findRoomAt(engine, playerPos.x + 1, playerPos.y)) exits.push('E');
         if (WorldQuery.findRoomAt(engine, playerPos.x - 1, playerPos.y)) exits.push('W');
 
+        // Atmosphere
+        const atmosphere = room.getComponent(Atmosphere);
+        let atmosphereText = "";
+        if (atmosphere) {
+            atmosphereText = `<atmosphere>Sky: ${atmosphere.skyState} | Lighting: ${atmosphere.lighting} | Contrast: ${atmosphere.contrast}</atmosphere>\n`;
+        }
+
         const miniMap = this.generateMiniMap(playerPos, engine);
 
-        return `
-${MessageFormatter.title(`[${roomDesc.title}]`)}
-<desc>${roomDesc.description}</desc>${terminalText}
+        return `${MessageFormatter.title(`[${roomDesc.title}]`)}
+${atmosphereText}<desc>${roomDesc.description}</desc>${terminalText}
 <exits>Exits: ${exits.join(', ')}</exits>
 ${miniMap}
 ${itemDescriptions}
-${npcDescriptions}
-        `.trim();
+${npcDescriptions}`.trim();
     }
 
     /**
@@ -115,6 +121,49 @@ ${npcDescriptions}
             miniMap += row + "\n";
         }
         return miniMap;
+    }
+
+    /**
+     * Generates structured map data for React rendering.
+     */
+    static generateMapData(playerPos: Position, engine: IEngine) {
+        const width = 20;
+        const height = 20;
+        const grid: any[][] = [];
+
+        for (let y = 0; y < height; y++) {
+            const row: any[] = [];
+            for (let x = 0; x < width; x++) {
+                const room = WorldQuery.findRoomAt(engine, x, y);
+                if (room) {
+                    const shop = room.getComponent(Shop);
+                    const desc = room.getComponent(Description);
+                    const isPlayer = x === playerPos.x && y === playerPos.y;
+
+                    let type = 'street';
+                    if (desc?.title.includes("Clinic")) type = 'clinic';
+                    else if (shop) type = 'shop';
+                    else if (desc?.title.includes("Club")) type = 'club';
+                    else if (desc?.title.includes("Park")) type = 'park';
+                    else if (desc?.title.includes("Plaza")) type = 'plaza';
+
+                    row.push({
+                        x, y,
+                        type,
+                        title: desc?.title || "Unknown",
+                        isPlayer
+                    });
+                } else {
+                    row.push(null);
+                }
+            }
+            grid.push(row);
+        }
+
+        return {
+            grid,
+            playerPos: { x: playerPos.x, y: playerPos.y }
+        };
     }
 
     /**

@@ -8,6 +8,7 @@ import { Container } from '../components/Container';
 import { Entity } from '../ecs/Entity';
 import { AutocompleteAggregator } from '../services/AutocompleteAggregator';
 import { DescriptionService } from '../services/DescriptionService';
+import { Credits } from '../components/Credits';
 
 import { MessageService } from '../services/MessageService';
 
@@ -348,7 +349,11 @@ export class InventoryHandler {
             torso: getItemName(inventory.equipment.get('torso') || null),
             legs: getItemName(inventory.equipment.get('legs') || null),
             waist: getItemName(inventory.equipment.get('waist') || null),
-            backpackContents
+            backpackContents,
+            currency: {
+                newYen: player.getComponent(Credits)?.newYen || 0,
+                credits: player.getComponent(Credits)?.credits || 0
+            }
         });
 
         const autocompleteData = AutocompleteAggregator.getInventoryAutocomplete(player, engine);
