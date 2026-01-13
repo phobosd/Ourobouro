@@ -10,6 +10,7 @@ interface BufferData {
     actions: CombatAction[];
     maxSlots: number;
     isExecuting: boolean;
+    isBuilding?: boolean;
     currentAction?: CombatAction;
     flow?: number;
     malware?: string[];
@@ -19,7 +20,8 @@ export const CombatBufferDisplay: React.FC<{ socket: any }> = ({ socket }) => {
     const [buffer, setBuffer] = useState<BufferData>({
         actions: [],
         maxSlots: 3,
-        isExecuting: false
+        isExecuting: false,
+        isBuilding: false
     });
     const [logs, setLogs] = useState<string[]>([]);
 
@@ -36,7 +38,8 @@ export const CombatBufferDisplay: React.FC<{ socket: any }> = ({ socket }) => {
         };
     }, [socket]);
 
-    if (buffer.actions.length === 0 && !buffer.isExecuting) return null;
+    // Only show if building or executing
+    if (!buffer.isBuilding && !buffer.isExecuting) return null;
 
     return (
         <div className="combat-buffer-container">

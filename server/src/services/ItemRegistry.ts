@@ -14,7 +14,7 @@ export interface ItemDefinition {
     legality: string;
     attributes: string;
     cost: number;
-    type: 'item' | 'weapon' | 'container' | 'cyberware';
+    type: 'item' | 'weapon' | 'container' | 'cyberware' | 'armor';
     slot?: string | null;
     extraData: any;
 }

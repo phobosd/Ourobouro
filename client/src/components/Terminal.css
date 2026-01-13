@@ -15,7 +15,6 @@
   display: flex;
   flex-direction: column;
   padding: 10px 20px;
-  /* This ensures content starts at the bottom */
   justify-content: flex-end;
 }
 
@@ -24,7 +23,6 @@
   margin-bottom: 2px;
   line-height: 1.4;
   white-space: pre-wrap;
-  /* Preserves newlines for map rendering */
   font-family: 'Courier New', Courier, monospace;
 }
 
@@ -57,6 +55,17 @@
   padding: 10px 20px;
   background-color: #000;
   border-top: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-indicators-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: flex-end;
+  width: 100%;
 }
 
 .terminal-input-row {
@@ -87,13 +96,10 @@
   font-weight: bold;
   font-size: 1.1em;
   text-transform: uppercase;
-  margin-bottom: 0;
-  /* Removed margin to reduce gap */
 }
 
 .text-room-desc {
   color: #e0e0e0;
-  /* Bright white but not super bright */
 }
 
 .text-desc {
@@ -129,48 +135,6 @@
 }
 
 .text-cmd {
-  color: #fff;
-  background: #333;
-  padding: 0 4px;
-  border-radius: 3px;
-}
-
-.text-system {
-  color: #cccccc;
-  /* Changed from yellow to grey to reduce yellow */
-  font-style: italic;
-}
-
-.text-movement {
-  color: #ffaa00;
-  font-style: italic;
-}
-
-.text-combat-hit {
-  color: #ff3300;
-  /* Red-Orange */
-  font-weight: bold;
-  text-shadow: 0 0 2px #ff3300;
-}
-
-.text-combat-miss {
-  color: #888888;
-  /* Grey */
-  font-style: italic;
-}
-
-.text-combat-death {
-  color: #ff0000;
-  /* Red */
-  font-weight: bold;
-  text-shadow: 0 0 5px #ff0000;
-  animation: pulse-red 1s infinite;
-}
-
-.text-level-up {
-  color: #00ff00;
-  /* Bright Green */
-  font-weight: bold;
   text-shadow: 0 0 5px #00ff00;
   animation: pulse 1s infinite;
 }
@@ -179,6 +143,25 @@
   color: #ffffff;
   text-shadow: 0 0 5px #ffffff;
   animation: pulse 2s infinite;
+}
+
+.text-atmosphere {
+  color: #00ffaa;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.text-currency {
+  color: #ffff00;
+  font-weight: bold;
+}
+
+.text-speech {
+  color: #ffffff;
+}
+
+.text-cyan {
+  color: #00ffff;
 }
 
 /* Map Colors */
@@ -261,21 +244,239 @@
   background: #555;
 }
 
-.text-atmosphere {
-  color: #00ffaa;
-  font-style: italic;
-  font-size: 0.9em;
+/* Matrix Mode Styles */
+.terminal-container.matrix-mode {
+  background-color: #000;
+  border: 1px solid #00ff41;
+  box-shadow: inset 0 0 50px rgba(0, 255, 65, 0.05);
 }
 
-.text-currency {
-  color: #ffff00;
+.matrix-mode .terminal-output {
+  text-shadow: 0 0 5px #00ff41;
+  /* Subtle constant jitter */
+  animation: matrix-jitter 10s infinite linear;
+}
+
+.matrix-mode .terminal-line,
+.matrix-mode .terminal-input,
+.matrix-mode .prompt,
+.matrix-mode .text-title,
+.matrix-mode .text-room-desc,
+.matrix-mode .text-desc,
+.matrix-mode .text-exits,
+.matrix-mode .text-item,
+.matrix-mode .text-npc,
+.matrix-mode .text-enemy,
+.matrix-mode .text-system,
+.matrix-mode .text-movement,
+.matrix-mode .text-combat-hit,
+.matrix-mode .text-combat-miss,
+.matrix-mode .text-combat-death,
+.matrix-mode .text-level-up,
+.matrix-mode .text-terminal,
+.matrix-mode .text-atmosphere,
+.matrix-mode .text-currency,
+.matrix-mode .text-speech,
+.matrix-mode .text-cyan,
+.matrix-mode .terminal-line.system,
+.matrix-mode .terminal-line.info,
+.matrix-mode .terminal-line.error,
+.matrix-mode .terminal-line.success,
+.matrix-mode .terminal-line.combat,
+.matrix-mode .terminal-line.input {
+  color: #00ff41 !important;
+}
+
+.matrix-mode .text-title {
+  text-decoration: underline;
+  letter-spacing: 2px;
+}
+
+.matrix-mode .terminal-input-area {
+  background-color: #000;
+  border-top: 1px solid #00ff41;
+}
+
+.matrix-mode .terminal-output::-webkit-scrollbar-thumb {
+  background: #00ff41;
+}
+
+.matrix-mode .terminal-output::-webkit-scrollbar-track {
+  background: #001100;
+}
+
+/* Glitch Effect on Keystroke */
+.glitch-active.matrix-mode .terminal-output {
+  animation: matrix-keystroke-glitch 0.05s infinite;
+  filter: brightness(1.5) contrast(1.2);
+}
+
+.glitch-active.matrix-mode .terminal-line {
+  transform: skewX(2deg);
+}
+
+@keyframes matrix-jitter {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  10% {
+    transform: translate(0.5px, -0.5px);
+  }
+
+  20% {
+    transform: translate(-0.5px, 0.5px);
+  }
+
+  30% {
+    transform: translate(0.5px, 0.5px);
+  }
+
+  40% {
+    transform: translate(-0.5px, -0.5px);
+  }
+
+  50% {
+    transform: translate(0.5px, 0);
+  }
+
+  60% {
+    transform: translate(-0.5px, 0);
+  }
+
+  70% {
+    transform: translate(0, 0.5px);
+  }
+
+  80% {
+    transform: translate(0, -0.5px);
+  }
+
+  90% {
+    transform: translate(0.5px, -0.5px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes matrix-keystroke-glitch {
+  0% {
+    transform: translate(2px, -2px);
+    filter: hue-rotate(90deg);
+  }
+
+  50% {
+    transform: translate(-2px, 2px);
+    filter: hue-rotate(-90deg);
+  }
+
+  100% {
+    transform: translate(2px, -2px);
+    filter: hue-rotate(90deg);
+  }
+}
+
+/* Matrix Map Styles */
+.matrix-mode .text-map-player {
+  color: #fff !important;
+  text-shadow: 0 0 10px #00ff41;
+}
+
+.matrix-mode .text-map-wall,
+.matrix-mode .text-map-shop,
+.matrix-mode .text-map-clinic,
+.matrix-mode .text-map-club,
+.matrix-mode .text-map-grass,
+.matrix-mode .text-map-street {
+  color: #00ff41 !important;
+  opacity: 0.6;
+}
+
+.matrix-map .inventory-header {
+  color: #00ff41 !important;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.3) !important;
+}
+
+/* Combat Visual Effects */
+.text-combat-hit {
+  color: #ff3300;
   font-weight: bold;
+  text-shadow: 0 0 2px #ff3300;
+  animation: bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-block;
 }
 
-.text-speech {
-  color: #ffffff;
+.text-combat-miss {
+  color: #888888;
+  font-style: italic;
+  animation: shake 0.4s ease-in-out;
+  display: inline-block;
 }
 
-.text-cyan {
-  color: #00ffff;
+.text-combat-death {
+  color: #ff0000;
+  font-weight: bold;
+  text-shadow: 0 0 5px #ff0000;
+  animation: explode 1s ease-out forwards;
+  display: inline-block;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-10px) scale(1.3);
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-6px) rotate(-5deg);
+  }
+
+  40% {
+    transform: translateX(6px) rotate(5deg);
+  }
+
+  60% {
+    transform: translateX(-3px) rotate(-3deg);
+  }
+
+  80% {
+    transform: translateX(3px) rotate(3deg);
+  }
+}
+
+@keyframes explode {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  40% {
+    transform: scale(2.5);
+    opacity: 1;
+    text-shadow: 0 0 40px #ff0000;
+    letter-spacing: 4px;
+    filter: brightness(2);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    letter-spacing: normal;
+    filter: brightness(1);
+  }
 }

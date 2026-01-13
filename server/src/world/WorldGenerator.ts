@@ -42,9 +42,74 @@ export class WorldGenerator {
             }
         }
 
-        this.createCyberspace();
+        this.createMatrixMirror(mapLayout);
 
         console.log('World generation complete.');
+    }
+
+    private createMatrixMirror(layout: number[][]) {
+        console.log("Generating Matrix Mirror world...");
+        const offset = 10000;
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const type = layout[y][x];
+                if (type === 0) continue;
+
+                const node = new Entity();
+                node.addComponent(new IsRoom());
+                node.addComponent(new IsCyberspace());
+                node.addComponent(new Position(x + offset, y));
+                node.addComponent(new Atmosphere("Neon-Pulse Grid", "Digital Glow", "Ultra-High"));
+
+                let title = "Digital Node";
+                let desc = "A crystalline structure of pulsing light and shifting data-streams.";
+
+                switch (type) {
+                    case 1: // Street
+                        title = "Data-Stream Conduit";
+                        desc = "A high-speed data conduit where packets of encrypted information flow like liquid light.";
+                        break;
+                    case 2: // Plaza
+                        title = "Central Processing Nexus";
+                        desc = "The core of the local network. Massive pillars of light represent the arcology's primary data-hubs.";
+                        break;
+                    case 3: // Shop
+                        title = "Encrypted Sub-Node";
+                        desc = "A secure sub-node containing commercial data-shards and transaction logs.";
+                        break;
+                    case 4: // Clinic
+                        title = "Bio-Data Repository";
+                        desc = "A specialized node for storing and processing biological telemetry and neural-map data.";
+                        break;
+                    case 5: // Club
+                        title = "Social Frequency Hub";
+                        desc = "A chaotic hub of unencrypted social data and sensory-broadcast streams.";
+                        break;
+                    case 6: // Park
+                        title = "Recursive Logic Garden";
+                        desc = "A peaceful sector of the grid where fractal algorithms create a digital representation of nature.";
+                        break;
+                    case 7: // Alchemist's Study
+                        title = "Obfuscated Archive";
+                        desc = "A heavily encrypted archive node, hidden behind layers of ancient, non-standard protocols.";
+                        break;
+                }
+
+                node.addComponent(new Description(title, desc));
+                this.engine.addEntity(node);
+
+                // Spawn ICE in the Matrix
+                if (Math.random() > 0.8) {
+                    const ice = PrefabFactory.createNPC(Math.random() > 0.7 ? 'black ice' : 'white ice');
+                    if (ice) {
+                        ice.addComponent(new Position(x + offset, y));
+                        this.engine.addEntity(ice);
+                        PrefabFactory.equipICE(ice, this.engine);
+                    }
+                }
+            }
+        }
     }
 
     private createLayout(w: number, h: number): number[][] {
@@ -177,7 +242,21 @@ export class WorldGenerator {
                     'modular_firearm',
                     'monofilament_whip',
                     'taser_prod',
-                    'compliance_derm'
+                    'compliance_derm',
+                    // Neon-Ronin Armor
+                    'ronin_visor',
+                    'synth_silk_kimono',
+                    'scabbard_pack',
+                    'obi_sash',
+                    'hakama_trousers',
+                    'tabi_boots',
+                    // Heavy-Chrome Armor
+                    'enforcer_helm',
+                    'plated_cuirass',
+                    'power_unit',
+                    'load_bearing_harness',
+                    'greaves_of_industry',
+                    'mag_lock_boots'
                 ];
             } else if (flavor.shopData.name === "Bits & Bytes") {
                 items = [
@@ -301,31 +380,6 @@ export class WorldGenerator {
         }
     }
 
-    private createCyberspace() {
-        // Create a 5x5 grid of cyberspace nodes starting at 100, 100
-        for (let y = 100; y < 105; y++) {
-            for (let x = 100; x < 105; x++) {
-                const node = new Entity();
-                node.addComponent(new IsCyberspace());
-                node.addComponent(new Position(x, y));
-                node.addComponent(new Description(
-                    `Data-Node [${x},${y}]`,
-                    "A crystalline structure of pulsing light and shifting data-streams. Data-links hum with the passage of encrypted packets."
-                ));
-                node.addComponent(new Atmosphere("Neon-Pulse Grid", "Digital Glow", "Ultra-High"));
-                this.engine.addEntity(node);
-
-                // Spawn some ICE
-                if (Math.random() > 0.8) {
-                    const ice = PrefabFactory.createNPC(Math.random() > 0.5 ? 'white ice' : 'black ice');
-                    if (ice) {
-                        ice.addComponent(new Position(x, y));
-                        this.engine.addEntity(ice);
-                    }
-                }
-            }
-        }
-    }
 
     private getRoomFlavor(type: number, x: number, y: number): { title: string, desc: string, shopData?: { name: string, desc: string } } {
         let zonePrefix = "";

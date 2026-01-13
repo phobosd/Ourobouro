@@ -10,6 +10,8 @@ import { IsRoom } from '../components/IsRoom';
 import { IEngine } from '../ecs/IEngine';
 import { Roundtime } from '../components/Roundtime';
 import { Stats } from '../components/Stats';
+import { Inventory } from '../components/Inventory';
+import { Weapon } from '../components/Weapon';
 
 import { MessageService } from '../services/MessageService';
 import { MessageFormatter } from '../utils/MessageFormatter';
@@ -159,11 +161,28 @@ export class NPCSystem extends System {
         // Check if NPC can act (not in Roundtime)
         const rt = npc.getComponent(Roundtime) as any;
         if (rt && rt.secondsRemaining > 0) {
-            console.log(`[NPC AI] ${npcComp.typeName} (${npc.id}) in roundtime: ${rt.secondsRemaining.toFixed(1)}s`);
+            // console.log(`[NPC AI] ${npcComp.typeName} (${npc.id}) in roundtime: ${rt.secondsRemaining.toFixed(1)}s`);
             return;
         }
 
-        const isAtAttackRange = combatStats.engagementTier === EngagementTier.MELEE || combatStats.engagementTier === EngagementTier.CLOSE_QUARTERS;
+        // Determine Attack Range based on equipped weapon
+        let maxAttackTier = EngagementTier.MELEE;
+        const inventory = npc.getComponent(Inventory) as Inventory;
+        if (inventory && inventory.rightHand) {
+            const weaponEntity = WorldQuery.getEntityById(engine, inventory.rightHand);
+            const weapon = weaponEntity?.getComponent(Weapon) as Weapon;
+            if (weapon) {
+                maxAttackTier = weapon.maxTier;
+            }
+        }
+
+        const tiers = Object.values(EngagementTier);
+        const currentTierIndex = tiers.indexOf(combatStats.engagementTier);
+        const maxTierIndex = tiers.indexOf(maxAttackTier);
+
+        // NPC is at attack range if current tier is <= max weapon tier
+        // AND current tier is not DISENGAGED (unless max tier is also disengaged, which shouldn't happen)
+        const isAtAttackRange = currentTierIndex <= maxTierIndex && combatStats.engagementTier !== EngagementTier.DISENGAGED;
 
         if (!isAtAttackRange) {
             console.log(`[NPC AI] ${npcComp.typeName} (${npc.id}) checking advance: current tier=${combatStats.engagementTier}, target=${target.id}`);

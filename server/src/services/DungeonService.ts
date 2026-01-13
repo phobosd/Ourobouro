@@ -30,23 +30,11 @@ export class DungeonService {
     private messageService: MessageService;
     private enemies: EnemyDef[] = [];
 
-    // Track visited rooms per player for Fog of War
-    // Key: playerId, Value: Set of "x,y" strings
     private visitedRooms: Map<string, Set<string>> = new Map();
-
-    // Track active dungeon instances (simplified: just one shared dungeon area for now, 
-    // but regenerated when empty? Or per player? 
-    // User said: "when they re-enter, there is a new map generated."
-    // This implies per-session or per-entry. 
-    // To keep it simple but functional: We'll generate a unique dungeon layout 
-    // in the 2000+ coordinate space. We'll clear it when the last player leaves?
-    // Or just regenerate it when a player enters via the door.
-    // Let's assume single player focus for now or shared dungeon that resets.
-    // We'll clear the 2000+ area before generating.
 
     private readonly DUNGEON_OFFSET_X = 2000;
     private readonly DUNGEON_OFFSET_Y = 2000;
-    private readonly DUNGEON_SIZE = 60; // Max bounds
+    private readonly DUNGEON_SIZE = 60;
 
     constructor(engine: IEngine, messageService: MessageService) {
         this.engine = engine;
@@ -54,7 +42,7 @@ export class DungeonService {
         this.loadEnemies();
     }
 
-    static getInstance(engine?: IEngine, messageService?: MessageService): DungeonService {
+    static getInstance(engine?: IEngine, messageService?: MessageService): DungeonService | undefined {
         if (!DungeonService.instance && engine && messageService) {
             DungeonService.instance = new DungeonService(engine, messageService);
         }
@@ -74,25 +62,49 @@ export class DungeonService {
     }
 
     public enterDungeon(playerId: string) {
-        // 1. Clear existing dungeon (for this prototype, we treat it as a fresh instance)
+        // TEMPORARY: Always regenerate to clear corrupted state from Redis
+        console.log("[DungeonService] Regenerating dungeon (forced)...");
         this.clearDungeon();
-
-        // 2. Generate new layout
         this.generateDungeon();
 
-        // 3. Teleport player
         const player = WorldQuery.getEntityById(this.engine, playerId);
         if (player) {
             const pos = player.getComponent(Position);
             if (pos) {
-                // Save previous position? For now, just hardcode exit to Plaza
-                pos.x = this.DUNGEON_OFFSET_X;
-                pos.y = this.DUNGEON_OFFSET_Y;
-                console.log(`[DungeonService] Teleported player ${playerId} to ${pos.x}, ${pos.y}`);
+                // Verify there's actually a room at the spawn point
+                const spawnRoom = this.engine.getEntitiesAt(this.DUNGEON_OFFSET_X, this.DUNGEON_OFFSET_Y)
+                    .find(e => e.hasComponent(IsRoom));
+
+                if (spawnRoom) {
+                    pos.x = this.DUNGEON_OFFSET_X;
+                    pos.y = this.DUNGEON_OFFSET_Y;
+                    console.log(`[DungeonService] Teleported player ${playerId} to ${pos.x}, ${pos.y}`);
+                } else {
+                    // Emergency: Find ANY dungeon room
+                    console.error(`[DungeonService] No room at dungeon spawn (${this.DUNGEON_OFFSET_X}, ${this.DUNGEON_OFFSET_Y})!`);
+                    const anyDungeonRoom = Array.from(this.engine.getEntities().values()).find(e => {
+                        const p = e.getComponent(Position);
+                        return e.hasComponent(IsRoom) && p &&
+                            p.x >= this.DUNGEON_OFFSET_X &&
+                            p.x < this.DUNGEON_OFFSET_X + this.DUNGEON_SIZE;
+                    });
+
+                    if (anyDungeonRoom) {
+                        const dungeonPos = anyDungeonRoom.getComponent(Position)!;
+                        pos.x = dungeonPos.x;
+                        pos.y = dungeonPos.y;
+                        console.log(`[DungeonService] Emergency spawn at dungeon room (${dungeonPos.x}, ${dungeonPos.y})`);
+                    } else {
+                        console.error(`[DungeonService] CRITICAL: No dungeon rooms found after generation!`);
+                        this.messageService.error(playerId, "ERROR: Dungeon generation failed. Aborting entry.");
+                        return;
+                    }
+                }
             }
 
-            // Reset visited for this player
-            this.visitedRooms.set(playerId, new Set([`${this.DUNGEON_OFFSET_X},${this.DUNGEON_OFFSET_Y}`]));
+            if (pos) {
+                this.visitedRooms.set(playerId, new Set([`${pos.x},${pos.y}`]));
+            }
 
             this.messageService.system(playerId, "\n[SYSTEM] WARNING: UNSTABLE REALITY DETECTED.");
             this.messageService.system(playerId, "[SYSTEM] CONNECTING TO GLITCH ZONE...");
@@ -107,44 +119,69 @@ export class DungeonService {
         if (player) {
             const pos = player.getComponent(Position);
             if (pos) {
-                // Teleport back to Plaza (10, 10)
-                pos.x = 10;
-                pos.y = 10;
+                // Try to find a safe spawn location
+                const safeX = 10;
+                const safeY = 10;
+
+                // Verify there's a room at the destination
+                const destRoom = this.engine.getEntitiesAt(safeX, safeY).find(e => e.hasComponent(IsRoom));
+
+                if (destRoom) {
+                    pos.x = safeX;
+                    pos.y = safeY;
+                    this.messageService.system(playerId, "[SYSTEM] DISCONNECTING...");
+                    this.messageService.info(playerId, "The glitch zone fades. You are back in the stability of the Sprawl.");
+                    console.log(`[DungeonService] Player ${playerId} left dungeon to (${safeX}, ${safeY})`);
+                } else {
+                    // Emergency fallback - find ANY room
+                    console.error(`[DungeonService] No room at (${safeX}, ${safeY})! Finding emergency spawn...`);
+                    const anyRoom = Array.from(this.engine.getEntities().values()).find(e => {
+                        const p = e.getComponent(Position);
+                        return e.hasComponent(IsRoom) && p && p.x < 1000; // Not in dungeon or matrix
+                    });
+
+                    if (anyRoom) {
+                        const anyPos = anyRoom.getComponent(Position)!;
+                        pos.x = anyPos.x;
+                        pos.y = anyPos.y;
+                        this.messageService.system(playerId, "[SYSTEM] EMERGENCY RELOCATION");
+                        this.messageService.info(playerId, "Reality stabilizes around you...");
+                        console.log(`[DungeonService] Emergency spawn at (${anyPos.x}, ${anyPos.y})`);
+                    } else {
+                        console.error(`[DungeonService] CRITICAL: No valid rooms found in world!`);
+                        this.messageService.error(playerId, "ERROR: Unable to find safe location. Contact administrator.");
+                    }
+                }
             }
-            this.messageService.system(playerId, "[SYSTEM] DISCONNECTING...");
-            this.messageService.info(playerId, "The glitch zone fades. You are back in the stability of the Sprawl.");
-            console.log(`[DungeonService] Player ${playerId} left dungeon.`);
         }
     }
 
     private clearDungeon() {
-        // Remove all entities in dungeon range
         const entities = this.engine.getEntities();
         const toRemove: string[] = [];
 
         for (const [id, entity] of entities) {
             const pos = entity.getComponent(Position);
             if (pos && pos.x >= this.DUNGEON_OFFSET_X) {
-                // Don't remove players!
-                if (!entity.getComponent(Stats)) {
-                    if (entity.hasComponent(NPC) || entity.hasComponent(IsRoom) || entity.hasComponent(Description)) {
-                        toRemove.push(id);
-                    }
+                // Only remove NPCs and Portals, keep rooms
+                if (entity.hasComponent(NPC) || entity.hasComponent(Portal)) {
+                    toRemove.push(id);
                 }
             }
         }
 
         toRemove.forEach(id => this.engine.removeEntity(id));
+        console.log(`[DungeonService] Cleared ${toRemove.length} entities from dungeon`);
     }
 
     private generateDungeon() {
-        const targetRooms = 60 + Math.floor(Math.random() * 30); // 60-90 rooms (Tripled size)
+        const targetRooms = 60 + Math.floor(Math.random() * 30);
         const visited = new Set<string>();
         const nodes: { x: number, y: number }[] = [{ x: this.DUNGEON_OFFSET_X, y: this.DUNGEON_OFFSET_Y }];
 
-        // Create Entry Room
         this.createRoom(this.DUNGEON_OFFSET_X, this.DUNGEON_OFFSET_Y, true);
         visited.add(`${this.DUNGEON_OFFSET_X},${this.DUNGEON_OFFSET_Y}`);
+        console.log(`[DungeonService] Created entry room at (${this.DUNGEON_OFFSET_X}, ${this.DUNGEON_OFFSET_Y})`);
 
         let created = 1;
         let attempts = 0;
@@ -152,19 +189,12 @@ export class DungeonService {
 
         while (created < targetRooms && attempts < maxAttempts) {
             attempts++;
-
-            // Pick a random node to branch from
-            // Bias towards the end of the list to create longer paths (DFS-ish), but occasionally pick random for branching
             const useRecent = Math.random() > 0.3;
             const idx = useRecent ? nodes.length - 1 - Math.floor(Math.random() * Math.min(5, nodes.length)) : Math.floor(Math.random() * nodes.length);
             const curr = nodes[idx];
 
-            // Pick a random direction
             const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
             const dir = dirs[Math.floor(Math.random() * dirs.length)];
-
-            // Determine segment length (Corridor/Alleyway)
-            // 2-6 rooms long
             const segmentLen = 2 + Math.floor(Math.random() * 5);
 
             let cx = curr.x;
@@ -177,22 +207,18 @@ export class DungeonService {
                 const ny = cy + dir[1];
                 const key = `${nx},${ny}`;
 
-                // Check bounds (relative to offset)
-                // Ensure we stay within the 2000+ range and don't accidentally wrap or go negative relative to offset
                 if (nx < this.DUNGEON_OFFSET_X || nx > this.DUNGEON_OFFSET_X + this.DUNGEON_SIZE ||
                     ny < this.DUNGEON_OFFSET_Y || ny > this.DUNGEON_OFFSET_Y + this.DUNGEON_SIZE) {
                     break;
                 }
 
                 if (!visited.has(key)) {
-                    // Check neighbors to prevent large open areas (labyrinth feel)
                     let neighborCount = 0;
                     const checkDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
                     for (const d of checkDirs) {
                         if (visited.has(`${nx + d[0]},${ny + d[1]}`)) neighborCount++;
                     }
 
-                    // If > 1 neighbor, we are creating a cluster/loop. Avoid most of the time.
                     if (neighborCount > 1 && Math.random() > 0.3) {
                         break;
                     }
@@ -204,8 +230,6 @@ export class DungeonService {
                     cy = ny;
                     created++;
                 } else {
-                    // If we hit an existing room, we might stop this segment or just skip
-                    // Let's stop to avoid weird overlaps, effectively "connecting" to that room
                     cx = nx;
                     cy = ny;
                     break;
@@ -213,10 +237,6 @@ export class DungeonService {
             }
         }
 
-        console.log(`[DungeonService] Generated ${created} rooms.`);
-
-        // Add Exit Portal in a room far from start
-        // Simple heuristic: furthest Manhattan distance
         let furthestNode = nodes[0];
         let maxDist = 0;
 
@@ -228,17 +248,14 @@ export class DungeonService {
             }
         }
 
-        const exitRoom = WorldQuery.findRoomAt(this.engine, furthestNode.x, furthestNode.y);
-        if (exitRoom) {
-            const portal = new Entity();
-            portal.addComponent(new Position(furthestNode.x, furthestNode.y));
-            portal.addComponent(new Description("Reality Rift", "<terminal>A BLINDING TEAR IN REALITY</terminal> revealing the stable world beyond."));
-            portal.addComponent(new Portal('room', 'plaza'));
-            this.engine.addEntity(portal);
+        console.log(`[DungeonService] Generated ${created} rooms. Furthest node at ${furthestNode.x}, ${furthestNode.y} (dist: ${maxDist})`);
 
-            // Boss spawn
-            // this.spawnEnemy(furthestNode.x, furthestNode.y, 3);
-        }
+        const portal = new Entity();
+        portal.addComponent(new Position(furthestNode.x, furthestNode.y));
+        portal.addComponent(new Description("Reality Rift", "<terminal>A BLINDING TEAR IN REALITY</terminal> revealing the stable world beyond."));
+        portal.addComponent(new Portal('room', 'plaza'));
+        this.engine.addEntity(portal);
+        console.log(`[DungeonService] Reality Rift spawned at ${furthestNode.x}, ${furthestNode.y}`);
     }
 
     private createRoom(x: number, y: number, isEntry: boolean) {
@@ -251,14 +268,12 @@ export class DungeonService {
         room.addComponent(new Atmosphere("Glitch-Fog", "Strobe", "Erratic"));
 
         this.engine.addEntity(room);
+        console.log(`[DungeonService] Added room entity ${room.id} at (${x}, ${y}), isEntry: ${isEntry}`);
 
         if (!isEntry) {
-            // Chance to spawn enemy
-            /*
             if (Math.random() < 0.6) {
                 this.spawnEnemy(x, y);
             }
-            */
         }
     }
 
@@ -288,12 +303,16 @@ export class DungeonService {
         };
     }
 
-    private spawnEnemy(x: number, y: number, minTier: number = 1) {
+    private spawnEnemy(x: number, y: number) {
         if (this.enemies.length === 0) return;
 
-        // Filter by tier (simple logic: random enemy that meets minTier)
-        // Actually, let's just pick random for now, maybe weight by tier later
-        const enemyDef = this.enemies[Math.floor(Math.random() * this.enemies.length)];
+        // Filter by tier based on distance
+        const dist = Math.abs(x - this.DUNGEON_OFFSET_X) + Math.abs(y - this.DUNGEON_OFFSET_Y);
+        const targetTier = Math.min(4, 1 + Math.floor(dist / 15));
+        const eligibleEnemies = this.enemies.filter(e => e.tier <= targetTier);
+        const enemyDef = eligibleEnemies.length > 0
+            ? eligibleEnemies[Math.floor(Math.random() * eligibleEnemies.length)]
+            : this.enemies[0];
 
         const entity = new Entity();
         entity.addComponent(new NPC(
@@ -306,10 +325,13 @@ export class DungeonService {
         ));
         entity.addComponent(new Position(x, y));
 
-        // Map Stats
-        const hp = enemyDef.stats.hp;
-        const atk = enemyDef.stats.atk;
-        const def = enemyDef.stats.def;
+        // Map Stats with scaling based on distance
+        const scale = 1 + (dist / 30); // ~3% increase per unit distance
+
+        const hp = Math.floor(enemyDef.stats.hp * scale);
+        const atk = Math.floor(enemyDef.stats.atk * scale);
+        const def = Math.floor(enemyDef.stats.def * scale);
+
         entity.addComponent(new CombatStats(hp, atk, def));
         entity.addComponent(new Stats()); // Base stats
 
@@ -331,9 +353,15 @@ export class DungeonService {
     }
 
     public isVisited(playerId: string, x: number, y: number): boolean {
-        // If not in dungeon range, always visited (main world)
-        if (x < this.DUNGEON_OFFSET_X) return true;
-
+        if (x < this.DUNGEON_OFFSET_X || x >= 10000) return true;
         return this.visitedRooms.get(playerId)?.has(`${x},${y}`) || false;
+    }
+
+    public getRemainingEnemiesCount(): number {
+        return Array.from(this.engine.getEntities().values()).filter(e => {
+            const npc = e.getComponent(NPC);
+            const pos = e.getComponent(Position);
+            return npc && npc.tag === 'glitch_enemy' && pos && pos.x >= this.DUNGEON_OFFSET_X;
+        }).length;
     }
 }

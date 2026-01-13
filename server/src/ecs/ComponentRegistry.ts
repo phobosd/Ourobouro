@@ -22,6 +22,7 @@ import { Atmosphere } from '../components/Atmosphere';
 import { Cyberware } from '../components/Cyberware';
 import { Portal } from '../components/Portal';
 import { Visuals } from '../components/Visuals';
+import { Momentum } from '../components/Momentum';
 
 export class ComponentRegistry {
     private static components: Map<string, ComponentClass<any>> = new Map();
@@ -58,5 +59,6 @@ export class ComponentRegistry {
         this.register('Cyberware', Cyberware);
         this.register('Portal', Portal);
         this.register('Visuals', Visuals);
+        this.register('Momentum', Momentum);
     }
 }

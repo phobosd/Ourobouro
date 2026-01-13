@@ -9,6 +9,9 @@ Welcome to Ouroboro, a cyberpunk text-based RPG. This guide will help you naviga
 4. [Shops & Terminals](#shops--terminals)
 5. [Skills & Progression](#skills--progression)
 6. [Cyberspace](#cyberspace)
+7. [The Glitch Zone](#the-glitch-zone-dungeon)
+8. [The Alchemist's Study](#the-alchemists-study)
+9. [God Commands](#god-commands-admindeveloper)
 
 ## Basic Commands
 
@@ -21,6 +24,20 @@ Welcome to Ouroboro, a cyberpunk text-based RPG. This guide will help you naviga
 | `score` | `skills` | View your character skills. | `score` |
 | `map` | `m` | Display the world map. | `map` |
 | `weather` | `sky` | Scan the sky for current weather conditions. | `weather` |
+| `stance` | - | Check or set your physical/combat stance. | `stance`, `stance offensive` |
+| `use` | `u` | Use a consumable item. | `use medkit` |
+
+## The Sprawl & Its Districts
+
+The world of Ouroboro is divided into several distinct sectors, each with its own atmosphere and dangers.
+
+*   **Chiba City**: The industrial heart, filled with rain-slicked streets and heavy manufacturing.
+*   **The Sprawl**: The central urban hub, home to the Arcology Plaza and major corporate headquarters.
+*   **Straylight**: The high-end district where the elite reside in gleaming towers of glass and chrome.
+*   **The Matrix (Cyberspace)**: A digital mirror of the physical world, accessible via `jack_in`. It contains specialized nodes like **Data-Stream Conduits** and **Encrypted Sub-Nodes**.
+*   **The Glitch Zone**: An unstable, procedurally generated dungeon accessed through the Glitch Door in the Central Plaza.
+
+For a detailed map and list of key locations, see the [Area Guide](AREAS.md).
 
 ## Interaction & Exploration
 
@@ -42,12 +59,30 @@ Navigate the world using cardinal directions: `north` (`n`), `south` (`s`), `eas
     *   `remove <item name>` (e.g., `remove helmet`)
 *   **Glance**: Quickly check what you are holding in your hands.
     *   `glance`
+*   **Use**: Consume an item to gain its effects.
+    *   `use <item name>` (e.g., `use medkit`)
 
-### Stance (Physical)
-Your physical stance affects your energy regeneration and combat effectiveness.
+### Consumables
+Consumables provide vital recovery and buffs. Most are destroyed upon use.
+*   **Medkit**: Restores **50 HP**.
+*   **Stimpack**: Instantly clears all **Fatigue** and restores **Balance** to 100%.
+*   **Painkillers**: Restores **25 HP**.
+*   **Bandage**: Restores **15 HP**.
+*   **Water Bottle**: Reduces **Fatigue** by 20.
+
+### Stance & Posture
+There are two types of "stance" in Ouroboro: **Physical Posture** and **Combat Stance**.
+
+**Physical Posture**:
+Affects your energy regeneration and ability to move.
 *   `stand`: Stand up (default). Required for most movement and full combat effectiveness.
 *   `sit`: Sit down (regenerate energy faster). **-25% Defense Power penalty.**
 *   `lie`: Lie down (sleep/rest). **-50% Defense Power penalty.**
+
+**Combat Stance**:
+Determines how you defend yourself in a fight (Evasion vs. Parry vs. Shield). See the [Combat Stances](#3-combat-stances) section for details.
+*   `stance`: Check your current physical and combat stance.
+*   `stance <type>`: Change your combat stance (e.g., `stance evasion`).
 
 ## Combat System
 
@@ -59,16 +94,22 @@ Your character's physical and mental capabilities directly impact your survival.
 *   **Agility (AGI)**: The most critical combat stat. It determines your **Attack Power**, **Defense Power**, and your success in **Maneuvering**. Higher AGI also makes the "Sync Bar" easier to hit by widening the critical zone and slowing the cursor.
 *   **Constitution (CON)**: Determines your **Max HP** and **Max Fatigue**. It also dictates how quickly you regenerate health and recover from exhaustion.
 *   **Strength (STR)**: Affects your carrying capacity and weight limits (important for heavy armor and weapons).
-*   **Momentum (Balance)**: A dynamic value (0-100%) representing your physical stability. High balance provides a significant bonus to both attack and defense. Missing attacks or being hit by heavy blows will reduce your balance.
+*   **Momentum (Flow)**: A dynamic value (0-100%) representing your combat rhythm and focus. 
+    *   **Building**: Gained through successful attacks, especially specialized moves like `slice`.
+    *   **Persistence**: Momentum persists as long as you are actively engaged or being targeted by a hostile NPC in the same room. It resets to 0 only when combat is fully concluded.
+    *   **States**: 
+        *   `Building` (0-14%): Just starting to find your rhythm.
+        *   `Flowing` (15-29%): Your movements become more fluid.
+        *   `Peak` (30%+): You are in a state of perfect focus. **Required for Iaijutsu.**
 
 ### 2. Engagement Tiers (Range)
 Combat occurs at specific ranges. You must be at the correct range for your weapon to be effective.
 
 *   **Disengaged**: Outside of immediate combat.
-*   **Missile**: Ideal for firearms and long-range weapons.
-*   **Polearm**: Reach weapons like spears or whips.
-*   **Melee**: The standard range for swords, knives, and clubs.
-*   **Close Quarters**: Extreme proximity (knuckles, daggers, or grappling).
+*   **Missile**: Long range. Ideal for **Rifles**, **Pistols**, and **SMGs**.
+*   **Polearm**: Extended melee range. Used for **Monofilament Whips** and other reach weapons.
+*   **Melee**: The standard range for **Katanas**, **Machetes**, and **Clubs**.
+*   **Close Quarters**: Extreme proximity. Required for **Knives**, **Knuckles**, and **Brawling** (Unarmed).
 
 **Commands**:
 *   `maneuver close`: Attempt to move one tier closer to your target.
@@ -76,24 +117,33 @@ Combat occurs at specific ranges. You must be at the correct range for your weap
 *   `advance <target>`: Automatically attempt to close distance every round.
 *   `retreat <target>`: Automatically attempt to withdraw every round.
 *   `hangback`: Toggle a defensive mode where you automatically try to maintain your distance and prevent enemies from closing in.
-*   `stop`: Cancel any automated actions (advance, retreat, hangback).
+*   `stop`: Cancel any automated actions (advance, retreat, hangback). **Ignores Roundtime.**
 *   `flee [direction]`: Attempt to break engagement and exit the room.
 
 ### 3. Combat Stances
-Your combat stance determines how you allocate your defensive focus. You have 100 "Defense Points" to distribute between three pools. Note that your **Physical Stance** (sitting/lying) can impose significant penalties to your total defense power.
+Your combat stance determines how you allocate your defensive focus. You have 100 "Defense Points" to distribute between three pools.
 
-*   **Evasion**: Your ability to dodge both melee and ranged attacks.
-*   **Parry**: Deflecting melee strikes with your weapon. **Ineffective against firearms.**
-    *   *Note: If wielding a Katana, your **Kenjutsu** skill is used for parrying.*
-*   **Shield**: Using a physical or energy shield to block.
+**Defense Pools**:
+*   **Evasion**: Uses your **Evasion** skill. Effective against **ALL** attacks (Melee and Ranged).
+*   **Parry**: Uses your **Melee Combat** (or **Kenjutsu**) skill. Effective against **Melee** attacks only.
+    *   *Bonus*: Parrying allows you to deflect blows and create openings.
+*   **Shield**: Uses your **Shield Usage** skill. Effective against **ALL** attacks.
+    *   *Note*: Requires a shield generator or physical shield equipped.
 
-**Preset Stances**:
-*   `stance offensive`: Balanced defense (33/33/34), maximum aggression.
-*   `stance defensive`: Balanced defense, minimum aggression (focus on survival).
-*   `stance neutral`: Balanced defense, moderate aggression.
-*   **Full Specialization**: `stance evasion`, `stance parry`, or `stance shield` (allocates 100% to one pool).
-    *   *Note: `stance parry` allows you to gain **Flow** passively when deflecting attacks.*
-*   `stance custom <e> <p> <s>`: Manually allocate points (e.g., `stance custom 50 50 0`).
+**Available Stances**:
+
+*   **Balanced Stances**: Distribute defense evenly (33% Evasion, 33% Parry, 34% Shield).
+    *   `stance offensive`: Maximum Aggression (100%). Increases your damage but lowers defense.
+    *   `stance neutral`: Moderate Aggression (50%). Balanced approach.
+    *   `stance defensive`: Zero Aggression (0%). Focuses entirely on survival.
+
+*   **Specialized Stances**: Allocate 100% defense to a single pool. Zero Aggression.
+    *   `stance evasion`: **100% Evasion**. Best for dodging gunfire and keeping mobile.
+    *   `stance parry`: **100% Parry**. Best for dueling melee opponents. **Passively generates Flow** when you successfully defend against an attack.
+    *   `stance shield`: **100% Shield**. Maximizes protection if you have shield gear.
+
+*   **Custom**:
+    *   `stance custom <evasion> <parry> <shield>`: Manually allocate your 100 defense points (e.g., `stance custom 50 50 0`).
 *   `stance`: Typing the command alone will display your current physical stance and defense allocation.
 
 ### 4. Traditional Combat (The Sync Bar)
@@ -107,14 +157,19 @@ When you use the `attack` command, you initiate a "Neural Sync." A bar will appe
 *   `assess`: View the current combat situation, including distances and statuses.
 *   `appraise <target>`: Check an enemy's health and wound status.
 
-### 5. Advanced Combat (Action Queuing)
-For melee combat, you can "upload" a sequence of actions to your neural buffer. This allows for rapid, fluid strikes and powerful combos.
+### 5. Advanced Combat (Sequence Mode)
+For melee combat, you can choose between immediate actions or "uploading" a sequence of actions to your neural buffer for rapid execution.
+
+**Sequence Mode**:
+*   **Toggle**: Type `sequence` (or `seq`) to toggle Sequence Mode ON/OFF.
+*   **Mode OFF (Default)**: Commands like `slash`, `thrust`, `parry`, and `dash` execute **immediately** as standard actions.
+*   **Mode ON**: These commands are queued into your **Combat Buffer** (up to 3 slots initially).
 
 **Buffer Actions**:
 *   `dash`: Closes distance to the target.
 *   `slash`: A standard melee strike (1.2x damage).
 *   `thrust`: A powerful, focused strike (1.5x damage).
-*   `parry`: Provides a temporary +20 bonus to your Parry defense and opens an **Active Parry Window** (1.5s). Any melee attack hitting you during this window has its damage reduced and grants you **Flow**.
+*   `parry`: Provides a temporary +20 bonus to your Parry defense and opens an **Active Parry Window** (1.5s).
 
 **Execution**:
 *   `upload` (or `execute`): Executes all queued actions in sequence.
@@ -144,7 +199,26 @@ Not all weapons are created equal. Some offer unique tactical advantages:
 *   **Monofilament Weapons**: Whips and wires that ignore physical armor, dealing massive damage but requiring high skill to control.
 *   **Non-Lethal Options**: The **Taser Prod** and **Compliance Derm** can stun or paralyze targets, allowing for non-lethal takedowns.
 *   **Heavy Kinetic**: Weapons like the **Street-Sweeper** deal devastating damage but are difficult to sync due to high recoil (jitter).
-*   **Katanas**: Require the **Kenjutsu** skill for maximum effectiveness, including parrying.
+*   **Katanas**: Require the **Kenjutsu** skill for maximum effectiveness. These weapons are the core of the Samurai combat style, utilizing **Momentum** for devastating techniques.
+    *   **Slice**: A fast, precision strike (2s roundtime). Successfully landing a `slice` with a katana grants **+5 Momentum**.
+    *   **Iaijutsu**: A devastating instant strike. 
+        *   **Requirement**: 30+ Momentum (Peak state).
+        *   **Effect**: Deals massive damage and bypasses standard defense checks. Consumes a portion of your momentum.
+
+### 8. Brawling (Unarmed Combat)
+If you find yourself without a weapon, you can rely on your fists. The **Brawling** skill governs your effectiveness with unarmed attacks.
+*   **Punch**: A standard strike. Balanced speed and damage.
+*   **Jab**: A quick, light blow. High accuracy but low damage.
+*   **Uppercut**: A powerful, rising strike. High damage but slower speed.
+*   **Headbutt**: A risky, close-range attack. High damage.
+
+### 9. Ammunition & Reloading
+Firearms require ammunition. When your magazine is empty, use `reload` to insert a fresh one.
+*   **Reload Speed**: Reloading takes time (Base: 5 seconds).
+*   **Skill Bonus**: Higher Marksmanship skill levels significantly reduce reload time for that weapon type.
+    *   *Light*: Pistols, SMGs
+    *   *Medium*: Rifles, Carbines
+    *   *Heavy*: Shotguns, Heavy Weapons
 
 ## Shops & Terminals
 
@@ -173,7 +247,61 @@ Type `score` to see your current skill levels.
 
 ## Cyberspace
 
-Access the Matrix to interact with digital systems.
+Access the Matrix to interact with digital systems, bypass security, and navigate the neural sprawl.
 
-*   `jack_in`: Connect to the Matrix (requires a Cyberdeck).
-*   `jack_out`: Disconnect from the Matrix.
+### 🔌 Jacking In & Out
+Connecting to the Matrix is a high-risk operation that requires focus and specialized hardware.
+
+*   **`jack_in`**: Connect your consciousness to the grid.
+    *   **Requirements**:
+        *   You must be **holding** a Cyberdeck in your hands (left or right).
+        *   You must be in a **Standing** stance.
+        *   You must be **Disengaged** from combat.
+    *   **Effect**: Your physical body enters a **Stasis** stance, and you incur a **4-second Round Timer** as your neural link synchronizes.
+*   **`jack_out`**: Disconnect and return to your physical body.
+    *   **Requirements**:
+        *   You must still be **holding** your Cyberdeck.
+        *   You must be **Disengaged** from digital combat.
+    *   **Effect**: You return to your physical body in a **Standing** stance, incurring a **4-second Round Timer** for re-entry.
+
+### 📟 The Matrix Environment
+Once jacked in, the world transforms into a neon-green wireframe grid.
+*   **Matrix Rain**: A constant stream of falling code permeates your vision.
+*   **Neural Topology Grid**: The `map` command provides a digital wireframe of the local network. Digital nodes are represented by specialized icons (e.g., `+` for Bio-Data, `$` for Encrypted Sub-Nodes).
+*   **Mirror World**: The Matrix mirrors the physical city. Every physical street and building has a corresponding digital node at a coordinate offset of +10,000.
+*   **ICE**: Intrusion Countermeasure Electronics (Black ICE, White ICE) patrol the grid. Engaging them in digital combat can cause **Lethal Feedback** to your physical nervous system.
+
+## The Glitch Zone (Dungeon)
+
+The Glitch Zone is an unstable, procedurally generated area filled with high-value "Glitch" enemies.
+
+*   **Entry**: Look for the **Glitch Door** in the Central Plaza (10, 10). Use `enter door` or `enter glitch` to step through.
+*   **Exit**: To leave the dungeon, you must find the **Reality Rift**, typically located at the furthest point from the entry. Use `enter rift` to return to the stability of the Sprawl.
+*   **Scaling Difficulty**: The Glitch Zone is dangerous. Enemies scale in power the further you venture from the entry point. Ensure you are well-equipped before exploring deep into the sector.
+*   **Progression**: Defeating glitch enemies provides high-value loot drops. The system will notify you of remaining glitch signatures as you clear the sector.
+
+## The Alchemist's Study
+
+A hidden chamber filled with ancient tech and mysterious artifacts. It contains a complex puzzle involving four stone busts: **Ignis**, **Aqua**, **Air**, and **Terra**.
+
+*   **The Puzzle**: You must `turn` the busts to face the correct directions based on the inscription found in the room.
+*   **Terra**: This bust is fused to its base and cannot be turned. It faces **Down**.
+*   **Interaction**: Use `turn <bust> <direction>` (e.g., `turn ignis west`).
+*   **Reward**: Solving the puzzle reveals a hidden path or grants access to rare archives.
+
+## God Commands (Admin/Developer)
+
+These commands are for testing and world management.
+
+| Command | Description | Example |
+| :--- | :--- | :--- |
+| `god find <query>` | Search for entities by name or ID. | `god find door` |
+| `god spawn <name>` | Spawn an item or NPC at your location. | `god spawn giant rat` |
+| `god money <amt> [target]` | Give credits to yourself or a target. | `god money 1000000` |
+| `god set-stat <stat> <val>` | Set a specific attribute for a target. | `god set-stat STR 20` |
+| `god set-skill <skill> <val>` | Set a specific skill level for a target. | `god set-skill Hacking 10` |
+| `god view [target]` | View detailed stats and components of a target. | `god view me` |
+| `god reset <skills\|health>` | Reset your skills or restore health to full. | `god reset health` |
+| `god weather` | Trigger a random weather change. | `god weather` |
+| `god pacify [target]` | Stop a target (or everyone in room) from attacking. | `god pacify` |
+| `god registry` | List all unique items in the game database. | `god registry` |

@@ -25,6 +25,8 @@ Revolutionary timing-based combat with client-side rendering for zero-lag respon
   - **[-] MISS ZONE** - No damage
 - **System Breach Effects**: 5 unique critical effects (Neural Feedback, Optic Glitch, Armor Shred, etc.)
 - **Dynamic Difficulty**: Scales with player Agility and Skill Level
+- **Combat Flow & Momentum**: Accumulate momentum through successful strikes to reach "Peak" state and unleash devastating techniques like Iaijutsu.
+- **Consumables System**: Use medkits, stimpacks, and other items to manage health, fatigue, and balance in real-time.
 
 ### World & NPCs
 - **Diverse Zones**: Streets, plaza, shops, clinic, nightclub, park

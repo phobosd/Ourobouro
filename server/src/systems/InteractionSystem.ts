@@ -43,6 +43,32 @@ export class InteractionSystem extends System {
             return;
         }
 
+        if (targetName.toLowerCase() === 'compendium') {
+            try {
+                const compendiumPath = path.join(process.cwd(), '../docs/COMPENDIUM.md');
+                const content = fs.readFileSync(compendiumPath, 'utf-8');
+                this.io.to(entityId).emit('open-guide', { content: content });
+                this.messageService.system(entityId, "Opening Compendium...");
+            } catch (err) {
+                console.error("Error reading compendium:", err);
+                this.messageService.error(entityId, "Failed to load Compendium.");
+            }
+            return;
+        }
+
+        if (targetName.toLowerCase() === 'areas' || targetName.toLowerCase() === 'map_guide') {
+            try {
+                const areasPath = path.join(process.cwd(), '../AREAS.md');
+                const content = fs.readFileSync(areasPath, 'utf-8');
+                this.io.to(entityId).emit('open-guide', { content: content });
+                this.messageService.system(entityId, "Opening Area Guide...");
+            } catch (err) {
+                console.error("Error reading areas:", err);
+                this.messageService.error(entityId, "Failed to load Area Guide.");
+            }
+            return;
+        }
+
         const player = WorldQuery.getEntityById(engine, entityId);
         if (!player) return;
 

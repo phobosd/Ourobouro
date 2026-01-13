@@ -16,6 +16,7 @@ import { Atmosphere } from '../components/Atmosphere';
 import { Portal } from '../components/Portal';
 import { DungeonService } from '../services/DungeonService';
 import { Visuals } from '../components/Visuals';
+import { ParserUtils } from '../utils/ParserUtils';
 
 export class DescriptionService {
     /**
@@ -110,7 +111,7 @@ ${npcDescriptions}`.trim();
             let row = "";
             for (let x = playerPos.x - range; x <= playerPos.x + range; x++) {
                 // Fog of War check
-                if (!DungeonService.getInstance().isVisited(playerId, x, y)) {
+                if (x >= 2000 && x < 10000 && !DungeonService.getInstance()?.isVisited(playerId, x, y)) {
                     row += "  "; // Two spaces to match char + space width
                     continue;
                 }
@@ -124,10 +125,6 @@ ${npcDescriptions}`.trim();
 
                     if (visualNPC) {
                         const visuals = visualNPC.getComponent(Visuals);
-                        // We need a way to format this color. MessageFormatter doesn't support arbitrary hex.
-                        // We'll map known colors or just use red for enemies.
-                        // For now, let's use a generic enemy tag or try to use the char.
-                        // Since the client parses tags, we can try <color:hex> if supported, or just <enemy>char</enemy>
                         row += `<enemy>${visuals?.char || 'E'}</enemy>`;
                     } else {
                         const r = WorldQuery.findRoomAt(engine, x, y);
@@ -168,16 +165,21 @@ ${npcDescriptions}`.trim();
      * Generates structured map data for React rendering.
      */
     static generateMapData(playerPos: Position, engine: IEngine) {
-        // Determine map bounds based on player position
         let startX = 0;
         let startY = 0;
         let width = 20;
         let height = 20;
 
-        const isDungeon = playerPos.x >= 2000;
-        if (isDungeon) {
-            // Center map on player for dungeon
-            const viewRadius = 10; // 20x20 view (matches city map size)
+        const isMatrix = playerPos.x >= 10000;
+        const isDungeon = playerPos.x >= 2000 && playerPos.x < 10000;
+
+        if (isMatrix) {
+            startX = 10000;
+            startY = 0;
+            width = 20;
+            height = 20;
+        } else if (isDungeon) {
+            const viewRadius = 10;
             startX = playerPos.x - viewRadius;
             startY = playerPos.y - viewRadius;
             width = viewRadius * 2;
@@ -185,11 +187,6 @@ ${npcDescriptions}`.trim();
         }
 
         const grid: any[][] = [];
-        // We need the player ID to check visited status. 
-        // Since we don't have it passed here, we have to find the player entity by position?
-        // Or assume the caller passes it? The caller is InteractionSystem.handleMap(entityId...)
-        // But this method signature is (playerPos, engine).
-        // We can find the player entity at this position.
         const playerEntity = engine.getEntitiesWithComponent(Position).find(e => {
             const p = e.getComponent(Position);
             return p && p.x === playerPos.x && p.y === playerPos.y && e.hasComponent(Stats) && !e.hasComponent(NPC);
@@ -200,8 +197,7 @@ ${npcDescriptions}`.trim();
         for (let y = startY; y < startY + height; y++) {
             const row: any[] = [];
             for (let x = startX; x < startX + width; x++) {
-                // Fog of War check for dungeon
-                if (isDungeon && !DungeonService.getInstance().isVisited(playerId, x, y)) {
+                if (isDungeon && !DungeonService.getInstance()?.isVisited(playerId, x, y)) {
                     row.push(null);
                     continue;
                 }
@@ -213,14 +209,14 @@ ${npcDescriptions}`.trim();
                     const isPlayer = x === playerPos.x && y === playerPos.y;
 
                     let type = 'street';
-                    if (isDungeon) type = 'dungeon'; // New type for client styling
-                    else if (desc?.title.includes("Clinic")) type = 'clinic';
-                    else if (shop) type = 'shop';
-                    else if (desc?.title.includes("Club")) type = 'club';
-                    else if (desc?.title.includes("Park")) type = 'park';
-                    else if (desc?.title.includes("Plaza")) type = 'plaza';
+                    if (isDungeon) type = 'dungeon';
+                    else if (desc?.title.includes("Clinic") || desc?.title.includes("Bio-Data")) type = 'clinic';
+                    else if (shop || desc?.title.includes("Encrypted Sub-Node")) type = 'shop';
+                    else if (desc?.title.includes("Club") || desc?.title.includes("Social Frequency")) type = 'club';
+                    else if (desc?.title.includes("Park") || desc?.title.includes("Recursive Logic")) type = 'park';
+                    else if (desc?.title.includes("Plaza") || desc?.title.includes("Central Processing")) type = 'plaza';
+                    else if (desc?.title.includes("Archive")) type = 'dungeon';
 
-                    // Normalize coordinates for client grid (0-based)
                     row.push({
                         x: x - startX,
                         y: y - startY,
@@ -247,7 +243,6 @@ ${npcDescriptions}`.trim();
      */
     static generateFullMap(playerPos: Position, engine: IEngine): string {
         let mapOutput = MessageFormatter.title('[Ouroboro City Map]') + '\n';
-
         const width = 20;
         const height = 20;
 
@@ -280,15 +275,14 @@ ${npcDescriptions}`.trim();
                             row += MessageFormatter.mapRoom("#");
                         }
                     } else {
-                        row += " "; // Empty space
+                        row += " ";
                     }
                 }
-                row += " "; // Spacing
+                row += " ";
             }
             mapOutput += row + "\n";
         }
 
-        // Legend
         mapOutput += '\n<legend>Key:</legend>\n';
         mapOutput += MessageFormatter.mapPlayer("@") + ' <legend>You</legend>  ';
         mapOutput += MessageFormatter.mapShop("$") + ' <legend>Shop</legend>  ';
@@ -312,11 +306,9 @@ ${MessageFormatter.title(`[${npcComp.typeName}]`)}
 <desc>${npcComp.description}</desc>
 `.trim();
 
-        // Show Equipment
         const inventory = npc.getComponent(Inventory);
         if (inventory) {
             const equipmentList: string[] = [];
-
             const getItemName = (id: string | null) => {
                 if (!id) return null;
                 const item = WorldQuery.getEntityById(engine, id);
@@ -332,11 +324,9 @@ ${MessageFormatter.title(`[${npcComp.typeName}]`)}
             inventory.equipment.forEach((itemId, slot) => {
                 const name = getItemName(itemId);
                 if (name) {
-                    // Format slot name nicely (e.g. "pocket_123" -> "Pocket")
                     let slotName = slot;
                     if (slot.startsWith('pocket')) slotName = 'Pocket';
                     else slotName = slot.charAt(0).toUpperCase() + slot.slice(1);
-
                     equipmentList.push(`<cyan>${slotName}:</cyan> <item>${name}</item>`);
                 }
             });
@@ -406,10 +396,10 @@ ${MessageFormatter.title(`[${itemComp.name}]`)}
      * Generates a description for a specific target at a location.
      */
     static describeTargetAt(player: Entity, engine: IEngine, playerPos: Position, targetName: string): string | null {
-        const name = targetName.toLowerCase();
+        const { index, name: targetNameLower } = ParserUtils.parseOrdinal(targetName.toLowerCase());
 
         // 1. Check for "pedestals" or "pedestal" (special case for Alchemist's Study)
-        if (name === 'pedestal' || name === 'pedestals') {
+        if (targetNameLower === 'pedestal' || targetNameLower === 'pedestals') {
             const pedestals = engine.getEntitiesWithComponent(Description).filter(e => {
                 const pos = e.getComponent(Position);
                 const desc = e.getComponent(Description);
@@ -428,68 +418,61 @@ ${MessageFormatter.title(`[${itemComp.name}]`)}
             }
         }
 
+        const matches: { type: 'npc' | 'object' | 'item', entity: Entity }[] = [];
+
         // 2. Check for NPCs
         const npcsInRoom = WorldQuery.findNPCsAt(engine, playerPos.x, playerPos.y);
-        const targetNPC = npcsInRoom.find(npc => {
+        npcsInRoom.forEach(npc => {
             const npcComp = npc.getComponent(NPC);
-            return npcComp && npcComp.typeName.toLowerCase().includes(name);
+            if (npcComp && npcComp.typeName.toLowerCase().includes(targetNameLower)) {
+                matches.push({ type: 'npc', entity: npc });
+            }
         });
 
-        if (targetNPC) {
-            return this.describeNPC(targetNPC, engine);
-        }
-
         // 3. Check for other entities (Terminals, Objects, PuzzleObjects)
-        const targetEntity = engine.getEntitiesWithComponent(Description).find(e => {
+        const roomEntities = engine.getEntitiesWithComponent(Description).filter(e => {
             const pos = e.getComponent(Position);
             const desc = e.getComponent(Description);
             return pos && desc && pos.x === playerPos.x && pos.y === playerPos.y && (
-                desc.title.toLowerCase().includes(name) ||
-                (name === 'bust' && desc.title.toLowerCase().includes('bust')) ||
-                (name === 'table' && desc.title.toLowerCase().includes('table'))
+                desc.title.toLowerCase().includes(targetNameLower) ||
+                (targetNameLower === 'bust' && desc.title.toLowerCase().includes('bust')) ||
+                (targetNameLower === 'table' && desc.title.toLowerCase().includes('table'))
             );
         });
-
-        if (targetEntity) {
-            const desc = targetEntity.getComponent(Description);
-            return desc ? desc.description : null;
-        }
+        roomEntities.forEach(e => matches.push({ type: 'object', entity: e }));
 
         // 4. Check inventory
         const inventory = player.getComponent(Inventory);
         if (inventory) {
-            const findInInventory = (itemId: string): string | null => {
+            const collectFromInventory = (itemId: string) => {
                 const itemEntity = WorldQuery.getEntityById(engine, itemId);
-                if (!itemEntity) return null;
+                if (!itemEntity) return;
                 const item = itemEntity.getComponent(Item);
-                if (item && item.name.toLowerCase().includes(name)) {
-                    return this.describeItem(itemEntity);
+                if (item && item.name.toLowerCase().includes(targetNameLower)) {
+                    matches.push({ type: 'item', entity: itemEntity });
                 }
 
-                // Check inside container
                 const container = itemEntity.getComponent(Container);
                 if (container) {
                     for (const subItemId of container.items) {
-                        const desc = findInInventory(subItemId);
-                        if (desc) return desc;
+                        collectFromInventory(subItemId);
                     }
                 }
-                return null;
             };
 
-            if (inventory.leftHand) {
-                const desc = findInInventory(inventory.leftHand);
-                if (desc) return desc;
-            }
-            if (inventory.rightHand) {
-                const desc = findInInventory(inventory.rightHand);
-                if (desc) return desc;
-            }
-
+            if (inventory.leftHand) collectFromInventory(inventory.leftHand);
+            if (inventory.rightHand) collectFromInventory(inventory.rightHand);
             for (const itemId of inventory.equipment.values()) {
-                const desc = findInInventory(itemId);
-                if (desc) return desc;
+                collectFromInventory(itemId);
             }
+        }
+
+        const target = matches[index];
+        if (target) {
+            if (target.type === 'npc') return this.describeNPC(target.entity, engine);
+            if (target.type === 'item') return this.describeItem(target.entity);
+            const desc = target.entity.getComponent(Description);
+            return desc ? desc.description : null;
         }
 
         return null;

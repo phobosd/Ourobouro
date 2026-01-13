@@ -26,6 +26,7 @@ export class CombatStats extends Component {
     targetId: string | null = null;
     currentTelegraph: string | null = null;
     isParrying: boolean = false;
+    pendingMove: string | null = null;
 
     constructor(maxHp: number = 100, attack: number = 10, defense: number = 0, isHostile: boolean = false) {
         super();

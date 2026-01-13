@@ -14,6 +14,7 @@ interface Chapter {
 
 export const GuideOverlay: React.FC<GuideOverlayProps> = ({ content, onClose }) => {
     const [chapters, setChapters] = useState<Chapter[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -42,19 +43,54 @@ export const GuideOverlay: React.FC<GuideOverlayProps> = ({ content, onClose }) 
         }
     };
 
+    const highlightText = (text: string): React.ReactNode => {
+        if (!searchTerm) return text;
+        const parts = text.split(new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+        return parts.map((part, i) =>
+            part.toLowerCase() === searchTerm.toLowerCase()
+                ? <mark key={i} className="search-highlight">{part}</mark>
+                : part
+        );
+    };
+
+    const parseInlineStyles = (text: string): React.ReactNode => {
+        // Split by code blocks, bold, and italic
+        // Order matters: code first (to preserve * inside code), then bold, then italic
+        const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g);
+
+        return parts.map((part, index) => {
+            if (part.startsWith('`') && part.endsWith('`')) {
+                return <code key={index}>{highlightText(part.slice(1, -1))}</code>;
+            }
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={index} style={{ color: '#fff', fontWeight: 'bold' }}>{highlightText(part.slice(2, -2))}</strong>;
+            }
+            if (part.startsWith('*') && part.endsWith('*')) {
+                return <em key={index}>{highlightText(part.slice(1, -1))}</em>;
+            }
+            return <span key={index}>{highlightText(part)}</span>;
+        });
+    };
+
     const renderContent = () => {
         const lines = content.split(/\r?\n/);
         let inTable = false;
 
-        return lines.map((line, index) => {
+        const elements: React.ReactNode[] = [];
+
+        lines.forEach((line, index) => {
             const trimmedLine = line.trim();
+            const matchesSearch = !searchTerm || line.toLowerCase().includes(searchTerm.toLowerCase());
 
             // Headers
             const headerMatch = trimmedLine.match(/^(#{1,3})\s+(.+)$/);
             if (headerMatch) {
-                const level = headerMatch[1].length;
-                const Tag = `h${level}` as any;
-                return <Tag key={index} id={`chapter-${index}`}>{headerMatch[2]}</Tag>;
+                if (matchesSearch) {
+                    const level = headerMatch[1].length;
+                    const Tag = `h${level}` as any;
+                    elements.push(<Tag key={index} id={`chapter-${index}`}>{highlightText(headerMatch[2])}</Tag>);
+                }
+                return;
             }
 
             // Tables
@@ -63,82 +99,97 @@ export const GuideOverlay: React.FC<GuideOverlayProps> = ({ content, onClose }) 
 
                 if (line.includes('---')) {
                     inTable = true;
-                    return null; // Skip separator line
+                    return;
                 }
 
                 if (!inTable) {
                     inTable = true;
-                    return (
-                        <table key={index}>
-                            <thead>
-                                <tr>
-                                    {cells.map((cell, i) => <th key={i}>{cell}</th>)}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {/* Rows will be added by subsequent lines */}
-                            </tbody>
-                        </table>
-                    );
+                    // We'll always show headers if the table has matching rows, or if the header itself matches
+                    // But for simplicity in a line-by-line filter, let's just check if this specific line matches
+                    if (matchesSearch) {
+                        elements.push(
+                            <table key={index}>
+                                <thead>
+                                    <tr>
+                                        {cells.map((cell, i) => <th key={i}>{parseInlineStyles(cell)}</th>)}
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        );
+                    }
+                    return;
                 }
 
-                return (
-                    <div key={index} className="table-row" style={{ display: 'flex', borderBottom: '1px solid #333' }}>
-                        {cells.map((cell, i) => (
-                            <div key={i} style={{ flex: 1, padding: '5px', borderRight: '1px solid #333' }}>
-                                {cell.replace(/`/g, '')}
-                            </div>
-                        ))}
-                    </div>
-                );
+                if (matchesSearch) {
+                    elements.push(
+                        <div key={index} className="table-row" style={{ display: 'flex', borderBottom: '1px solid #333' }}>
+                            {cells.map((cell, i) => (
+                                <div key={i} style={{ flex: 1, padding: '5px', borderRight: '1px solid #333' }}>
+                                    {parseInlineStyles(cell)}
+                                </div>
+                            ))}
+                        </div>
+                    );
+                }
+                return;
             } else {
                 inTable = false;
             }
 
             // Lists
             if (trimmedLine.startsWith('* ') || trimmedLine.startsWith('- ')) {
-                return <li key={index} style={{ marginLeft: '20px' }}>{trimmedLine.replace(/^[\*\-]\s+/, '')}</li>;
+                if (matchesSearch) {
+                    elements.push(<li key={index} style={{ marginLeft: '20px' }}>{parseInlineStyles(trimmedLine.replace(/^[\*\-]\s+/, ''))}</li>);
+                }
+                return;
             }
 
             // Empty lines
             if (trimmedLine === '') {
-                return <br key={index} />;
+                if (!searchTerm) elements.push(<br key={index} />);
+                return;
             }
 
-            // Code blocks (inline)
-            const parts = line.split('`');
-            if (parts.length > 1) {
-                return (
-                    <p key={index}>
-                        {parts.map((part, i) =>
-                            i % 2 === 1 ? <code key={i}>{part}</code> : <span key={i}>{part}</span>
-                        )}
-                    </p>
-                );
+            // Default Paragraph
+            if (matchesSearch) {
+                elements.push(<p key={index}>{parseInlineStyles(line)}</p>);
             }
-
-            return <p key={index}>{line}</p>;
         });
+
+        return elements;
     };
 
     return (
         <div className="guide-overlay">
             <div className="guide-header">
                 <div className="guide-title">USER'S GUIDE v1.0</div>
+                <div className="guide-search">
+                    <input
+                        type="text"
+                        placeholder="Search guide..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="guide-search-input"
+                    />
+                </div>
                 <button className="guide-close-btn" onClick={onClose}>[CLOSE]</button>
             </div>
             <div className="guide-body">
                 <div className="guide-toc">
-                    {chapters.map(chapter => (
-                        <div
-                            key={chapter.id}
-                            className="guide-toc-item"
-                            style={{ paddingLeft: `${(chapter.level - 1) * 10 + 5}px` }}
-                            onClick={() => scrollToChapter(chapter.id)}
-                        >
-                            {chapter.title}
-                        </div>
-                    ))}
+                    {chapters
+                        .filter(chapter => !searchTerm || chapter.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .map(chapter => (
+                            <div
+                                key={chapter.id}
+                                className="guide-toc-item"
+                                style={{ paddingLeft: `${(chapter.level - 1) * 10 + 5}px` }}
+                                onClick={() => scrollToChapter(chapter.id)}
+                            >
+                                {highlightText(chapter.title)}
+                            </div>
+                        ))
+                    }
                 </div>
                 <div className="guide-content" ref={contentRef}>
                     {renderContent()}

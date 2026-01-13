@@ -1,26 +1,33 @@
-/* StatusBar (Bottom Bar) */
 .status-bar {
     display: flex;
     flex-direction: row;
     width: 100%;
-    height: 24px;
-    background: #000;
-    border-top: 1px solid #333;
+    height: 32px;
+    background: rgba(0, 10, 0, 0.9);
+    border-top: 1px solid #00ff00;
     font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-size: 11px;
     flex-shrink: 0;
-    /* Prevent shrinking */
+    padding: 4px 10px;
+    gap: 8px;
+    box-sizing: border-box;
+    box-shadow: 0 -2px 10px rgba(0, 255, 0, 0.1);
 }
 
 .status-section {
     flex: 1;
     position: relative;
-    border-right: 1px solid #333;
-    background: #111;
+    background: rgba(0, 40, 0, 0.3);
+    border: 1px solid #008800;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
-.status-section:last-child {
-    border-right: none;
+.status-section:hover {
+    border-color: #00ff00;
+    background: rgba(0, 60, 0, 0.4);
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.2);
 }
 
 .status-track {
@@ -32,18 +39,19 @@
 .status-fill {
     height: 100%;
     transition: width 0.2s ease-out;
+    opacity: 0.7;
 }
 
 .status-fill.hp {
-    background-color: #880000;
+    background: linear-gradient(90deg, #440000, #ff0000);
 }
 
 .status-fill.balance {
-    background-color: #000088;
+    background: linear-gradient(90deg, #000044, #0000ff);
 }
 
 .status-fill.fatigue {
-    background-color: #886600;
+    background: linear-gradient(90deg, #443300, #ffaa00);
 }
 
 .status-text {
@@ -55,35 +63,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    text-shadow: 1px 1px 0 #000;
+    color: #00ff00;
+    text-shadow: 0 0 3px #000;
     font-weight: bold;
     z-index: 1;
-}
-
-.status-info {
-    flex: 0.8;
-    /* Slightly smaller */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: #222;
-    color: #ccc;
-    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 16px;
 }
 
 /* Roundtime Indicator (Above Prompt) */
-.rt-container {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-bottom: 4px;
-}
-
 .rt-indicator {
     width: 27%;
-    /* Matches roughly the health bar width (1/3.8 flex ratio) */
     min-width: 200px;
     height: 20px;
     background: #000;
@@ -93,26 +84,14 @@
     width: 100%;
     height: 100%;
     background: #110000;
-    /* Darker background for empty part */
     border: 1px solid #ff0000;
     position: relative;
-}
-
-.rt-indicator.target .rt-bar-bg {
-    border-color: #ffaa00;
-    background: #111100;
 }
 
 .rt-bar-fill {
     height: 100%;
     background: #aa0000;
-    /* The actual red bar */
     transition: width 0.1s linear;
-    /* Smooth draining */
-}
-
-.rt-indicator.target .rt-bar-fill {
-    background: #aa8800;
 }
 
 .rt-text {
@@ -129,8 +108,172 @@
     text-transform: uppercase;
     text-shadow: 0 0 2px #000;
     z-index: 2;
+    font-size: 11px;
 }
 
-.rt-indicator.target .rt-text {
-    color: #ffaa00;
+/* Momentum Bar (Above Prompt) */
+.momentum-bar-container {
+    width: 27%;
+    min-width: 200px;
+    height: 20px;
+    background: #000;
+    margin-left: auto;
+}
+
+.momentum-track {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 20, 20, 0.5);
+    border: 1px solid #00ffff;
+    position: relative;
+    overflow: hidden;
+}
+
+.momentum-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #004444, #00ffff);
+    transition: width 0.3s ease-out, background 0.3s ease;
+    opacity: 0.8;
+}
+
+.momentum-fill.building {
+    background: linear-gradient(90deg, #444400, #ffff00);
+}
+
+.momentum-fill.flowing {
+    background: linear-gradient(90deg, #004444, #00ffff);
+}
+
+.momentum-fill.peak {
+    background: linear-gradient(90deg, #880088, #ff00ff);
+    box-shadow: 0 0 15px #ff00ff;
+    opacity: 1;
+}
+
+.momentum-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    box-sizing: border-box;
+    color: #00ffff;
+    font-weight: bold;
+    font-size: 11px;
+    text-transform: uppercase;
+    text-shadow: 0 0 3px #000;
+    z-index: 2;
+    letter-spacing: 1px;
+}
+
+.momentum-fill.building~.momentum-text {
+    color: #ffff00;
+}
+
+.momentum-fill.flowing~.momentum-text {
+    color: #00ffff;
+}
+
+.momentum-fill.peak~.momentum-text {
+    color: #ff00ff;
+}
+
+.momentum-state {
+    font-size: 9px;
+    opacity: 0.9;
+}
+
+/* Top Status Bar Container */
+.top-status-bar {
+    display: flex;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    border-bottom: 1px solid #00ff00;
+    box-shadow: 0 2px 10px rgba(0, 255, 0, 0.2);
+    z-index: 10;
+}
+
+/* Hands Display (Top of Terminal) */
+.hands-display {
+    display: flex;
+    gap: 10px;
+    padding: 8px 15px;
+    border-right: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.hand-box {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 40, 0, 0.4);
+    border: 1px solid #008800;
+    border-radius: 4px;
+    padding: 4px 10px;
+    min-width: 150px;
+    transition: all 0.3s ease;
+}
+
+.hand-box:hover {
+    background: rgba(0, 60, 0, 0.6);
+    border-color: #00ff00;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+.hand-label {
+    color: #00ff00;
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 12px;
+    padding-right: 10px;
+    border-right: 1px solid #008800;
+    text-shadow: 0 0 5px #00ff00;
+}
+
+.hand-content {
+    color: #fff;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Combat Status Display (Top of Terminal) */
+.combat-status-display {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+    padding: 8px 15px;
+}
+
+.status-box {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 40, 0, 0.4);
+    border: 1px solid #008800;
+    border-radius: 4px;
+    padding: 2px 10px;
+    min-width: 100px;
+}
+
+.status-label {
+    color: #00ff00;
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.status-value {
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-shadow: 0 0 5px #00ff00;
 }

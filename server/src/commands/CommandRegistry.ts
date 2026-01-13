@@ -13,6 +13,7 @@ import { PortalSystem } from '../systems/PortalSystem';
 import { StanceSystem } from '../systems/StanceSystem';
 import { CharacterSystem } from '../systems/CharacterSystem';
 import { InventorySystem } from '../systems/InventorySystem';
+import { Roundtime } from '../components/Roundtime';
 
 export interface SystemRegistry {
     movement: MovementSystem;
@@ -45,6 +46,7 @@ export interface Command {
     aliases: string[];
     description: string;
     execute: (context: CommandContext) => void;
+    ignoresRoundtime?: boolean;
 }
 
 export class CommandRegistry {
@@ -64,6 +66,16 @@ export class CommandRegistry {
         const command = this.commands.get(commandName);
 
         if (command) {
+            // Check Roundtime
+            if (!command.ignoresRoundtime) {
+                const player = context.engine.getEntity(context.socketId);
+                const rt = player?.getComponent(Roundtime);
+                if (rt && rt.secondsRemaining > 0) {
+                    context.messageService.info(context.socketId, `...wait ${Math.ceil(rt.secondsRemaining)} seconds.`);
+                    return;
+                }
+            }
+
             try {
                 command.execute(context);
             } catch (error) {

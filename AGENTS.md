@@ -4,6 +4,32 @@ Welcome, Architect. This document is your primary source of truth for the Ourobo
 
 ---
 
+## 🛠 Maintenance Protocols
+
+As an agent, you are responsible for maintaining the integrity of this knowledge base and the user-facing documentation.
+
+1.  **Update `AGENTS.md`**: Every time a new mechanic, architectural change, or large-scale modification is added or removed, you **MUST** update this file to reflect the current state of the engine.
+2.  **Update `docs/USERS_GUIDE.md`**: This is the player's primary manual and the source for the in-game guide. You **MUST** update this file whenever:
+    - A new **command** is added, modified, or removed.
+    - A **new area** is introduced (e.g., The Glitch Zone, The Alchemist's Study, or new city sectors like Straylight).
+    - A **major mechanic** is added (e.g., the Combat Buffer, Flow State, or specialized weapon traits like Smart-Link).
+    - A **lore element** or **world-building detail** that affects gameplay is established.
+    - **Environmental effects** or hazards are added.
+    Accuracy is paramount as players rely on this for survival and progression.
+3.  **Update `docs/COMPENDIUM.md`**: This is the reference for all game data. You **MUST** update this file whenever:
+    - A new **NPC** is added or modified (stats, behavior, description).
+    - A new **Item** is added or modified (stats, cost, type).
+4.  **Update `docs/AREAS.md`**: You **MUST** update this file whenever:
+    - A new **Area** or **Zone** is added.
+    - The **Map Layout** is changed in `WorldGenerator.ts`.
+    - New **Key Locations** (Shops, Dungeons) are created.
+5.  **Update `client/src/components/Terminal.tsx`**: You **MUST** update this file whenever a new command is added:
+    - Add the command to the `COMMANDS` list.
+    - Implement its argument autocomplete logic in `getMatches`.
+6.  **Review Game Documentation**: You **MUST** review `docs/USERS_GUIDE.md`, `docs/COMPENDIUM.md`, and `docs/AREAS.md` to become familiar with the game itself.
+
+---
+
 ## 🧠 The Mental Model
 
 Ouroboro is a **High-Performance ECS (Entity-Component-System)** MUD (Multi-User Dungeon) built with Node.js and React.
@@ -97,19 +123,121 @@ graph TD
 ## 🛠 Golden Path Implementation Recipes
 
 ### 📦 Adding a New Item
-To add a "Neural Link" item:
-1. **Data Layer**: Add a row to `server/data/items.csv`.
-   ```csv
-   neural_link,Neural Link,A sleek interface port.,0.1,1,legal,INT:2
-   ```
-2. **Prefab Factory**: Update `server/src/factories/PrefabFactory.ts`.
-   ```typescript
-   // Inside createItem
-   if (def.type === 'cyberware') {
-       entity.addComponent(new Cyberware(def.extraData));
+The game uses `server/data/items.json` as the primary item database. Items are loaded by `ItemRegistry` and instantiated by `PrefabFactory`.
+
+#### Item Types
+- **`item`**: General items (consumables, quest items, ammo)
+- **`weapon`**: Combat weapons (requires `Weapon` component)
+- **`armor`**: Wearable armor (requires `Armor` component)
+- **`cyberware`**: Neural/body implants (requires `Cyberware` component)
+- **`container`**: Storage items like backpacks (requires `Container` component)
+
+#### Adding a Weapon
+1. **Add to `items.json`**:
+   ```json
+   {
+       "id": "99",
+       "name": "plasma_cutter",
+       "shortName": "Plasma Cutter",
+       "description": "A high-energy cutting tool.",
+       "weight": 3.0,
+       "size": "Medium",
+       "legality": "Restricted",
+       "attributes": "Melee Weapon; Ignores armor.",
+       "cost": 2500,
+       "type": "weapon",
+       "extraData": {
+           "damage": 35,
+           "range": 0,
+           "minTier": "melee",
+           "maxTier": "close quarters",
+           "momentumImpact": 0.4,
+           "roundtime": 3,
+           "difficulty": { "speed": 1.2, "zoneSize": 3, "jitter": 0.2 }
+       }
    }
    ```
-3. **Registry**: If you created a new component (e.g., `Cyberware`), register it in `server/src/ecs/ComponentRegistry.ts`.
+2. **Add to Shop** (optional): Update `WorldGenerator.ts` shop terminal items array.
+3. **Update COMPENDIUM.md**: Document the new weapon with stats.
+
+#### Adding Armor
+**CRITICAL**: Armor items store their slot in `extraData.slot`, not at the top level!
+
+1. **Add to `items.json`**:
+   ```json
+   {
+       "id": "100",
+       "name": "tactical_vest",
+       "shortName": "Tactical Vest",
+       "description": "Lightweight kevlar vest.",
+       "weight": 2.0,
+       "size": "Medium",
+       "legality": "Legal",
+       "attributes": "Torso Armor; Medium Defense, Low Penalty.",
+       "cost": 1500,
+       "type": "armor",
+       "extraData": {
+           "defense": 8,
+           "penalty": 1,
+           "slot": "torso"
+       }
+   }
+   ```
+   **Valid Slots**: `head`, `torso`, `back`, `waist`, `legs`, `feet`
+   
+2. **Armor Mechanics**:
+   - `defense`: Added to defender's power in combat calculations
+   - `penalty`: Subtracted from defender's power (represents agility loss)
+   - Equipped armor is checked in `CombatSystem.calculateDefenderPower()`
+
+3. **Add to Shop** (optional): Add to The Armory in `WorldGenerator.ts`.
+4. **Update COMPENDIUM.md**: Document with defense/penalty stats.
+
+#### Adding Cyberware
+1. **Add to `items.json`**:
+   ```json
+   {
+       "id": "101",
+       "name": "neural_boost",
+       "shortName": "Neural Boost Chip",
+       "description": "Enhances cognitive processing.",
+       "weight": 0.01,
+       "size": "Tiny",
+       "legality": "Legal",
+       "attributes": "Neural Cyberware; +2 INT.",
+       "cost": 3000,
+       "type": "cyberware",
+       "extraData": {
+           "slot": "neural",
+           "modifiers": { "INT": 2 }
+       }
+   }
+   ```
+
+#### Adding a Container
+**CRITICAL**: Containers need `slot` at the TOP level (not in extraData) AND in extraData!
+1. **Add to `items.json`**:
+   ```json
+   {
+       "id": "102",
+       "name": "tactical_backpack",
+       "shortName": "Tactical Backpack",
+       "description": "Military-grade storage.",
+       "weight": 2.0,
+       "size": "Large",
+       "legality": "Legal",
+       "attributes": "Container; 30kg capacity.",
+       "cost": 200,
+       "type": "container",
+       "slot": "back",
+       "extraData": { "capacity": 30 }
+   }
+   ```
+
+#### Registry & Components
+- **No code changes needed** for standard item types (weapon, armor, cyberware, container)
+- `PrefabFactory.createItem()` automatically handles all standard types
+- If creating a **new component type**, register it in `ComponentRegistry.ts`
 
 ### 🤖 Adding a New NPC
 NPCs are created via the `PrefabFactory`:
@@ -148,6 +276,14 @@ Commands are registered in the `CommandRegistry`:
    // Example: Accessing inventory from a command
    ctx.systems.inventory.handleGet(ctx.socketId, itemName, ctx.engine);
    ```
+4. **Special Flags**:
+    - `ignoresRoundtime: true`: Allows the command to be executed even if the player is currently in roundtime (e.g., `stop`).
+
+### 💊 Consumables & The 'Use' Command
+Consumables are handled by the `InventorySystem.handleUse` method.
+1. **Logic**: The system checks the player's hands and equipment (containers) for the item.
+2. **Effects**: Effects are hardcoded in `handleUse` based on the item name (e.g., `medkit`, `stimpack`).
+3. **Consumption**: Items are removed from the world and inventory using `consumeItem`.
 
 ### 📡 Event-Driven Communication
 Use the `GameEventBus` to decouple systems:
@@ -192,6 +328,18 @@ To add a new "Black Market" room:
        this.spawnNPC(x, y, type); // Spawns thugs/dealers
    }
    ```
+
+### 🌐 Cyberspace & The Matrix
+The Matrix is implemented as a **Mirror World** with a coordinate offset.
+- **Coordinate Offset**: Cyberspace exists at `x + 10000`. Every physical room has a corresponding digital node.
+- **Persona**: Use the `IsPersona` component to track the active neural link.
+- **Jacking Mechanics**: Managed by `CyberspaceSystem.ts`.
+    - `jack_in`: Moves player to offset, sets physical body to `Stasis`, adds `IsPersona`, and emits `cyberspace-state` to the client.
+    - `jack_out`: Restores position and stance, removes `IsPersona`.
+- **Client Transformation**: When `isMatrixMode` is true, the client applies the `.matrix-mode` CSS class and renders the `MatrixBackground3D` component.
+- **ICE**: Digital enemies (ICE) use the `IsICE` and `IsCyberspace` components.
+
+---
 
 ### 🧩 Adding a Puzzle
 Puzzles follow the **State-Check Pattern**:

@@ -71,7 +71,7 @@ export class AutocompleteAggregator {
             }
         });
 
-        // Find Puzzle Objects & Other Description entities (busts, tables, etc.)
+        // Find Puzzle Objects
         const descEntities = engine.getEntitiesWithComponent(Description).filter(e => {
             const pos = e.getComponent(Position);
             const desc = e.getComponent(Description);
@@ -87,22 +87,43 @@ export class AutocompleteAggregator {
                 if (!objects.includes(title)) {
                     objects.push(title);
                 }
-
             }
         });
 
         // Find Ground Items & Containers
         const items = WorldQuery.findItemsAt(engine, playerPos.x, playerPos.y);
+        const itemTypeCounts = new Map<string, number>();
+        const itemTypeTotals = new Map<string, number>();
+
+        items.forEach(item => {
+            const itemComp = item.getComponent(Item);
+            if (itemComp) {
+                const name = itemComp.name.toLowerCase();
+                itemTypeTotals.set(name, (itemTypeTotals.get(name) || 0) + 1);
+            }
+        });
+
         items.forEach(item => {
             const itemComp = item.getComponent(Item);
             const containerComp = item.getComponent(Container);
 
             if (itemComp) {
-                groundItems.push(itemComp.name.toLowerCase());
+                const name = itemComp.name.toLowerCase();
+                const total = itemTypeTotals.get(name) || 0;
+                let finalName = name;
 
-                // If it's also a container, add it to groundContainers
-                if (containerComp) {
-                    groundContainers.push(itemComp.name.toLowerCase());
+                if (total > 1) {
+                    const count = (itemTypeCounts.get(name) || 0) + 1;
+                    itemTypeCounts.set(name, count);
+                    const ordinal = ordinalNames[count - 1] || count.toString();
+                    finalName = `${ordinal} ${name}`;
+                    if (!groundItems.includes(name)) groundItems.push(name);
+                }
+
+                if (!groundItems.includes(finalName)) groundItems.push(finalName);
+                if (containerComp && !groundContainers.includes(finalName)) {
+                    groundContainers.push(finalName);
+                    if (total > 1 && !groundContainers.includes(name)) groundContainers.push(name);
                 }
             }
         });
@@ -127,77 +148,75 @@ export class AutocompleteAggregator {
         const containers: string[] = [];
         const equipped: string[] = [];
 
-        const getHandContent = (handId: string | null) => {
-            if (!handId) return null;
-            const item = WorldQuery.getEntityById(engine, handId);
-            return item?.getComponent(Item)?.name || null;
-        };
+        const typeCounts = new Map<string, number>();
+        const typeTotals = new Map<string, number>();
+        const ordinalNames = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"];
 
-        const addSuggestions = (name: string) => {
-            const lowerName = name.toLowerCase();
-            if (!invItems.includes(lowerName)) invItems.push(lowerName);
+        const allItems: { id: string, isEquipped: boolean }[] = [];
 
-
-            // Specific aliases
-            if (lowerName.includes('pistol magazine')) {
-                if (!invItems.includes('mag')) invItems.push('mag');
-            }
-        };
-
-        if (inventory.leftHand) {
-            const name = getHandContent(inventory.leftHand);
-            if (name) addSuggestions(name);
-        }
-        if (inventory.rightHand) {
-            const name = getHandContent(inventory.rightHand);
-            if (name) addSuggestions(name);
-        }
-
-        // Check hands for containers
-        if (inventory.leftHand) {
-            const item = WorldQuery.getEntityById(engine, inventory.leftHand);
-            const itemComp = item?.getComponent(Item);
-            const container = item?.getComponent(Container);
-            if (container && itemComp) {
-                containers.push(itemComp.name.toLowerCase());
-            }
-        }
-        if (inventory.rightHand) {
-            const item = WorldQuery.getEntityById(engine, inventory.rightHand);
-            const itemComp = item?.getComponent(Item);
-            const container = item?.getComponent(Container);
-            if (container && itemComp) {
-                containers.push(itemComp.name.toLowerCase());
-            }
-        }
-
-        inventory.equipment.forEach((itemId) => {
+        const collectAll = (itemId: string | null, isEquipped: boolean = false) => {
+            if (!itemId) return;
+            allItems.push({ id: itemId, isEquipped });
             const item = WorldQuery.getEntityById(engine, itemId);
+            const containerComp = item?.getComponent(Container);
+            if (containerComp) {
+                containerComp.items.forEach(cid => collectAll(cid, false));
+            }
+        };
+
+        collectAll(inventory.leftHand, false);
+        collectAll(inventory.rightHand, false);
+        inventory.equipment.forEach(id => collectAll(id, true));
+
+        // Count totals
+        allItems.forEach(entry => {
+            const item = WorldQuery.getEntityById(engine, entry.id);
             const itemComp = item?.getComponent(Item);
-            const container = item?.getComponent(Container);
-
-            // Add to equipped list
             if (itemComp) {
-                equipped.push(itemComp.name.toLowerCase());
+                const name = itemComp.name.toLowerCase();
+                typeTotals.set(name, (typeTotals.get(name) || 0) + 1);
             }
+        });
 
-            if (container && itemComp) {
-                containers.push(itemComp.name.toLowerCase());
-            }
+        // Add with ordinals
+        allItems.forEach(entry => {
+            const item = WorldQuery.getEntityById(engine, entry.id);
+            const itemComp = item?.getComponent(Item);
+            const containerComp = item?.getComponent(Container);
+            if (itemComp) {
+                const name = itemComp.name.toLowerCase();
+                const total = typeTotals.get(name) || 0;
 
-            if (container) {
-                container.items.forEach(cid => {
-                    const cItem = WorldQuery.getEntityById(engine, cid);
-                    const name = cItem?.getComponent(Item)?.name;
-                    if (name) addSuggestions(name);
-                });
+                let finalName = name;
+                if (total > 1) {
+                    const count = (typeCounts.get(name) || 0) + 1;
+                    typeCounts.set(name, count);
+                    const ordinal = ordinalNames[count - 1] || count.toString();
+                    finalName = `${ordinal} ${name}`;
+                    if (!invItems.includes(name)) invItems.push(name);
+                }
+
+                if (!invItems.includes(finalName)) invItems.push(finalName);
+                if (containerComp && !containers.includes(finalName)) {
+                    containers.push(finalName);
+                    if (total > 1 && !containers.includes(name)) containers.push(name);
+                }
+                if (entry.isEquipped && !equipped.includes(finalName)) {
+                    equipped.push(finalName);
+                    if (total > 1 && !equipped.includes(name)) equipped.push(name);
+                }
+
+                // Specific aliases
+                if (name.includes('pistol magazine') && !invItems.includes('mag')) {
+                    invItems.push('mag');
+                }
             }
         });
 
         return {
             type: 'inventory',
             items: invItems.filter(n => n !== 'empty' && n !== 'unknown'),
-            containers: Array.from(new Set(containers)), // Remove duplicates
+            containers: Array.from(new Set(containers)),
             equipped: equipped
         };
     }

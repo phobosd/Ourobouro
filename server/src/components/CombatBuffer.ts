@@ -19,6 +19,7 @@ export class CombatBuffer extends Component {
     public actions: CombatAction[] = [];
     public maxSlots: number = 3;
     public isExecuting: boolean = false;
+    public isBuilding: boolean = false;
     public flow: number = 0;
     public malware: string[] = [];
 

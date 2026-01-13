@@ -46,6 +46,7 @@ import { DungeonService } from './services/DungeonService';
 import { CommandSchema, CombatResultSchema, TerminalBuySchema } from './schemas/SocketSchemas';
 import { EngagementTier } from './types/CombatTypes';
 import { CombatBuffer, CombatActionType } from './components/CombatBuffer';
+import { Momentum } from './components/Momentum';
 
 const ALL_STATS = ['STR', 'CON', 'AGI', 'CHA', 'HP', 'MAXHP', 'ATTACK', 'DEFENSE'];
 const ALL_SKILLS = [
@@ -228,14 +229,16 @@ commandRegistry.register({
             target = target.substring(3).trim();
         }
         ctx.systems.observation.handleLook(ctx.socketId, ctx.engine, target);
-    }
+    },
+    ignoresRoundtime: true
 });
 
 commandRegistry.register({
     name: 'map',
     aliases: ['m'],
     description: 'View the area map',
-    execute: (ctx) => ctx.systems.observation.handleMap(ctx.socketId, ctx.engine)
+    execute: (ctx) => ctx.systems.observation.handleMap(ctx.socketId, ctx.engine),
+    ignoresRoundtime: true
 });
 
 commandRegistry.register({
@@ -267,15 +270,15 @@ commandRegistry.register({
 });
 
 commandRegistry.register({
-    name: 'jackin',
-    aliases: ['connect'],
+    name: 'jack_in',
+    aliases: ['connect', 'jackin'],
     description: 'Jack into the Matrix',
     execute: (ctx) => ctx.systems.cyberspace.handleJackIn(ctx.socketId, ctx.engine)
 });
 
 commandRegistry.register({
-    name: 'jackout',
-    aliases: ['disconnect'],
+    name: 'jack_out',
+    aliases: ['disconnect', 'jackout'],
     description: 'Jack out of the Matrix',
     execute: (ctx) => ctx.systems.cyberspace.handleJackOut(ctx.socketId, ctx.engine)
 });
@@ -284,14 +287,16 @@ commandRegistry.register({
     name: 'inventory',
     aliases: ['inv', 'i'],
     description: 'Check your inventory',
-    execute: (ctx) => ctx.systems.inventory.handleInventory(ctx.socketId, ctx.engine)
+    execute: (ctx) => ctx.systems.inventory.handleInventory(ctx.socketId, ctx.engine),
+    ignoresRoundtime: true
 });
 
 commandRegistry.register({
     name: 'glance',
     aliases: ['gl'],
     description: 'Glance at your hands',
-    execute: (ctx) => ctx.systems.observation.handleGlance(ctx.socketId, ctx.engine)
+    execute: (ctx) => ctx.systems.observation.handleGlance(ctx.socketId, ctx.engine),
+    ignoresRoundtime: true
 });
 
 commandRegistry.register({
@@ -326,14 +331,16 @@ commandRegistry.register({
     name: 'sheet',
     aliases: ['stats'],
     description: 'View your character attributes',
-    execute: (ctx) => ctx.systems.character.handleSheet(ctx.socketId, ctx.engine)
+    execute: (ctx) => ctx.systems.character.handleSheet(ctx.socketId, ctx.engine),
+    ignoresRoundtime: true
 });
 
 commandRegistry.register({
     name: 'score',
     aliases: ['skills'],
     description: 'View your character skills',
-    execute: (ctx) => ctx.systems.character.handleScore(ctx.socketId, ctx.engine)
+    execute: (ctx) => ctx.systems.character.handleScore(ctx.socketId, ctx.engine),
+    ignoresRoundtime: true
 });
 
 commandRegistry.register({
@@ -341,6 +348,13 @@ commandRegistry.register({
     aliases: ['switch'],
     description: 'Swap items between your hands',
     execute: (ctx) => ctx.systems.inventory.handleSwap(ctx.socketId, ctx.engine)
+});
+
+commandRegistry.register({
+    name: 'use',
+    aliases: ['u'],
+    description: 'Use an item from your hands or inventory',
+    execute: (ctx) => ctx.systems.inventory.handleUse(ctx.socketId, ctx.args.join(' '), ctx.engine)
 });
 
 commandRegistry.register({
@@ -372,6 +386,90 @@ commandRegistry.register({
 });
 
 commandRegistry.register({
+    name: 'punch',
+    aliases: [],
+    description: 'Punch a target (Brawling)',
+    execute: (ctx) => {
+        const targetName = ctx.args.join(' ');
+        if (!targetName) {
+            ctx.io.to(ctx.socketId).emit('message', 'Punch who?');
+            return;
+        }
+        ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'punch');
+    }
+});
+
+commandRegistry.register({
+    name: 'jab',
+    aliases: [],
+    description: 'Jab a target (Brawling)',
+    execute: (ctx) => {
+        const targetName = ctx.args.join(' ');
+        if (!targetName) {
+            ctx.io.to(ctx.socketId).emit('message', 'Jab who?');
+            return;
+        }
+        ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'jab');
+    }
+});
+
+commandRegistry.register({
+    name: 'headbutt',
+    aliases: [],
+    description: 'Headbutt a target (Brawling)',
+    execute: (ctx) => {
+        const targetName = ctx.args.join(' ');
+        if (!targetName) {
+            ctx.io.to(ctx.socketId).emit('message', 'Headbutt who?');
+            return;
+        }
+        ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'headbutt');
+    }
+});
+
+commandRegistry.register({
+    name: 'uppercut',
+    aliases: [],
+    description: 'Uppercut a target (Brawling)',
+    execute: (ctx) => {
+        const targetName = ctx.args.join(' ');
+        if (!targetName) {
+            ctx.io.to(ctx.socketId).emit('message', 'Uppercut who?');
+            return;
+        }
+        ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'uppercut');
+    }
+});
+
+commandRegistry.register({
+    name: 'slice',
+    aliases: [],
+    description: 'Perform a fast, precision strike (Samurai weapons build momentum)',
+    execute: (ctx) => {
+        const targetName = ctx.args.join(' ');
+        if (!targetName) {
+            ctx.io.to(ctx.socketId).emit('message', 'Slice who?');
+            return;
+        }
+        ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'slice');
+    }
+});
+
+commandRegistry.register({
+    name: 'iaijutsu',
+    aliases: ['iai'],
+    description: 'Perform a devastating instant strike (Requires 30+ Momentum)',
+    execute: (ctx) => {
+        const targetName = ctx.args.join(' ');
+        if (!targetName) {
+            ctx.io.to(ctx.socketId).emit('message', 'Iaijutsu who?');
+            return;
+        }
+        ctx.systems.combat.handleIaijutsu(ctx.socketId, targetName, ctx.engine);
+    }
+});
+
+commandRegistry.register({
     name: 'reload',
     aliases: ['rel'],
     description: 'Reload your weapon',
@@ -382,7 +480,8 @@ commandRegistry.register({
     name: 'ammo',
     aliases: ['checkammo'],
     description: 'Check ammunition in your weapon',
-    execute: (ctx) => ctx.systems.combat.handleCheckAmmo(ctx.socketId, ctx.engine)
+    execute: (ctx) => ctx.systems.combat.handleCheckAmmo(ctx.socketId, ctx.engine),
+    ignoresRoundtime: true
 });
 
 const handleBufferAction = (ctx: CommandContext, type: CombatActionType) => {
@@ -392,6 +491,26 @@ const handleBufferAction = (ctx: CommandContext, type: CombatActionType) => {
     const buffer = player.getComponent(CombatBuffer);
     if (!buffer) {
         ctx.messageService.error(ctx.socketId, "You don't have a combat buffer.");
+        return;
+    }
+
+    if (!buffer.isBuilding) {
+        // Execute immediate action
+        const targetName = ctx.args.join(' ');
+        switch (type) {
+            case CombatActionType.DASH:
+                ctx.systems.combat.handleManeuver(ctx.socketId, 'CLOSE', ctx.engine, targetName);
+                break;
+            case CombatActionType.SLASH:
+                ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'slash');
+                break;
+            case CombatActionType.THRUST:
+                ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'thrust');
+                break;
+            case CombatActionType.PARRY:
+                ctx.systems.combat.handleImmediateParry(ctx.socketId, ctx.engine);
+                break;
+        }
         return;
     }
 
@@ -412,35 +531,65 @@ const handleBufferAction = (ctx: CommandContext, type: CombatActionType) => {
     ctx.io.to(ctx.socketId).emit('buffer-update', {
         actions: buffer.actions,
         maxSlots: buffer.maxSlots,
-        isExecuting: buffer.isExecuting
+        isExecuting: buffer.isExecuting,
+        isBuilding: buffer.isBuilding
     });
 };
 
 commandRegistry.register({
+    name: 'sequence',
+    aliases: ['seq', 'buffer'],
+    description: 'Toggle combat sequence building mode',
+    execute: (ctx) => {
+        const player = ctx.engine.getEntity(ctx.socketId);
+        if (!player) return;
+        const buffer = player.getComponent(CombatBuffer);
+        if (!buffer) return;
+
+        buffer.isBuilding = !buffer.isBuilding;
+        if (buffer.isBuilding) {
+            ctx.messageService.success(ctx.socketId, "Sequence Mode ENABLED. Actions will be queued.");
+            buffer.actions = []; // Clear on start
+        } else {
+            ctx.messageService.info(ctx.socketId, "Sequence Mode DISABLED. Actions will execute immediately.");
+        }
+
+        // Notify client
+        ctx.io.to(ctx.socketId).emit('buffer-update', {
+            actions: buffer.actions,
+            maxSlots: buffer.maxSlots,
+            isExecuting: buffer.isExecuting,
+            isBuilding: buffer.isBuilding
+        });
+    },
+    ignoresRoundtime: true
+});
+
+commandRegistry.register({
     name: 'dash',
     aliases: [],
-    description: 'Add DASH to combat buffer',
+    description: 'Dash or add DASH to buffer',
     execute: (ctx) => handleBufferAction(ctx, CombatActionType.DASH)
 });
 
 commandRegistry.register({
     name: 'slash',
     aliases: [],
-    description: 'Add SLASH to combat buffer',
+    description: 'Slash or add SLASH to buffer',
     execute: (ctx) => handleBufferAction(ctx, CombatActionType.SLASH)
 });
 
 commandRegistry.register({
     name: 'parry',
     aliases: [],
-    description: 'Add PARRY to combat buffer',
+    description: 'Parry or add PARRY to buffer',
     execute: (ctx) => handleBufferAction(ctx, CombatActionType.PARRY)
 });
 
 commandRegistry.register({
     name: 'thrust',
     aliases: [],
-    description: 'Add THRUST to combat buffer',
+    description: 'Thrust or add THRUST to buffer',
     execute: (ctx) => handleBufferAction(ctx, CombatActionType.THRUST)
 });
 
@@ -506,7 +655,7 @@ commandRegistry.register({
 
 commandRegistry.register({
     name: 'advance',
-    aliases: ['approach'],
+    aliases: ['approach', 'adv'],
     description: 'Automatically advance on a target until close range',
     execute: (ctx) => {
         const target = ctx.args.join(' ');
@@ -530,7 +679,8 @@ commandRegistry.register({
     description: 'Stop any automated actions',
     execute: (ctx) => {
         ctx.systems.combat.handleStop(ctx.socketId, ctx.engine);
-    }
+    },
+    ignoresRoundtime: true
 });
 
 commandRegistry.register({
@@ -939,7 +1089,8 @@ commandRegistry.register({
     execute: (ctx) => {
         const helpText = commandRegistry.getHelp();
         ctx.messageService.info(ctx.socketId, helpText);
-    }
+    },
+    ignoresRoundtime: true
 });
 
 // Persistence Setup
@@ -982,6 +1133,18 @@ setInterval(() => {
             const stats = entity.getComponent(Stats);
             const con = stats?.attributes.get('CON')?.value || 10;
 
+            const inventory = entity.getComponent(Inventory);
+            const rightHandItem = inventory?.rightHand ? WorldQuery.getEntityById(engine, inventory.rightHand) : null;
+            const weapon = rightHandItem?.getComponent(Weapon);
+            const weaponName = weapon?.name.toLowerCase() || '';
+            const hasKatana = weaponName.includes('katana') ||
+                weaponName.includes('kitana') ||
+                weaponName.includes('samurai sword') || false;
+
+            const leftHandItem = inventory?.leftHand ? WorldQuery.getEntityById(engine, inventory.leftHand) : null;
+            const leftHandName = leftHandItem?.getComponent(Item)?.name || 'Empty';
+            const rightHandName = rightHandItem?.getComponent(Item)?.name || 'Empty';
+
             io.to(id).emit('stats-update', {
                 hp: combatStats.hp,
                 maxHp: combatStats.maxHp,
@@ -991,8 +1154,47 @@ setInterval(() => {
                 balance: combatStats.balance,
                 fatigue: combatStats.fatigue,
                 maxFatigue: con * 10,
-                engagement: combatStats.engagementTier
+                engagement: combatStats.engagementTier,
+                momentum: entity.getComponent(Momentum)?.current || 0,
+                hasKatana,
+                leftHand: leftHandName,
+                rightHand: rightHandName,
+                evasion: combatStats.evasion,
+                parry: combatStats.parry,
+                shield: combatStats.shield,
+                aggression: combatStats.aggression
             });
+        }
+
+        // Momentum Management
+        const momentum = entity.getComponent(Momentum);
+        if (momentum) {
+            let inCombat = combatStats && combatStats.engagementTier !== EngagementTier.DISENGAGED;
+
+            if (!inCombat) {
+                // Check if any NPC is targeting us in the same room
+                const pos = entity.getComponent(Position);
+                if (pos) {
+                    const hostiles = engine.getEntitiesWithComponent(NPC).filter(npc => {
+                        const npcStats = npc.getComponent(CombatStats);
+                        const npcPos = npc.getComponent(Position);
+                        return npcStats?.targetId === id && npcPos?.x === pos.x && npcPos?.y === pos.y;
+                    });
+                    if (hostiles.length > 0) {
+                        inCombat = true;
+                    }
+                }
+            }
+
+            if (inCombat) {
+                // In combat: No decay
+            } else {
+                // Out of combat: Reset
+                if (momentum.current > 0) {
+                    momentum.reset();
+                    messageService.info(id, "<error>[MOMENTUM] Your combat flow dissipates as the threat fades.</error>");
+                }
+            }
         }
     }
 
@@ -1054,26 +1256,27 @@ io.on('connection', (socket) => {
     player.addComponent(new CombatStats(100, 10, 5, false));
     player.addComponent(new CombatBuffer(3));
     player.addComponent(new Stance(StanceType.Standing));
+    player.addComponent(new Momentum());
     player.addComponent(new Credits(500, 1000000)); // 500 New Yen, 1,000,000 Credits
 
     // Create Shirt with pockets
     const shirt = new Entity();
     shirt.addComponent(new Item("Tactical Shirt", "A shirt with reinforced pockets.", 0.8, 1, "Medium", "Legal", "", "shirt", "torso"));
-    shirt.addComponent(new Container(1.0)); // 1lb max
+    shirt.addComponent(new Container(3.0)); // 3lbs max
     engine.addEntity(shirt);
     inventory.equipment.set('torso', shirt.id);
 
     // Create Pants with pockets
     const pants = new Entity();
     pants.addComponent(new Item("Cargo Pants", "Durable tactical pants with many pockets.", 1.5, 1, "Medium", "Legal", "", "pants", "legs"));
-    pants.addComponent(new Container(1.0)); // 1lb max
+    pants.addComponent(new Container(5.0)); // 5lbs max
     engine.addEntity(pants);
     inventory.equipment.set('legs', pants.id);
 
     // Create Belt
     const belt = new Entity();
     belt.addComponent(new Item("Utility Belt", "A leather belt with pouches.", 0.5, 1, "Small", "Legal", "", "belt", "waist"));
-    belt.addComponent(new Container(1.0)); // 1lb max
+    belt.addComponent(new Container(4.0)); // 4lbs max
     engine.addEntity(belt);
     inventory.equipment.set('waist', belt.id);
 
@@ -1106,7 +1309,30 @@ io.on('connection', (socket) => {
     engine.addEntity(pistol);
     inventory.rightHand = pistol.id;
 
+    // Create Cyberdeck (in Backpack)
+    const deck = new Entity();
+    deck.addComponent(new Item("Ono-Sendai Cyberspace 7", "A legendary cyberdeck, sleek and powerful.", 1.5, 1, "Small", "Legal", "deck"));
+    engine.addEntity(deck);
+
+    const backpackId = inventory.equipment.get('back');
+    if (backpackId) {
+        const backpack = engine.getEntity(backpackId);
+        const container = backpack?.getComponent(Container);
+        if (container) {
+            container.items.push(deck.id);
+        }
+    }
+
     engine.addEntity(player);
+
+    // Send initial autocomplete data
+    const roomAuto = AutocompleteAggregator.getRoomAutocomplete(player.getComponent(Position)!, engine);
+    socket.emit('autocomplete-update', roomAuto);
+    const invAuto = AutocompleteAggregator.getInventoryAutocomplete(player, engine);
+    socket.emit('autocomplete-update', invAuto);
+
+    // Initial Look
+    observationSystem.handleLook(socket.id, engine);
 
     // Check for aggressive NPCs in the spawn room
     const spawnPos = player.getComponent(Position)!;
@@ -1124,15 +1350,6 @@ io.on('connection', (socket) => {
             messageService.combat(socket.id, `<enemy>${npcComp.typeName} notices you and prepares to attack!</enemy>`);
         }
     }
-
-    // Send initial autocomplete data
-    const roomAuto = AutocompleteAggregator.getRoomAutocomplete(player.getComponent(Position)!, engine);
-    socket.emit('autocomplete-update', roomAuto);
-    const invAuto = AutocompleteAggregator.getInventoryAutocomplete(player, engine);
-    socket.emit('autocomplete-update', invAuto);
-
-    // Initial Look
-    observationSystem.handleLook(socket.id, engine);
 
 
     socket.on('command', (cmd: string) => {

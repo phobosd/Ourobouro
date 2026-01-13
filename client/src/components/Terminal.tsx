@@ -7,7 +7,8 @@ import { SheetDisplay } from './SheetDisplay';
 import { TerminalDisplay } from './TerminalDisplay';
 import { GuideOverlay } from './GuideOverlay';
 import { MapDisplay } from './MapDisplay';
-import { StatusBar, RoundtimeIndicator } from './StatusHUD';
+import { MiniMap } from './MiniMap';
+import { StatusBar, RoundtimeIndicator, HandsDisplay, CombatStatusDisplay, MomentumBar } from './StatusHUD';
 import { CombatBufferDisplay } from './CombatBufferDisplay';
 import './Terminal.css';
 
@@ -100,10 +101,21 @@ export const Terminal: React.FC = () => {
         fatigue?: number;
         maxFatigue?: number;
         engagement?: string;
+        momentum?: number;
+        hasKatana?: boolean;
     } | null>(null);
 
     const [terminalData, setTerminalData] = useState<any>(null);
     const [guideContent, setGuideContent] = useState<string | null>(null);
+    const [isMatrixMode, setIsMatrixMode] = useState(false);
+    const [isGlitching, setIsGlitching] = useState(false);
+    const [miniMapData, setMiniMapData] = useState<any>(null);
+
+    const triggerGlitch = () => {
+        if (!isMatrixMode) return;
+        setIsGlitching(true);
+        setTimeout(() => setIsGlitching(false), 50);
+    };
 
     // ... (rest of Terminal component)
 
@@ -113,6 +125,10 @@ export const Terminal: React.FC = () => {
 
         newSocket.on('connect', () => {
             addSystemLine('Connected to Ouroboro Server...');
+            // Request initial map data
+            setTimeout(() => {
+                newSocket.emit('command', 'map');
+            }, 500);
         });
 
         newSocket.on('disconnect', () => {
@@ -127,6 +143,13 @@ export const Terminal: React.FC = () => {
             if (typeof message === 'string') {
                 addSystemLine(message);
             } else {
+                // Update mini-map if this is map data
+                if (message.type === 'map' && message.payload) {
+                    setMiniMapData(message.payload);
+                    // Don't add map to terminal output - it's only for the mini-map
+                    return;
+                }
+
                 // Handle structured message
                 addLine({
                     id: (message.timestamp || Date.now()).toString() + Math.random(),
@@ -204,6 +227,16 @@ export const Terminal: React.FC = () => {
             setGuideContent(data.content);
         });
 
+        newSocket.on('cyberspace-state', (data: { active: boolean }) => {
+            setIsMatrixMode(data.active);
+        });
+
+        // Listen for position updates to refresh mini-map
+        newSocket.on('position-update', () => {
+            // Request fresh map data
+            newSocket.emit('command', 'map');
+        });
+
         return () => {
             newSocket.disconnect();
         };
@@ -242,8 +275,9 @@ export const Terminal: React.FC = () => {
         'wear', 'equip', 'remove', 'unequip', 'takeoff',
         'turn', 'rotate', 'jack_in', 'jack_out', 'jackin', 'jackout',
         'maneuver', 'man', 'target', 'stance', 'appraise', 'app',
-        'advance', 'retreat', 'flee', 'hangback', 'reload', 'ammo', 'stop', 'assess',
-        'dash', 'slash', 'parry', 'thrust', 'upload', 'execute'
+        'advance', 'adv', 'retreat', 'flee', 'hangback', 'reload', 'ammo', 'stop', 'assess',
+        'dash', 'slash', 'parry', 'thrust', 'upload', 'execute',
+        'punch', 'jab', 'headbutt', 'uppercut', 'iaijutsu', 'iai', 'slice'
     ];
 
     const [completionState, setCompletionState] = useState<{
@@ -277,12 +311,14 @@ export const Terminal: React.FC = () => {
         if (['drop', 'd'].includes(cmd)) return "Usage: drop <item>";
         if (['inventory', 'inv', 'i'].includes(cmd)) return "Usage: inventory";
         if (['attack', 'kill', 'fight'].includes(cmd)) return "Usage: attack <target>";
+        if (['punch', 'jab', 'headbutt', 'uppercut', 'slice', 'iaijutsu'].includes(cmd)) return `Usage: ${cmd} <target>`;
         if (['maneuver', 'man'].includes(cmd)) return "Usage: maneuver <close|withdraw> [target]";
         if (['put', 'stow'].includes(cmd)) return "Usage: put <item> in <container>";
         if (cmd === 'target') return "Usage: target <body_part>";
         if (cmd === 'stance') return "Usage: stance <type>";
         if (cmd === 'flee') return "Usage: flee <direction>";
         if (['appraise', 'app'].includes(cmd)) return "Usage: appraise <target>";
+        if (['advance', 'adv'].includes(cmd)) return "Usage: advance <target>";
         if (['read', 'scan'].includes(cmd)) return "Usage: read <target>";
         if (['turn', 'rotate'].includes(cmd)) return "Usage: turn <target>";
         if (['wear', 'equip'].includes(cmd)) return "Usage: wear <item>";
@@ -294,6 +330,16 @@ export const Terminal: React.FC = () => {
         if (cmd === 'parry') return "Usage: parry (Adds PARRY to combat buffer)";
         if (cmd === 'thrust') return "Usage: thrust (Adds THRUST to combat buffer)";
         if (['upload', 'execute'].includes(cmd)) return "Usage: upload (Executes combat buffer)";
+        if (cmd === 'god' && parts[1] === 'find') return "Usage: god find <query>";
+        if (cmd === 'god' && parts[1] === 'spawn') return "Usage: god spawn <item_name | npc_name>";
+        if (cmd === 'god' && parts[1] === 'money') return "Usage: god money <amount> [target]";
+        if (cmd === 'god' && parts[1] === 'set-stat') return "Usage: god set-stat [target] <stat> <value>";
+        if (cmd === 'god' && parts[1] === 'set-skill') return "Usage: god set-skill [target] <skill> <value>";
+        if (cmd === 'god' && parts[1] === 'view') return "Usage: god view [target]";
+        if (cmd === 'god' && parts[1] === 'reset') return "Usage: god reset <skills|health>";
+        if (cmd === 'god' && parts[1] === 'weather') return "Usage: god weather <clear|rain|storm|fog>";
+        if (cmd === 'god' && parts[1] === 'pacify') return "Usage: god pacify [target]";
+        if (cmd === 'god' && parts[1] === 'registry') return "Usage: god registry";
 
         return null;
     };
@@ -409,7 +455,7 @@ export const Terminal: React.FC = () => {
             } else if (['get', 'g', 'take'].includes(cmd)) {
                 const fromIndex = parts.indexOf('from');
                 if (fromIndex === -1) {
-                    const candidates = Array.from(new Set([...autocompleteData.roomItems]));
+                    const candidates = Array.from(new Set([...autocompleteData.roomItems, ...autocompleteData.inventory]));
                     const search = parts.slice(1).join(' ');
                     matches = candidates.filter(s => matchCandidate(s, search));
                     if ('from'.startsWith(search.toLowerCase()) && autocompleteData.containers.length > 0 && search.length > 0) {
@@ -442,8 +488,16 @@ export const Terminal: React.FC = () => {
                     }
                     baseString = rawParts.slice(0, searchStartIndex).join(' ') + ' ';
                 }
-            } else if (['attack', 'kill', 'fight', 'read', 'scan', 'turn', 'rotate', 'appraise', 'app', 'advance', 'retreat'].includes(cmd)) {
+            } else if (['punch', 'jab', 'headbutt', 'uppercut', 'slice', 'iaijutsu'].includes(cmd)) {
+                const candidates = autocompleteData.roomNPCs;
+                const search = parts.slice(1).join(' ');
+                matches = candidates.filter(s => matchCandidate(s, search));
+                baseString = rawParts[0] + ' ';
+            } else if (['attack', 'kill', 'fight', 'read', 'scan', 'turn', 'rotate', 'appraise', 'app', 'advance', 'adv', 'retreat'].includes(cmd)) {
                 const candidates = Array.from(new Set([...autocompleteData.roomObjects, ...autocompleteData.roomItems]));
+                if (['read', 'scan'].includes(cmd)) {
+                    candidates.push('guide', 'compendium', 'areas');
+                }
                 const search = parts.slice(1).join(' ');
                 matches = candidates.filter(s => matchCandidate(s, search));
                 baseString = rawParts[0] + ' ';
@@ -496,6 +550,11 @@ export const Terminal: React.FC = () => {
                 const search = parts.slice(1).join(' ');
                 matches = autocompleteData.equipped.filter(s => matchCandidate(s, search));
                 baseString = rawParts[0] + ' ';
+            } else if (['use', 'u'].includes(cmd)) {
+                // Autocomplete with inventory items only
+                const search = parts.slice(1).join(' ');
+                matches = autocompleteData.inventory.filter(s => matchCandidate(s, search));
+                baseString = rawParts[0] + ' ';
             } else if (['drop', 'd'].includes(cmd)) {
                 // Autocomplete with inventory items only
                 const search = parts.slice(1).join(' ');
@@ -507,6 +566,7 @@ export const Terminal: React.FC = () => {
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        triggerGlitch();
         if (e.key === 'Enter') {
             if (inputValue.trim()) {
                 // Add to history
@@ -576,10 +636,17 @@ export const Terminal: React.FC = () => {
     };
 
     return (
-        <div className="terminal-container">
+        <div className={`terminal-container ${isMatrixMode ? 'matrix-mode' : ''} ${isGlitching ? 'glitch-active' : ''}`}>
+            {playerStats && (
+                <div className="top-status-bar">
+                    <HandsDisplay stats={playerStats} />
+                    <CombatStatusDisplay stats={playerStats} />
+                </div>
+            )}
             {socket && <CombatOverlay socket={socket} />}
             {socket && <CombatBufferDisplay socket={socket} />}
-            {terminalData && socket && (
+            <MiniMap data={miniMapData} />
+            {terminalData && (
                 <TerminalDisplay
                     data={terminalData}
                     socket={socket}
@@ -598,7 +665,10 @@ export const Terminal: React.FC = () => {
                 ))}
             </div>
             <div className="terminal-input-area">
-                {playerStats && <RoundtimeIndicator stats={playerStats} />}
+                <div className="status-indicators-row">
+                    {playerStats && <RoundtimeIndicator stats={playerStats} />}
+                    {playerStats && <MomentumBar stats={playerStats} />}
+                </div>
                 <div className="terminal-input-row">
                     <span className="prompt">
                         {'>'}
@@ -629,7 +699,13 @@ export const Terminal: React.FC = () => {
 
                                 // Display the help output
                                 if (matches.length > 0) {
-                                    helpText += `<title>[Available Options]</title>\n<info>${matches.join(', ')}</info>`;
+                                    helpText += `<title>[Available Options]</title>\n`;
+                                    const optionsWithUsage = matches.map(m => {
+                                        const usage = getUsage(inputWithoutQuestion + ' ' + m);
+                                        return usage ? `<info>${m}</info> -> ${usage}` : `<info>${m}</info>`;
+                                    });
+                                    const hasUsage = optionsWithUsage.some(o => o.includes('->'));
+                                    helpText += optionsWithUsage.join(hasUsage ? '\n' : ', ');
                                 } else if (!usage) {
                                     helpText = 'No options found.';
                                 }
@@ -640,6 +716,7 @@ export const Terminal: React.FC = () => {
                                 setCompletionState({ active: false, prefix: '', matches: [], index: 0 });
                                 return;
                             }
+                            triggerGlitch();
                             setInputValue(val);
                             setCompletionState({ active: false, prefix: '', matches: [], index: 0 });
                         }}

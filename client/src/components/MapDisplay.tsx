@@ -42,8 +42,9 @@ export const MapDisplay: React.FC<Props> = React.memo(({ data }) => {
     const displayX = data.worldPos ? data.worldPos.x : data.playerPos.x;
     const displayY = data.worldPos ? data.worldPos.y : data.playerPos.y;
 
+    const isCyberspace = displayX >= 5000;
     let sector = 'UNKNOWN';
-    if (displayX >= 2000) sector = 'CYBERSPACE';
+    if (isCyberspace) sector = 'THE MATRIX';
     else if (displayX < 7) sector = 'CHIBA';
     else if (displayX < 14) sector = 'SPRAWL';
     else sector = 'STRAYLIGHT';
@@ -51,8 +52,8 @@ export const MapDisplay: React.FC<Props> = React.memo(({ data }) => {
     const isLargeMap = data.grid.length > 25;
 
     return (
-        <div className="inventory-display">
-            <div className="inventory-header">CITY NAVIGATION GRID</div>
+        <div className={`inventory-display ${isCyberspace ? 'matrix-map' : ''}`}>
+            <div className="inventory-header">{isCyberspace ? 'NEURAL TOPOLOGY GRID' : 'CITY NAVIGATION GRID'}</div>
             <div className="inventory-grid" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div className={`map-grid ${isLargeMap ? 'large-map' : ''}`}>
                     {data.grid.map((row, y) => (
@@ -70,8 +71,15 @@ export const MapDisplay: React.FC<Props> = React.memo(({ data }) => {
                     ))}
                 </div>
             </div>
-            <div className="inventory-footer" style={{ marginTop: '10px', textAlign: 'center', fontSize: '12px', color: '#0ff', borderTop: '1px solid rgba(0, 255, 255, 0.3)', paddingTop: '5px' }}>
-                LOCATION: ({displayX}, {displayY}) | SECTOR: {sector}
+            <div className="inventory-footer" style={{
+                marginTop: '10px',
+                textAlign: 'center',
+                fontSize: '12px',
+                color: isCyberspace ? '#00ff41' : '#0ff',
+                borderTop: `1px solid ${isCyberspace ? 'rgba(0, 255, 65, 0.3)' : 'rgba(0, 255, 255, 0.3)'}`,
+                paddingTop: '5px'
+            }}>
+                LOCATION: ({isCyberspace ? displayX - 10000 : displayX}, {displayY}) | SECTOR: {sector}
             </div>
         </div>
     );

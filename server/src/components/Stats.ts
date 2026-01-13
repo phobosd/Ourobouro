@@ -33,6 +33,7 @@ export class Stats extends Component {
         this.addSkill('Marksmanship (Medium)');
         this.addSkill('Marksmanship (Heavy)');
         this.addSkill('Kenjutsu');
+        this.addSkill('Brawling');
     }
 
     addSkill(name: string, startLevel: number = 1) {

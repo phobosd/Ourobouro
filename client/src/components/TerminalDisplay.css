@@ -28,7 +28,7 @@
     background-color: #003300;
     padding: 10px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     border-bottom: 2px solid #00ff00;
 }
@@ -112,6 +112,10 @@
     text-shadow: 0 0 5px #ff0000;
 }
 
+.term-legality.restricted {
+    color: #ffaa00;
+}
+
 .term-legality.variable {
     color: #ffff00;
 }
@@ -125,6 +129,22 @@
     color: #ffd700;
     font-weight: bold;
     text-align: right;
+}
+
+.term-category-header {
+    background-color: #002200 !important;
+    font-weight: bold;
+    text-align: center;
+    color: #00ffff !important;
+    text-shadow: 0 0 10px #00ffff;
+    border-top: 2px solid #00ff00 !important;
+    border-bottom: 2px solid #00ff00 !important;
+}
+
+.term-category-header td {
+    padding: 15px 10px !important;
+    font-size: 1.1em;
+    letter-spacing: 2px;
 }
 
 .term-footer {

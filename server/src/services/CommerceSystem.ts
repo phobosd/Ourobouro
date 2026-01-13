@@ -85,6 +85,7 @@ export class CommerceSystem {
             if (tempEntity) {
                 const item = tempEntity.getComponent(Item);
                 if (item) {
+                    const itemDef = ItemRegistry.getInstance().getItem(name);
                     return {
                         name: item.name,
                         weight: item.weight,
@@ -92,7 +93,8 @@ export class CommerceSystem {
                         legality: item.legality,
                         attributes: item.attributes,
                         description: item.description,
-                        cost: ItemRegistry.getInstance().getItem(name)?.cost || 100
+                        cost: itemDef?.cost || 100,
+                        type: itemDef?.type || 'item'
                     };
                 }
             } else {

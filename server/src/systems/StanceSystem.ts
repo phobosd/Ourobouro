@@ -25,6 +25,11 @@ export class StanceSystem extends System {
         const stance = player.getComponent(Stance);
         if (!stance) return;
 
+        if (stance.current === StanceType.Stasis) {
+            this.messageService.error(entityId, "You cannot change your physical stance while jacked into the Matrix.");
+            return;
+        }
+
         if (stance.current === newStance) {
             this.messageService.info(entityId, `You are already ${newStance}.`);
             return;

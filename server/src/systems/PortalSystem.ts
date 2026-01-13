@@ -53,12 +53,15 @@ export class PortalSystem extends System {
 
         if (portal.destinationType === 'dungeon') {
             console.log(`[PortalSystem] Entering dungeon for ${entityId}`);
-            DungeonService.getInstance(engine, this.messageService).enterDungeon(entityId);
+            DungeonService.getInstance(engine, this.messageService)?.enterDungeon(entityId);
         } else if (portal.destinationType === 'room') {
+            // Check if player is currently in dungeon
             if (playerPos.x >= 2000) {
-                DungeonService.getInstance(engine, this.messageService).leaveDungeon(entityId);
+                // Leaving dungeon
+                DungeonService.getInstance(engine, this.messageService)?.leaveDungeon(entityId);
             } else {
-                DungeonService.getInstance(engine, this.messageService).leaveDungeon(entityId);
+                // Regular door - just a flavor message
+                this.messageService.info(entityId, "You step through the doorway...");
             }
         }
     }

@@ -24,6 +24,7 @@ export class Weapon extends Component {
     minTier: EngagementTier;
     maxTier: EngagementTier;
     momentumImpact: number; // How much this weapon affects balance on hit/use
+    roundtime: number; // Base roundtime in seconds
 
     constructor(
         name: string,
@@ -36,7 +37,8 @@ export class Weapon extends Component {
         difficulty: SyncDifficulty = { speed: 1.0, zoneSize: 2, jitter: 0 },
         minTier: EngagementTier = EngagementTier.MELEE,
         maxTier: EngagementTier = EngagementTier.MELEE,
-        momentumImpact: number = 0.1
+        momentumImpact: number = 0.1,
+        roundtime: number = 3
     ) {
         super();
         this.name = name;
@@ -51,5 +53,6 @@ export class Weapon extends Component {
         this.minTier = minTier;
         this.maxTier = maxTier;
         this.momentumImpact = momentumImpact;
+        this.roundtime = roundtime;
     }
 }

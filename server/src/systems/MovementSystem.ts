@@ -57,8 +57,14 @@ export class MovementSystem extends System {
             if (!pos) continue;
 
             if (stance && stance.current !== StanceType.Standing) {
-                this.messageService.info(entityId, `You can't move while ${stance.current}!`);
-                continue;
+                // Allow movement in Stasis if we are in the Matrix (Persona)
+                const isMatrix = pos.x >= 10000;
+                if (stance.current === StanceType.Stasis && isMatrix) {
+                    // Allow movement
+                } else {
+                    this.messageService.info(entityId, `You can't move while ${stance.current}!`);
+                    continue;
+                }
             }
 
             const combatStats = entity.getComponent(CombatStats);
@@ -116,6 +122,14 @@ export class MovementSystem extends System {
                     combatStats.engagementTier = EngagementTier.DISENGAGED;
                 }
 
+                // Trigger look
+                if (this.observationSystem) {
+                    this.observationSystem.handleLook(entityId, engine);
+                }
+
+                // Emit position update for mini-map refresh
+                this.io.to(entityId).emit('position-update');
+
                 // Check for aggressive NPCs in the new room
                 const npcsInRoom = WorldQuery.findNPCsAt(engine, targetX, targetY);
                 for (const npc of npcsInRoom) {
@@ -140,13 +154,8 @@ export class MovementSystem extends System {
                     }
                 }
 
-                // Trigger look
-                if (this.observationSystem) {
-                    this.observationSystem.handleLook(entityId, engine);
-                }
-
                 // Mark visited for Dungeon Fog of War
-                DungeonService.getInstance().markVisited(entityId, targetX, targetY);
+                DungeonService.getInstance()?.markVisited(entityId, targetX, targetY);
             } else {
                 this.messageService.info(entityId, "You can't go that way.");
             }

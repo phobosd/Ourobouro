@@ -10,6 +10,7 @@ import { Cyberware } from '../components/Cyberware';
 import { IsICE } from '../components/IsICE';
 import { WoundTable } from '../components/WoundTable';
 import { Stats } from '../components/Stats';
+import { Armor } from '../components/Armor';
 
 import { ItemRegistry } from '../services/ItemRegistry';
 import { EngagementTier } from '../types/CombatTypes';
@@ -56,6 +57,46 @@ export class PrefabFactory {
         }
     }
 
+    static equipICE(npc: Entity, engine: IEngine) {
+        // 1. Equip Armor
+        const armor = PrefabFactory.createItem("digital_vest");
+        if (armor) {
+            engine.addEntity(armor);
+            const inventory = npc.getComponent(Inventory) || new Inventory();
+            if (!npc.hasComponent(Inventory)) npc.addComponent(inventory);
+
+            inventory.equipment.set('body', armor.id);
+
+            // Apply armor stats manually since we don't have an ArmorSystem yet
+            const combatStats = npc.getComponent(CombatStats);
+            if (combatStats) {
+                combatStats.defense += 10; // Match the item definition
+            }
+        }
+
+        // 2. Equip Weapon (50/50 chance)
+        const isRanged = Math.random() < 0.5;
+        const weaponName = isRanged ? "pulse_rifle" : "digital_blade";
+        const weapon = PrefabFactory.createItem(weaponName);
+
+        if (weapon) {
+            engine.addEntity(weapon);
+            const inventory = npc.getComponent(Inventory) || new Inventory();
+            if (!npc.hasComponent(Inventory)) npc.addComponent(inventory);
+
+            inventory.rightHand = weapon.id;
+
+            // If ranged, give them some ammo too
+            if (isRanged) {
+                const ammo = PrefabFactory.createItem("energy_cell");
+                if (ammo) {
+                    engine.addEntity(ammo);
+                    inventory.equipment.set('belt_1', ammo.id);
+                }
+            }
+        }
+    }
+
     static createItem(name: string): Entity | null {
         const entity = new Entity();
         const registry = ItemRegistry.getInstance();
@@ -66,8 +107,13 @@ export class PrefabFactory {
         // If not found by ID, try to find by name in the registry (ItemRegistry handles this via its map)
 
         if (def) {
+            // For armor items, get slot from extraData
+            const itemSlot = def.type === 'armor' && def.extraData?.slot
+                ? def.extraData.slot
+                : (def.slot || null);
+
             // Use shortName as the display name, and name as the internal slug/alias
-            entity.addComponent(new Item(def.shortName, def.description, def.weight, 1, def.size, def.legality, def.attributes, def.name, def.slot || null));
+            entity.addComponent(new Item(def.shortName, def.description, def.weight, 1, def.size, def.legality, def.attributes, def.name, itemSlot));
 
             if (def.type === 'container') {
                 const capacity = def.extraData.capacity || 10;
@@ -77,6 +123,7 @@ export class PrefabFactory {
                 const minTier = data.minTier || EngagementTier.MELEE;
                 const maxTier = data.maxTier || EngagementTier.MELEE;
                 const momentumImpact = data.momentumImpact || 0.1;
+                const roundtime = data.roundtime || 3;
                 entity.addComponent(new Weapon(
                     def.shortName,
                     def.description,
@@ -88,11 +135,15 @@ export class PrefabFactory {
                     data.difficulty || { speed: 1.0, zoneSize: 1, jitter: 0.1 },
                     minTier as any,
                     maxTier as any,
-                    momentumImpact
+                    momentumImpact,
+                    roundtime
                 ));
             } else if (def.type === 'cyberware') {
                 const data = def.extraData;
                 entity.addComponent(new Cyberware(data.slot || 'neural', new Map(Object.entries(data.modifiers || {}))));
+            } else if (def.type === 'armor') {
+                const data = def.extraData;
+                entity.addComponent(new Armor(data.defense || 0, data.penalty || 0));
             }
 
             // Add Magazine component if it's a magazine item
@@ -121,11 +172,11 @@ export class PrefabFactory {
                 break;
             case 'ceska_scorpion':
                 entity.addComponent(new Item("Ceska Scorpion", "A matte-black submachine gun.", 2.0));
-                entity.addComponent(new Weapon("Ceska Scorpion", "smg", 15, 20, "9mm", "Ceska Scorpion Magazine", 20, { speed: 1.2, zoneSize: 4, jitter: 0.2 }, EngagementTier.MISSILE, EngagementTier.MELEE, 0.3));
+                entity.addComponent(new Weapon("Ceska Scorpion", "smg", 15, 20, "9mm", "Ceska Scorpion Magazine", 20, { speed: 1.2, zoneSize: 4, jitter: 0.2 }, EngagementTier.MISSILE, EngagementTier.MELEE, 0.3, 3));
                 break;
             case 'compliance_derm':
                 entity.addComponent(new Item("Compliance Derm", "A dermal patch that induces paralysis.", 0.01));
-                entity.addComponent(new Weapon("Compliance Derm", "derm", 1, 1, "none", "none", 1, { speed: 1.0, zoneSize: 5, jitter: 0.0 }, EngagementTier.CLOSE_QUARTERS, EngagementTier.CLOSE_QUARTERS, 0.0));
+                entity.addComponent(new Weapon("Compliance Derm", "derm", 1, 1, "none", "none", 1, { speed: 1.0, zoneSize: 5, jitter: 0.0 }, EngagementTier.CLOSE_QUARTERS, EngagementTier.CLOSE_QUARTERS, 0.0, 1));
                 break;
             default:
                 return null;
@@ -271,7 +322,8 @@ export class PrefabFactory {
             'tactical shirt', 'cargo pants', 'utility belt',
             'ceska_scorpion', 'mag_scorpion', 'shotgun_12g', 'shells_12g',
             'rifle_556', 'mag_rifle_556', 'ammo_9mm_loose', 'ammo_556_loose',
-            'katana', 'dagger', 'machete', 'brass_knuckles'
+            'katana', 'dagger', 'machete', 'brass_knuckles',
+            'digital_blade', 'pulse_rifle', 'digital_vest', 'energy_cell'
         ];
     }
 

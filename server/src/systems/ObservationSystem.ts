@@ -11,6 +11,7 @@ import { IEngine } from '../ecs/IEngine';
 import { DescriptionService } from '../services/DescriptionService';
 import { MessageService } from '../services/MessageService';
 import { AutocompleteAggregator } from '../services/AutocompleteAggregator';
+import { ParserUtils } from '../utils/ParserUtils';
 
 export class ObservationSystem extends System {
     private messageService: MessageService;
@@ -61,41 +62,42 @@ export class ObservationSystem extends System {
         const inventory = player.getComponent(Inventory);
         if (!inventory) return;
 
-        // Search for the container in hands first
-        let targetContainer: Entity | undefined = undefined;
+        const { index, name: targetName } = ParserUtils.parseOrdinal(containerName);
+        const matches: Entity[] = [];
 
+        // Search for the container in hands first
         // Check left hand
         if (inventory.leftHand) {
             const item = WorldQuery.getEntityById(engine, inventory.leftHand);
             const itemComp = item?.getComponent(Item);
-            if (itemComp && itemComp.name.toLowerCase().includes(containerName.toLowerCase())) {
-                targetContainer = item;
+            if (itemComp && itemComp.name.toLowerCase().includes(targetName)) {
+                matches.push(item!);
             }
         }
 
         // Check right hand
-        if (!targetContainer && inventory.rightHand) {
+        if (inventory.rightHand) {
             const item = WorldQuery.getEntityById(engine, inventory.rightHand);
             const itemComp = item?.getComponent(Item);
-            if (itemComp && itemComp.name.toLowerCase().includes(containerName.toLowerCase())) {
-                targetContainer = item;
+            if (itemComp && itemComp.name.toLowerCase().includes(targetName)) {
+                matches.push(item!);
             }
         }
 
         // Search for the container in equipped items
-        if (!targetContainer) {
-            for (const itemId of inventory.equipment.values()) {
-                const item = WorldQuery.getEntityById(engine, itemId);
-                const itemComp = item?.getComponent(Item);
-                if (itemComp && itemComp.name.toLowerCase().includes(containerName.toLowerCase())) {
-                    targetContainer = item;
-                    break;
-                }
+        for (const itemId of inventory.equipment.values()) {
+            const item = WorldQuery.getEntityById(engine, itemId);
+            const itemComp = item?.getComponent(Item);
+            if (itemComp && itemComp.name.toLowerCase().includes(targetName)) {
+                matches.push(item!);
             }
         }
 
+        const targetContainer = matches[index];
+
         if (!targetContainer) {
-            this.messageService.info(entityId, `You don't have a ${containerName}.`);
+            const ordinalStr = index > 0 ? `${ParserUtils.ORDINAL_NAMES[index] || (index + 1) + 'th'} ` : '';
+            this.messageService.info(entityId, `You don't have a ${ordinalStr}${targetName}.`);
             return;
         }
 

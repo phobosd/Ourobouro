@@ -141,3 +141,40 @@
 .guide-toc::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+/* Search Styles */
+.guide-search {
+    flex: 1;
+    margin: 0 20px;
+}
+
+.guide-search-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #008800;
+    color: #00ff00;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.guide-search-input:focus {
+    border-color: #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    background: rgba(0, 20, 0, 0.6);
+}
+
+.search-highlight {
+    background-color: rgba(255, 255, 0, 0.4);
+    color: #fff;
+    padding: 0 2px;
+    border-radius: 2px;
+    box-shadow: 0 0 5px rgba(255, 255, 0, 0.3);
+}
+
+mark.search-highlight {
+    background-color: #ffff00;
+    color: #000;
+}

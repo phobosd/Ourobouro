@@ -9,6 +9,7 @@ interface ItemData {
     attributes: string;
     description: string;
     cost: number;
+    type?: string;
 }
 
 interface TerminalData {
@@ -25,6 +26,40 @@ interface Props {
 export const TerminalDisplay: React.FC<Props> = ({ data, socket, onClose }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
+    // Create a flat array of items in display order (grouped by type)
+    const displayItems = React.useMemo(() => {
+        const grouped: { [key: string]: ItemData[] } = {};
+        data.items.forEach(item => {
+            const type = item.type || 'item';
+            if (!grouped[type]) grouped[type] = [];
+            grouped[type].push(item);
+        });
+
+        const categories = [
+            { key: 'weapon' },
+            { key: 'armor' },
+            { key: 'item' },
+            { key: 'cyberware' },
+            { key: 'container' }
+        ];
+
+        const flatItems: ItemData[] = [];
+        categories.forEach(category => {
+            if (grouped[category.key]) {
+                flatItems.push(...grouped[category.key]);
+            }
+        });
+        return flatItems;
+    }, [data.items]);
+
+    // Scroll selected item into view
+    useEffect(() => {
+        const selectedRow = document.querySelector(`tr[data-index="${selectedIndex}"]`);
+        if (selectedRow) {
+            selectedRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, [selectedIndex]);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'ArrowUp') {
@@ -32,11 +67,13 @@ export const TerminalDisplay: React.FC<Props> = ({ data, socket, onClose }) => {
                 setSelectedIndex(prev => Math.max(0, prev - 1));
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                setSelectedIndex(prev => Math.min(data.items.length - 1, prev + 1));
+                setSelectedIndex(prev => Math.min(displayItems.length - 1, prev + 1));
             } else if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                const item = data.items[selectedIndex];
-                socket.emit('terminal-buy', { itemName: item.name, cost: item.cost });
+                const item = displayItems[selectedIndex];
+                if (item) {
+                    socket.emit('terminal-buy', { itemName: item.name, cost: item.cost });
+                }
             } else if (e.key === 'Escape') {
                 e.preventDefault();
                 onClose();
@@ -45,7 +82,7 @@ export const TerminalDisplay: React.FC<Props> = ({ data, socket, onClose }) => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [data, selectedIndex, socket, onClose]);
+    }, [displayItems, selectedIndex, socket, onClose]);
 
     return (
         <div className="term-overlay">
@@ -67,19 +104,58 @@ export const TerminalDisplay: React.FC<Props> = ({ data, socket, onClose }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.items.map((item, idx) => (
-                                <tr key={idx} className={idx === selectedIndex ? 'selected' : ''}>
-                                    <td className="term-name">
-                                        {idx === selectedIndex && <span className="term-cursor">&gt; </span>}
-                                        {item.name}
-                                    </td>
-                                    <td>{item.weight} kg</td>
-                                    <td>{item.size}</td>
-                                    <td className={`term-legality ${item.legality.toLowerCase()}`}>{item.legality}</td>
-                                    <td className="term-attr">{item.attributes}</td>
-                                    <td className="term-cost">{item.cost} CR</td>
-                                </tr>
-                            ))}
+                            {(() => {
+                                // Group items by type
+                                const grouped: { [key: string]: ItemData[] } = {};
+                                data.items.forEach(item => {
+                                    const type = item.type || 'item';
+                                    if (!grouped[type]) grouped[type] = [];
+                                    grouped[type].push(item);
+                                });
+
+                                // Define category order and labels
+                                const categories = [
+                                    { key: 'weapon', label: '═══ WEAPONS ═══' },
+                                    { key: 'armor', label: '═══ ARMOR ═══' },
+                                    { key: 'item', label: '═══ AMMUNITION & ITEMS ═══' },
+                                    { key: 'cyberware', label: '═══ CYBERWARE ═══' },
+                                    { key: 'container', label: '═══ CONTAINERS ═══' }
+                                ];
+
+                                let globalIndex = 0;
+                                return categories.map(category => {
+                                    if (!grouped[category.key]) return null;
+
+                                    const items = grouped[category.key];
+                                    return (
+                                        <React.Fragment key={category.key}>
+                                            <tr className="term-category-header">
+                                                <td colSpan={6}>{category.label}</td>
+                                            </tr>
+                                            {items.map((item) => {
+                                                const idx = globalIndex++;
+                                                return (
+                                                    <tr
+                                                        key={idx}
+                                                        data-index={idx}
+                                                        className={idx === selectedIndex ? 'selected' : ''}
+                                                    >
+                                                        <td className="term-name">
+                                                            {idx === selectedIndex && <span className="term-cursor">&gt; </span>}
+                                                            {item.name}
+                                                        </td>
+                                                        <td>{item.weight} kg</td>
+                                                        <td>{item.size}</td>
+                                                        <td className={`term-legality ${item.legality.toLowerCase()}`}>{item.legality}</td>
+                                                        <td className="term-attr">{item.attributes}</td>
+                                                        <td className="term-cost">{item.cost} CR</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </React.Fragment>
+                                    );
+                                });
+                            })()}
                         </tbody>
                     </table>
                 </div>

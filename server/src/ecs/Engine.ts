@@ -94,6 +94,10 @@ export class Engine implements IEngine {
         this.systems.push(system);
     }
 
+    getSystem<T>(systemClass: any): T | undefined {
+        return this.systems.find(s => s instanceof systemClass) as T | undefined;
+    }
+
     private reindexSpatial(): void {
         this.spatialIndex.clear();
         const entitiesWithPos = this.getEntitiesWithComponent(Position);

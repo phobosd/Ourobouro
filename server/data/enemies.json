@@ -65,6 +65,50 @@
                 "effect": "reflect_damage"
             },
             "description": "A heavy, armored figure made of burning orange firewall data."
+        },
+        {
+            "id": "glitch_architect",
+            "name": "Glitch Architect",
+            "tier": 4,
+            "stats": {
+                "atk": 40,
+                "def": 15,
+                "spd": 20,
+                "hp": 150
+            },
+            "visuals": {
+                "char": "A",
+                "color": "#ffffff",
+                "glitch_rate": 0.8
+            },
+            "special": {
+                "id": "rewrite",
+                "trigger": "low_hp",
+                "effect": "heal_self"
+            },
+            "description": "A tall, spindly figure that seems to be rewriting the room around it as it moves."
+        },
+        {
+            "id": "null_pointer",
+            "name": "Null Pointer",
+            "tier": 2,
+            "stats": {
+                "atk": 20,
+                "def": 0,
+                "spd": 30,
+                "hp": 40
+            },
+            "visuals": {
+                "char": "0",
+                "color": "#888888",
+                "glitch_rate": 0.5
+            },
+            "special": {
+                "id": "void",
+                "trigger": "death",
+                "effect": "explode"
+            },
+            "description": "A literal hole in reality, shaped like a zero. It draws light into itself."
         }
     ]
 }
