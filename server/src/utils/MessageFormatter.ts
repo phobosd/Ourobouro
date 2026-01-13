@@ -26,12 +26,12 @@ export class MessageFormatter {
         return this.wrap('system', content);
     }
 
-    static item(content: string): string {
-        return this.wrap('item', content);
+    static item(content: string, id?: string): string {
+        return id ? `<item id="${id}">${content}</item>` : this.wrap('item', content);
     }
 
-    static npc(content: string): string {
-        return this.wrap('npc', content);
+    static npc(content: string, id?: string): string {
+        return id ? `<npc id="${id}">${content}</npc>` : this.wrap('npc', content);
     }
 
     static combat(content: string): string {

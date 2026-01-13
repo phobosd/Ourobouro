@@ -11,6 +11,30 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Default Blue Theme */
+  --theme-primary: #00f3ff;
+  --theme-primary-dim: rgba(0, 243, 255, 0.3);
+  --theme-primary-glow: rgba(0, 243, 255, 0.15);
+  --theme-bg-translucent: rgba(0, 20, 30, 0.9);
+  --theme-bg-panel: rgba(0, 20, 30, 0.7);
+  --theme-bg-hover: rgba(0, 30, 45, 0.8);
+  --theme-border: rgba(0, 243, 255, 0.4);
+  --theme-text-shadow: #00f3ff;
+  --theme-grid-color: rgba(0, 243, 255, 0.05);
+}
+
+/* Matrix Mode Override (Green Theme) */
+.matrix-mode {
+  --theme-primary: #00ff41;
+  --theme-primary-dim: rgba(0, 255, 65, 0.3);
+  --theme-primary-glow: rgba(0, 255, 65, 0.15);
+  --theme-bg-translucent: rgba(0, 20, 0, 0.9);
+  --theme-bg-panel: rgba(0, 20, 0, 0.7);
+  --theme-bg-hover: rgba(0, 40, 0, 0.8);
+  --theme-border: rgba(0, 255, 65, 0.4);
+  --theme-text-shadow: #00ff41;
+  --theme-grid-color: rgba(0, 255, 65, 0.05);
 }
 
 body {

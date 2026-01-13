@@ -391,26 +391,64 @@ export class CombatSystem extends System {
             }
         }
 
-        const { name: parsedName, ordinal } = this.parseTargetName(targetName);
+        let target: Entity | undefined;
+        let parsedName = "";
+        let ordinal = 1;
 
-        // Find target NPC in the same room with ordinal support
-        const roomNPCs = engine.getEntitiesWithComponent(NPC).filter(e => {
-            const npc = e.getComponent(NPC);
-            const pos = e.getComponent(Position);
-            return npc && pos && npc.typeName.toLowerCase().includes(parsedName.toLowerCase()) &&
-                pos.x === attackerPos.x && pos.y === attackerPos.y;
-        });
+        if (!targetName) {
+            // Auto-targeting logic
+            // 1. Check if we have a locked target
+            if (combatStats && combatStats.targetId) {
+                const lockedTarget = WorldQuery.getEntityById(engine, combatStats.targetId);
+                const lockedPos = lockedTarget?.getComponent(Position);
+                // Verify target is still valid and in the same room
+                if (lockedTarget && lockedPos && lockedPos.x === attackerPos.x && lockedPos.y === attackerPos.y) {
+                    target = lockedTarget;
+                }
+            }
 
-        if (roomNPCs.length === 0) {
-            this.messageService.info(attackerId, `You don't see "${targetName}" here.`);
-            return;
-        }
+            // 2. If no locked target, check for single hostile/NPC in room
+            if (!target) {
+                const roomNPCs = WorldQuery.findNPCsAt(engine, attackerPos.x, attackerPos.y);
+                if (roomNPCs.length === 1) {
+                    target = roomNPCs[0];
+                } else if (roomNPCs.length > 1) {
+                    // If multiple, maybe prioritize hostile ones? 
+                    // For now, if multiple and no target specified, it's ambiguous.
+                    this.messageService.info(attackerId, "There are multiple targets here. Which one do you want to attack?");
+                    return;
+                }
+            }
 
-        const target = roomNPCs[ordinal - 1];
+            if (!target) {
+                this.messageService.info(attackerId, "Attack who?");
+                return;
+            }
+        } else {
+            // Standard parsing logic
+            const result = this.parseTargetName(targetName);
+            parsedName = result.name;
+            ordinal = result.ordinal;
 
-        if (!target) {
-            this.messageService.info(attackerId, `There is no ${ordinal > 1 ? this.ordinalNames[ordinal - 1] || ordinal : ''} "${parsedName}" here.`);
-            return;
+            // Find target NPC in the same room with ordinal support
+            const roomNPCs = engine.getEntitiesWithComponent(NPC).filter(e => {
+                const npc = e.getComponent(NPC);
+                const pos = e.getComponent(Position);
+                return npc && pos && npc.typeName.toLowerCase().includes(parsedName.toLowerCase()) &&
+                    pos.x === attackerPos.x && pos.y === attackerPos.y;
+            });
+
+            if (roomNPCs.length === 0) {
+                this.messageService.info(attackerId, `You don't see "${targetName}" here.`);
+                return;
+            }
+
+            target = roomNPCs[ordinal - 1];
+
+            if (!target) {
+                this.messageService.info(attackerId, `There is no ${ordinal > 1 ? this.ordinalNames[ordinal - 1] || ordinal : ''} "${parsedName}" here.`);
+                return;
+            }
         }
 
         const targetNPC = target.getComponent(NPC);

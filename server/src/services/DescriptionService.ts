@@ -33,7 +33,7 @@ export class DescriptionService {
         const itemsInRoom = WorldQuery.findItemsAt(engine, playerPos.x, playerPos.y);
         const itemDescriptions = itemsInRoom.map(item => {
             const itemComp = item.getComponent(Item);
-            return itemComp ? MessageFormatter.item(`There is a ${itemComp.name} here.`) : '';
+            return itemComp ? `There is a ${MessageFormatter.item(itemComp.name, item.id)} here.` : '';
         }).filter(s => s !== '').join('\n');
 
         // Find NPCs in the room
@@ -44,9 +44,9 @@ export class DescriptionService {
             if (npcComp) {
                 // Enemies (with CombatStats and isHostile) are red
                 if (combatStats && combatStats.isHostile) {
-                    return `<enemy>${npcComp.typeName} is standing here.</enemy>`;
+                    return `<enemy id="${npc.id}">${npcComp.typeName} is standing here.</enemy>`;
                 } else {
-                    return MessageFormatter.npc(`${npcComp.typeName} is standing here.`);
+                    return MessageFormatter.npc(`${npcComp.typeName} is standing here.`, npc.id);
                 }
             }
             return '';
@@ -367,7 +367,8 @@ ${MessageFormatter.title(`[${itemComp.name}]`)}
             const item = WorldQuery.getEntityById(engine, id);
             const i = item?.getComponent(Item);
             if (!i) return "Unknown";
-            return i.quantity > 1 ? `${i.name} x${i.quantity}` : i.name;
+            const displayName = i.quantity > 1 ? `${i.name} x${i.quantity}` : i.name;
+            return MessageFormatter.item(displayName, id);
         });
     }
 
@@ -385,7 +386,7 @@ ${MessageFormatter.title(`[${itemComp.name}]`)}
             const i = item?.getComponent(Item);
             if (i) {
                 const displayName = i.quantity > 1 ? `${i.name} (x${i.quantity})` : i.name;
-                output += MessageFormatter.item(`  - ${displayName}`) + '\n';
+                output += `  - ${MessageFormatter.item(displayName, id)}\n`;
             }
         });
 
@@ -411,7 +412,7 @@ ${MessageFormatter.title(`[${itemComp.name}]`)}
                 pedestals.forEach(p => {
                     const desc = p.getComponent(Description);
                     if (desc) {
-                        message += MessageFormatter.item(`- ${desc.title}`) + '\n';
+                        message += `- ${MessageFormatter.item(desc.title, p.id)}\n`;
                     }
                 });
                 return message;

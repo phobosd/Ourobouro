@@ -168,6 +168,7 @@ For melee combat, you can choose between immediate actions or "uploading" a sequ
 **Buffer Actions**:
 *   `dash`: Closes distance to the target.
 *   `slash`: A standard melee strike (1.2x damage).
+*   `slice`: A fast, precision strike (Samurai weapons build momentum).
 *   `thrust`: A powerful, focused strike (1.5x damage).
 *   `parry`: Provides a temporary +20 bonus to your Parry defense and opens an **Active Parry Window** (1.5s).
 

@@ -23,43 +23,13 @@ interface TerminalLine {
 }
 
 // Helper function to parse messages (moved outside component to be accessible)
-const parseMessage = (text: string): React.ReactNode => {
-    if (!text) return null;
+import { ParseMessage } from './InteractiveText';
 
-    const tagRegex = /<([a-zA-Z0-9-]+)>([\s\S]*?)<\/\1>/g;
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = tagRegex.exec(text)) !== null) {
-        if (match.index > lastIndex) {
-            parts.push(<span key={`text-${lastIndex}`}>{text.substring(lastIndex, match.index)}</span>);
-        }
-
-        const tag = match[1];
-        const content = match[2];
-
-        parts.push(
-            <span key={`tag-${match.index}`} className={`text-${tag}`}>
-                {parseMessage(content)}
-            </span>
-        );
-
-        lastIndex = tagRegex.lastIndex;
-    }
-
-    if (lastIndex < text.length) {
-        parts.push(<span key={`text-${lastIndex}`}>{text.substring(lastIndex)}</span>);
-    }
-
-    return <>{parts}</>;
-};
-
-const TerminalLineItem = React.memo(({ line }: { line: TerminalLine }) => {
+const TerminalLineItem = React.memo(({ line, socket }: { line: TerminalLine, socket: Socket | null }) => {
     return (
         <div className={`terminal-line ${line.type}`}>
             {line.type === 'inventory' && line.data ? (
-                <InventoryDisplay data={line.data} />
+                <InventoryDisplay data={line.data} socket={socket} />
             ) : line.type === 'score' && line.data ? (
                 <ScoreDisplay data={line.data} />
             ) : line.type === 'sheet' && line.data ? (
@@ -67,7 +37,7 @@ const TerminalLineItem = React.memo(({ line }: { line: TerminalLine }) => {
             ) : line.type === 'map' && line.data ? (
                 <MapDisplay data={line.data} />
             ) : (
-                parseMessage(line.text)
+                <ParseMessage text={line.text} socket={socket} />
             )}
         </div>
     );
@@ -103,7 +73,18 @@ export const Terminal: React.FC = () => {
         engagement?: string;
         momentum?: number;
         hasKatana?: boolean;
-    } | null>(null);
+        leftHand?: string;
+        rightHand?: string;
+        leftHandDetails?: any;
+        rightHandDetails?: any;
+    } | null>({
+        hp: 100,
+        maxHp: 100,
+        stance: 'standing',
+        engagement: 'disengaged',
+        leftHand: 'Empty',
+        rightHand: 'Empty'
+    });
 
     const [terminalData, setTerminalData] = useState<any>(null);
     const [guideContent, setGuideContent] = useState<string | null>(null);
@@ -229,6 +210,8 @@ export const Terminal: React.FC = () => {
 
         newSocket.on('cyberspace-state', (data: { active: boolean }) => {
             setIsMatrixMode(data.active);
+            // Refresh map data to reflect new mode
+            newSocket.emit('command', 'map');
         });
 
         // Listen for position updates to refresh mini-map
@@ -251,8 +234,8 @@ export const Terminal: React.FC = () => {
     const addLine = (newLine: TerminalLine) => {
         setLines(prev => {
             const newLines = [...prev, newLine];
-            if (newLines.length > 1000) {
-                return newLines.slice(newLines.length - 1000);
+            if (newLines.length > 2000) {
+                return newLines.slice(newLines.length - 2000);
             }
             return newLines;
         });
@@ -661,7 +644,7 @@ export const Terminal: React.FC = () => {
             )}
             <div className="terminal-output" ref={outputRef}>
                 {lines.map(line => (
-                    <TerminalLineItem key={line.id} line={line} />
+                    <TerminalLineItem key={line.id} line={line} socket={socket} />
                 ))}
             </div>
             <div className="terminal-input-area">

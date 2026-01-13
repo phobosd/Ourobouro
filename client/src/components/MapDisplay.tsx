@@ -75,8 +75,8 @@ export const MapDisplay: React.FC<Props> = React.memo(({ data }) => {
                 marginTop: '10px',
                 textAlign: 'center',
                 fontSize: '12px',
-                color: isCyberspace ? '#00ff41' : '#0ff',
-                borderTop: `1px solid ${isCyberspace ? 'rgba(0, 255, 65, 0.3)' : 'rgba(0, 255, 255, 0.3)'}`,
+                color: 'var(--theme-primary)',
+                borderTop: '1px solid var(--theme-primary-dim)',
                 paddingTop: '5px'
             }}>
                 LOCATION: ({isCyberspace ? displayX - 10000 : displayX}, {displayY}) | SECTOR: {sector}

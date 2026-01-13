@@ -4,25 +4,27 @@
     top: 50%;
     transform: translateY(-50%);
     width: 200px;
-    background: rgba(0, 10, 0, 0.9);
-    border: 1px solid #00ff41;
-    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    background: var(--theme-bg-translucent);
+    border: 1px solid var(--theme-primary);
+    box-shadow: 0 0 15px var(--theme-primary-glow);
     padding: 10px;
     font-family: 'Courier New', Courier, monospace;
-    color: #00ff41;
+    color: var(--theme-primary);
     z-index: 1000;
     pointer-events: none;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    clip-path: polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px);
 }
 
 .buffer-header {
     font-weight: bold;
     font-size: 0.9rem;
-    border-bottom: 1px solid #00ff41;
+    border-bottom: 1px solid var(--theme-primary);
     padding-bottom: 5px;
-    text-shadow: 0 0 5px #00ff41;
+    text-shadow: 0 0 5px var(--theme-text-shadow);
+    color: var(--theme-primary);
 }
 
 .buffer-info {
@@ -30,9 +32,9 @@
     flex-direction: column;
     gap: 2px;
     font-size: 0.75rem;
-    background: rgba(0, 30, 0, 0.6);
+    background: var(--theme-bg-panel);
     padding: 5px;
-    border: 1px dashed rgba(0, 255, 65, 0.3);
+    border: 1px dashed var(--theme-primary-dim);
 }
 
 .info-item {
@@ -55,20 +57,20 @@
     display: flex;
     gap: 10px;
     padding: 5px;
-    background: rgba(0, 40, 0, 0.5);
-    border: 1px solid rgba(0, 255, 65, 0.2);
+    background: var(--theme-bg-panel);
+    border: 1px solid var(--theme-border);
     transition: all 0.3s ease;
 }
 
 .buffer-slot.filled {
-    border-color: #00ff41;
-    background: rgba(0, 60, 0, 0.7);
+    border-color: var(--theme-primary);
+    background: var(--theme-bg-hover);
 }
 
 .buffer-slot.active {
-    background: #00ff41;
+    background: var(--theme-primary);
     color: #000;
-    box-shadow: 0 0 10px #00ff41;
+    box-shadow: 0 0 10px var(--theme-primary);
     animation: pulse 1s infinite;
 }
 
@@ -84,7 +86,7 @@
     font-size: 0.8rem;
     text-align: center;
     padding: 5px;
-    background: rgba(0, 20, 0, 0.8);
+    background: var(--theme-bg-hover);
 }
 
 .status-executing {

@@ -3,6 +3,7 @@ import { Component } from '../ecs/Component';
 export enum CombatActionType {
     DASH = 'DASH',
     SLASH = 'SLASH',
+    SLICE = 'SLICE',
     PARRY = 'PARRY',
     THRUST = 'THRUST',
     REBOOT = 'REBOOT', // Malware

@@ -15,6 +15,7 @@ import { MessageService } from '../services/MessageService';
 import { Server } from 'socket.io';
 import { ParserUtils } from '../utils/ParserUtils';
 import { CombatStats } from '../components/CombatStats';
+import { MessageFormatter } from '../utils/MessageFormatter';
 
 export class InventorySystem extends System {
     private io: Server;
@@ -349,7 +350,8 @@ export class InventorySystem extends System {
         const getItemName = (id: string | null) => {
             if (!id) return "Empty";
             const item = WorldQuery.getEntityById(engine, id);
-            return item?.getComponent(Item)?.name || "Unknown";
+            const itemComp = item?.getComponent(Item);
+            return itemComp ? MessageFormatter.item(itemComp.name, id) : "Unknown";
         };
 
         this.io.to(entityId).emit('inventory-data', {

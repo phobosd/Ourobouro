@@ -20,6 +20,47 @@ interface Props {
 }
 
 export const MiniMap: React.FC<Props> = ({ data }) => {
+    const [position, setPosition] = React.useState({ x: window.innerWidth - 340, y: 20 });
+    const [isDragging, setIsDragging] = React.useState(false);
+    const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 });
+
+
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setIsDragging(true);
+        setDragOffset({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y
+        });
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+        if (isDragging) {
+            setPosition({
+                x: e.clientX - dragOffset.x,
+                y: e.clientY - dragOffset.y
+            });
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    React.useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        } else {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, dragOffset]);
+
     if (!data) return null;
 
     const getSymbol = (cell: MapCell) => {
@@ -52,7 +93,16 @@ export const MiniMap: React.FC<Props> = ({ data }) => {
     else sector = 'STRAYLIGHT';
 
     return (
-        <div className={`minimap-container ${isCyberspace ? 'matrix-mode' : ''}`}>
+        <div
+            className={`minimap-container ${isCyberspace ? 'matrix-mode' : ''} ${isDragging ? 'dragging' : ''}`}
+            style={{
+                right: 'auto',
+                left: `${position.x}px`,
+                top: `${position.y}px`,
+                cursor: isDragging ? 'grabbing' : 'grab'
+            }}
+            onMouseDown={handleMouseDown}
+        >
             <div className="minimap-header">
                 {isCyberspace ? 'NEURAL MAP' : 'NAV MAP'}
             </div>

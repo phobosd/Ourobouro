@@ -16,6 +16,8 @@ interface StatusProps {
         hasKatana?: boolean;
         leftHand?: string;
         rightHand?: string;
+        leftHandDetails?: any;
+        rightHandDetails?: any;
         evasion?: number;
         parry?: number;
         shield?: number;
@@ -23,18 +25,26 @@ interface StatusProps {
     } | null;
 }
 
+import { ItemTooltip } from './ItemTooltip';
+
 export const HandsDisplay: React.FC<StatusProps> = ({ stats }) => {
     if (!stats) return null;
 
     return (
         <div className="hands-display">
             <div className="hand-box left">
-                <div className="hand-label">L</div>
-                <div className="hand-content">{stats.leftHand || 'Empty'}</div>
+                <div className="hand-box-visual">
+                    <div className="hand-label">L</div>
+                    <div className="hand-content">{stats.leftHand || 'Empty'}</div>
+                </div>
+                {stats.leftHandDetails && <ItemTooltip details={stats.leftHandDetails} />}
             </div>
             <div className="hand-box right">
-                <div className="hand-label">R</div>
-                <div className="hand-content">{stats.rightHand || 'Empty'}</div>
+                <div className="hand-box-visual">
+                    <div className="hand-label">R</div>
+                    <div className="hand-content">{stats.rightHand || 'Empty'}</div>
+                </div>
+                {stats.rightHandDetails && <ItemTooltip details={stats.rightHandDetails} />}
             </div>
         </div>
     );

@@ -377,10 +377,6 @@ commandRegistry.register({
     description: 'Attack a target',
     execute: (ctx) => {
         const targetName = ctx.args.join(' ');
-        if (!targetName) {
-            ctx.io.to(ctx.socketId).emit('message', 'Attack what?');
-            return;
-        }
         ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine);
     }
 });
@@ -391,10 +387,6 @@ commandRegistry.register({
     description: 'Punch a target (Brawling)',
     execute: (ctx) => {
         const targetName = ctx.args.join(' ');
-        if (!targetName) {
-            ctx.io.to(ctx.socketId).emit('message', 'Punch who?');
-            return;
-        }
         ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'punch');
     }
 });
@@ -405,10 +397,6 @@ commandRegistry.register({
     description: 'Jab a target (Brawling)',
     execute: (ctx) => {
         const targetName = ctx.args.join(' ');
-        if (!targetName) {
-            ctx.io.to(ctx.socketId).emit('message', 'Jab who?');
-            return;
-        }
         ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'jab');
     }
 });
@@ -419,10 +407,6 @@ commandRegistry.register({
     description: 'Headbutt a target (Brawling)',
     execute: (ctx) => {
         const targetName = ctx.args.join(' ');
-        if (!targetName) {
-            ctx.io.to(ctx.socketId).emit('message', 'Headbutt who?');
-            return;
-        }
         ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'headbutt');
     }
 });
@@ -433,10 +417,6 @@ commandRegistry.register({
     description: 'Uppercut a target (Brawling)',
     execute: (ctx) => {
         const targetName = ctx.args.join(' ');
-        if (!targetName) {
-            ctx.io.to(ctx.socketId).emit('message', 'Uppercut who?');
-            return;
-        }
         ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'uppercut');
     }
 });
@@ -445,14 +425,7 @@ commandRegistry.register({
     name: 'slice',
     aliases: [],
     description: 'Perform a fast, precision strike (Samurai weapons build momentum)',
-    execute: (ctx) => {
-        const targetName = ctx.args.join(' ');
-        if (!targetName) {
-            ctx.io.to(ctx.socketId).emit('message', 'Slice who?');
-            return;
-        }
-        ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'slice');
-    }
+    execute: (ctx) => handleBufferAction(ctx, CombatActionType.SLICE)
 });
 
 commandRegistry.register({
@@ -461,10 +434,6 @@ commandRegistry.register({
     description: 'Perform a devastating instant strike (Requires 30+ Momentum)',
     execute: (ctx) => {
         const targetName = ctx.args.join(' ');
-        if (!targetName) {
-            ctx.io.to(ctx.socketId).emit('message', 'Iaijutsu who?');
-            return;
-        }
         ctx.systems.combat.handleIaijutsu(ctx.socketId, targetName, ctx.engine);
     }
 });
@@ -506,6 +475,9 @@ const handleBufferAction = (ctx: CommandContext, type: CombatActionType) => {
                 break;
             case CombatActionType.THRUST:
                 ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'thrust');
+                break;
+            case CombatActionType.SLICE:
+                ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'slice');
                 break;
             case CombatActionType.PARRY:
                 ctx.systems.combat.handleImmediateParry(ctx.socketId, ctx.engine);
@@ -1128,22 +1100,29 @@ setInterval(() => {
     for (const [id, entity] of engine.getEntities()) {
         const combatStats = entity.getComponent(CombatStats);
         const stance = entity.getComponent(Stance);
+        const momentum = entity.getComponent(Momentum);
+
         if (combatStats) {
             const rt = entity.getComponent(Roundtime) as Roundtime | undefined;
             const stats = entity.getComponent(Stats);
             const con = stats?.attributes.get('CON')?.value || 10;
 
             const inventory = entity.getComponent(Inventory);
-            const rightHandItem = inventory?.rightHand ? WorldQuery.getEntityById(engine, inventory.rightHand) : null;
-            const weapon = rightHandItem?.getComponent(Weapon);
-            const weaponName = weapon?.name.toLowerCase() || '';
-            const hasKatana = weaponName.includes('katana') ||
-                weaponName.includes('kitana') ||
-                weaponName.includes('samurai sword') || false;
 
             const leftHandItem = inventory?.leftHand ? WorldQuery.getEntityById(engine, inventory.leftHand) : null;
             const leftHandName = leftHandItem?.getComponent(Item)?.name || 'Empty';
+            const leftHandItemComp = leftHandItem?.getComponent(Item);
+            const leftHandWeapon = leftHandItem?.getComponent(Weapon);
+
+            const rightHandItem = inventory?.rightHand ? WorldQuery.getEntityById(engine, inventory.rightHand) : null;
             const rightHandName = rightHandItem?.getComponent(Item)?.name || 'Empty';
+            const rightHandItemComp = rightHandItem?.getComponent(Item);
+            const rightHandWeapon = rightHandItem?.getComponent(Weapon);
+
+            const weaponName = rightHandWeapon?.name.toLowerCase() || '';
+            const hasKatana = weaponName.includes('katana') ||
+                weaponName.includes('kitana') ||
+                weaponName.includes('samurai sword') || false;
 
             io.to(id).emit('stats-update', {
                 hp: combatStats.hp,
@@ -1155,10 +1134,28 @@ setInterval(() => {
                 fatigue: combatStats.fatigue,
                 maxFatigue: con * 10,
                 engagement: combatStats.engagementTier,
-                momentum: entity.getComponent(Momentum)?.current || 0,
+                momentum: momentum?.current || 0,
                 hasKatana,
                 leftHand: leftHandName,
                 rightHand: rightHandName,
+                leftHandDetails: leftHandItemComp ? {
+                    name: leftHandItemComp.name,
+                    description: leftHandItemComp.description,
+                    weight: leftHandItemComp.weight,
+                    attributes: leftHandItemComp.attributes,
+                    damage: leftHandWeapon?.damage,
+                    range: leftHandWeapon?.range,
+                    ammo: leftHandWeapon ? `${leftHandWeapon.currentAmmo}/${leftHandWeapon.magSize}` : undefined
+                } : null,
+                rightHandDetails: rightHandItemComp ? {
+                    name: rightHandItemComp.name,
+                    description: rightHandItemComp.description,
+                    weight: rightHandItemComp.weight,
+                    attributes: rightHandItemComp.attributes,
+                    damage: rightHandWeapon?.damage,
+                    range: rightHandWeapon?.range,
+                    ammo: rightHandWeapon ? `${rightHandWeapon.currentAmmo}/${rightHandWeapon.magSize}` : undefined
+                } : null,
                 evasion: combatStats.evasion,
                 parry: combatStats.parry,
                 shield: combatStats.shield,
@@ -1167,7 +1164,6 @@ setInterval(() => {
         }
 
         // Momentum Management
-        const momentum = entity.getComponent(Momentum);
         if (momentum) {
             let inCombat = combatStats && combatStats.engagementTier !== EngagementTier.DISENGAGED;
 
@@ -1397,6 +1393,144 @@ io.on('connection', (socket) => {
             return;
         }
         interactionSystem.handleTerminalBuy(socket.id, engine, result.data.itemName, result.data.cost);
+    });
+
+    socket.on('get-item-details', (request: any, callback: (data: any) => void) => {
+        let itemName = '';
+        let itemId = '';
+
+        if (typeof request === 'string') {
+            itemName = request;
+        } else {
+            itemName = request.name;
+            itemId = request.id;
+        }
+
+        console.log(`[Server] get-item-details requested for: "${itemName}" (ID: ${itemId})`);
+
+        let item: any = null;
+
+        // 1. Try to find by Entity ID first (if provided)
+        if (itemId) {
+            const entity = engine.getEntity(itemId);
+            if (entity) {
+                const itemComp = entity.getComponent(Item);
+                if (itemComp) {
+                    // Construct item details from the component directly
+                    // We might need to look up the template for some static data if not on component
+                    // But for now, let's assume component + registry fallback for description
+
+                    // Try to find the template to get description/attributes if missing
+                    // We don't store templateId on Item component currently, which is a limitation.
+                    // But we can try to match by name again in registry for static data.
+                    const template = ItemRegistry.getInstance().getItem(itemComp.name) ||
+                        ItemRegistry.getInstance().getAllItems().find(i => i.name === itemComp.name);
+
+                    item = {
+                        name: itemComp.name,
+                        description: itemComp.description || template?.description || "No description.",
+                        weight: itemComp.weight,
+                        // Use component data for dynamic stats if available, otherwise template
+                        extraData: {
+                            damage: (entity.getComponent(Weapon) as any)?.damage || template?.extraData?.damage,
+                            range: (entity.getComponent(Weapon) as any)?.range || template?.extraData?.range,
+                            magSize: template?.extraData?.magSize,
+                            currentAmmo: template?.extraData?.currentAmmo // This might need actual ammo tracking logic
+                        },
+                        attributes: template?.attributes
+                    };
+                }
+            }
+        }
+
+        // 2. Fallback to Registry Lookup by Name
+        if (!item) {
+            // Try to find by name or ID
+            item = ItemRegistry.getInstance().getItem(itemName);
+
+            // If not found, try to find by shortName (case insensitive search in registry)
+            if (!item) {
+                const allItems = ItemRegistry.getInstance().getAllItems();
+                item = allItems.find(i => i.name.toLowerCase() === itemName.toLowerCase() || i.shortName.toLowerCase() === itemName.toLowerCase());
+            }
+        }
+
+        if (item) {
+            callback({
+                name: item.name,
+                description: item.description,
+                damage: item.extraData?.damage,
+                range: item.extraData?.range,
+                ammo: item.extraData?.magSize ? `${item.extraData.currentAmmo || item.extraData.magSize}/${item.extraData.magSize}` : undefined,
+                weight: item.weight,
+                attributes: item.attributes
+            });
+        } else {
+            callback(null);
+        }
+    });
+
+    socket.on('get-npc-details', (request: { id?: string, name: string }, callback) => {
+        let npcName = request.name;
+        let npcId = request.id;
+
+        let npcEntity: Entity | undefined;
+
+        // 1. Try to find by Entity ID first (if provided)
+        if (npcId) {
+            npcEntity = engine.getEntity(npcId);
+        }
+
+        // 2. Fallback: Find by name in the same room as player
+        if (!npcEntity) {
+            const player = engine.getEntity(socket.id);
+            if (player) {
+                const playerPos = player.getComponent(Position);
+                if (playerPos) {
+                    const npcsInRoom = WorldQuery.findNPCsAt(engine, playerPos.x, playerPos.y);
+                    npcEntity = npcsInRoom.find(n => {
+                        const npcComp = n.getComponent(NPC);
+                        return npcComp && npcComp.typeName.toLowerCase() === npcName.toLowerCase();
+                    });
+                }
+            }
+        }
+
+        if (npcEntity) {
+            const npcComp = npcEntity.getComponent(NPC);
+            const combatStats = npcEntity.getComponent(CombatStats);
+            const inventory = npcEntity.getComponent(Inventory);
+
+            // Basic details
+            const details: any = {
+                name: npcComp?.typeName || "Unknown",
+                description: npcComp?.description || "No description available.",
+                isHostile: combatStats?.isHostile || false,
+                health: combatStats ? `${Math.ceil(combatStats.hp)}/${combatStats.maxHp}` : "Unknown",
+                status: combatStats?.isHostile ? "Hostile" : "Neutral"
+            };
+
+            // Equipment summary
+            if (inventory) {
+                const equipment: string[] = [];
+                if (inventory.rightHand) {
+                    const item = WorldQuery.getEntityById(engine, inventory.rightHand);
+                    if (item) equipment.push(`Right Hand: ${item.getComponent(Item)?.name}`);
+                }
+                if (inventory.leftHand) {
+                    const item = WorldQuery.getEntityById(engine, inventory.leftHand);
+                    if (item) equipment.push(`Left Hand: ${item.getComponent(Item)?.name}`);
+                }
+                // Could add worn items too if desired
+                if (equipment.length > 0) {
+                    details.equipment = equipment;
+                }
+            }
+
+            callback(details);
+        } else {
+            callback(null);
+        }
     });
 
     socket.on('disconnect', () => {
