@@ -67,7 +67,7 @@ graph TD
             Gen_NPC[NPC Generator]
             Gen_Quest[Quest Generator]
             Gen_Map[Map/Chunk Generator]
-            LLM[LLM Service (Flavor Text)]
+            LLM["LLM Service (Flavor Text)"]
         end
         
         subgraph "Gatekeepers (Safety)"
