@@ -17,7 +17,7 @@ graph TD
         Director[World Director]
         Guardrails[Guardrail Service]
         Publisher[Publisher Service]
-        Engine[Game Engine (ECS)]
+        Engine["Game Engine (ECS)"]
         
         subgraph "Generators"
             NPCGen[NPC Generator]
@@ -30,7 +30,7 @@ graph TD
     end
 
     subgraph "External"
-        AI[LLM Provider (Gemini/Local)]
+        AI["LLM Provider (Gemini/Local)"]
     end
 
     Admin -->|Socket.IO| Director
