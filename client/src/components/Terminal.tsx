@@ -5,6 +5,7 @@ import { GuideOverlay } from './GuideOverlay';
 import { MiniMap } from './MiniMap';
 import { StatusBar, HandsDisplay, CombatStatusDisplay } from './StatusHUD';
 import { CombatBufferDisplay } from './CombatBufferDisplay';
+import { CombatDisplay } from './CombatDisplay';
 import { TerminalLineItem } from './TerminalLineItem';
 import { TerminalInput } from './TerminalInput';
 import { useGameSocket } from '../hooks/useGameSocket';
@@ -58,6 +59,7 @@ export const Terminal: React.FC = () => {
             )}
             {socket && <CombatOverlay socket={socket} />}
             {socket && <CombatBufferDisplay socket={socket} />}
+            {socket && <CombatDisplay socket={socket} />}
             <MiniMap data={miniMapData} />
             {terminalData && (
                 <TerminalDisplay

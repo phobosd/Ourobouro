@@ -10,7 +10,7 @@ const COMMANDS = [
     'wear', 'equip', 'remove', 'unequip', 'takeoff',
     'turn', 'rotate', 'jack_in', 'jack_out', 'jackin', 'jackout',
     'maneuver', 'man', 'target', 'stance', 'appraise', 'app',
-    'advance', 'adv', 'retreat', 'flee', 'hangback', 'reload', 'ammo', 'stop', 'assess',
+    'advance', 'adv', 'retreat', 'flee', 'hangback', 'reload', 'ammo', 'stop', 'assess', 'balance', 'bal',
     'dash', 'slash', 'parry', 'thrust', 'upload', 'execute',
     'punch', 'jab', 'headbutt', 'uppercut', 'iaijutsu', 'iai', 'slice'
 ];
@@ -59,6 +59,7 @@ export const useTerminalInput = (
         if (['maneuver', 'man'].includes(cmd)) return "Usage: maneuver <close|withdraw> [target]";
         if (['put', 'stow'].includes(cmd)) return "Usage: put <item> in <container>";
         if (cmd === 'target') return "Usage: target <body_part>";
+        if (['balance', 'bal'].includes(cmd)) return "Usage: balance";
         if (cmd === 'stance') return "Usage: stance <type>";
         if (cmd === 'flee') return "Usage: flee <direction>";
         if (['appraise', 'app'].includes(cmd)) return "Usage: appraise <target>";
@@ -263,7 +264,8 @@ export const useTerminalInput = (
             } else if (cmd === 'target') {
                 const search = parts.slice(1).join(' ');
                 const bodyParts = ['head', 'neck', 'chest', 'abdomen', 'back', 'r_arm', 'l_arm', 'r_leg', 'l_leg', 'eyes'];
-                matches = bodyParts.filter(s => s.startsWith(search.toLowerCase()));
+                const candidates = Array.from(new Set([...bodyParts, ...autocompleteData.roomNPCs]));
+                matches = candidates.filter(s => matchCandidate(s, search));
                 baseString = rawParts[0] + ' ';
             } else if (cmd === 'stance') {
                 const search = parts.slice(1).join(' ');

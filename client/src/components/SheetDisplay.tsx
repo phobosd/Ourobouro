@@ -51,34 +51,6 @@ export const SheetDisplay: React.FC<Props> = ({ data }) => {
                         </div>
                     </div>
                 </div>
-
-                {data.equipment && (
-                    <div className="inventory-section" style={{ gridColumn: '1 / -1' }}>
-                        <div className="section-title">ARMOR & GEAR:</div>
-                        <div className="backpack-list" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                            <div className="inventory-item stat-row">
-                                <span className="stat-label">Head:</span>
-                                <span className="stat-value">{data.equipment.head}</span>
-                            </div>
-                            <div className="inventory-item stat-row">
-                                <span className="stat-label">Torso:</span>
-                                <span className="stat-value">{data.equipment.torso}</span>
-                            </div>
-                            <div className="inventory-item stat-row">
-                                <span className="stat-label">Legs:</span>
-                                <span className="stat-value">{data.equipment.legs}</span>
-                            </div>
-                            <div className="inventory-item stat-row">
-                                <span className="stat-label">Feet:</span>
-                                <span className="stat-value">{data.equipment.feet}</span>
-                            </div>
-                            <div className="inventory-item stat-row">
-                                <span className="stat-label">Hands:</span>
-                                <span className="stat-value">{data.equipment.hands}</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

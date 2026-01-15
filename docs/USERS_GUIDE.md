@@ -27,6 +27,7 @@ Welcome to Ouroboro, a cyberpunk text-based RPG. This guide will help you naviga
 | `map` | `m` | Display the world map. | `map` |
 | `weather` | `sky` | Scan the sky for current weather conditions. | `weather` |
 | `stance` | - | Check or set your physical/combat stance. | `stance`, `stance offensive` |
+| `balance` | `bal` | Check your current balance. | `balance` |
 | `use` | `u` | Use a consumable item. | `use medkit` |
 
 ## The Sprawl & Its Districts
@@ -120,18 +121,6 @@ Your character's physical and mental capabilities directly impact your survival.
 *   **Strength (STR)**: Affects your carrying capacity and weight limits (important for heavy armor and weapons).
 *   **Momentum (Flow)**: A dynamic value (0-100%) representing your combat rhythm and focus. 
     *   **Building**: Gained through successful attacks, especially specialized moves like `slice`.
-    *   **Persistence**: Momentum persists as long as you are actively engaged or being targeted by a hostile NPC in the same room. It resets to 0 only when combat is fully concluded.
-    *   **States**: 
-        *   `Building` (0-14%): Just starting to find your rhythm.
-        *   `Flowing` (15-29%): Your movements become more fluid.
-        *   `Peak` (30%+): You are in a state of perfect focus. **Required for Iaijutsu.**
-
-### 2. Engagement Tiers (Range)
-Combat occurs at specific ranges. You must be at the correct range for your weapon to be effective.
-
-*   **Disengaged**: Outside of immediate combat.
-*   **Missile**: Long range. Ideal for **Rifles**, **Pistols**, and **SMGs**.
-*   **Polearm**: Extended melee range. Used for **Monofilament Whips** and other reach weapons.
 *   **Melee**: The standard range for **Katanas**, **Machetes**, and **Clubs**.
 *   **Close Quarters**: Extreme proximity. Required for **Knives**, **Knuckles**, and **Brawling** (Unarmed).
 
@@ -178,6 +167,7 @@ When you use the `attack` command, you initiate a "Neural Sync." A bar will appe
 
 **Targeting**:
 *   `target <body_part>`: Set a specific body part to target (e.g., `target head`, `target legs`).
+*   `target <npc_name>`: Switch your primary target (e.g., `target rat`, `target second rat`).
 *   `assess`: View the current combat situation, including distances and statuses.
 *   `appraise <target>`: Check an enemy's health and wound status.
 
@@ -210,6 +200,18 @@ While executing a buffer, watch for enemy **Telegraphs** (e.g., "The enemy prepa
 *   **Active Parry**: Using the `parry` buffer action opens a 1.5s window. If an enemy attacks during this time, you deflect the blow, reducing its severity (e.g., a Solid hit becomes Marginal) and gaining Flow.
 *   **Stance Parry**: If you are in `stance parry` (100% allocation), you gain Flow passively when an enemy misses you or lands only a Marginal hit.
 *   **Flow State**: Accumulating 3 Flow increases your **Max Buffer Slots** (up to 6), allowing for even longer combos.
+
+### Combat Balance
+Your **Balance** is a critical stat in combat. It represents your stability and footing.
+*   **Effects**: High Balance increases your Attack Power and Defense. Low Balance makes you vulnerable and weak.
+*   **Losing Balance**: You lose Balance when you take damage (especially from heavy or crushing blows) or when you miss an attack.
+*   **Regaining Balance**:
+    *   **Passive**: Balance regenerates slowly over time. The rate increases significantly if you **Retreat** to range or **Disengage** from combat.
+    *   **Active**: Landing successful attacks (especially Solid or Crushing hits) restores your Balance.
+    *   **Defense**: Successfully **Parrying**, **Blocking**, or **Evading** an attack restores a small amount of Balance (5%).
+    *   **Stimpacks**: Using a Stimpack instantly restores Balance to 100%.
+*   **Exhaustion**: If your Fatigue drops to 0, your Balance is capped at 50%, leaving you severely disadvantaged.
+*   **The Death Spiral**: Be warned! If you have **0 Fatigue** and **0 Balance**, your chance to hit drops to **0%**. You will be unable to land attacks unless you achieve a **Perfect Sync** (which grants a massive precision bonus) or use a Stimpack to recover. Do not let yourself get to this point!
 
 ### 6. Wounds & System Shock
 Heavy hits can cause lasting damage:

@@ -1,9 +1,12 @@
 import { Entity } from '../../../ecs/Entity';
 import { IEngine } from '../../../ecs/IEngine';
 import { CombatStats } from '../../../components/CombatStats';
+import { Position } from '../../../components/Position';
+import { NPC } from '../../../components/NPC';
 import { WorldQuery } from '../../../utils/WorldQuery';
 import { MessageService } from '../../../services/MessageService';
 import { BodyPart } from '../../../types/CombatTypes';
+import { CombatUtils } from '../CombatUtils';
 
 export class DefenseHandler {
     static handleHangback(playerId: string, engine: IEngine, messageService: MessageService) {
@@ -15,17 +18,38 @@ export class DefenseHandler {
         }
     }
 
-    static handleTarget(playerId: string, part: string, engine: IEngine, messageService: MessageService) {
+    static handleTarget(playerId: string, arg: string, engine: IEngine, messageService: MessageService) {
         const player = WorldQuery.getEntityById(engine, playerId);
         const stats = player?.getComponent(CombatStats);
-        if (stats) {
-            const bodyPart = Object.values(BodyPart).find(p => p.toLowerCase() === part.toLowerCase());
-            if (bodyPart) {
-                stats.targetLimb = bodyPart as BodyPart;
-                messageService.info(playerId, `Targeting bias set to: ${bodyPart}`);
-            } else {
-                messageService.error(playerId, `Invalid body part: ${part}. Valid parts: ${Object.values(BodyPart).join(', ')}`);
-            }
+        if (!stats) return;
+
+        // 1. Check if it's a body part
+        const bodyPart = Object.values(BodyPart).find(p => p.toLowerCase() === arg.toLowerCase());
+        if (bodyPart) {
+            stats.targetLimb = bodyPart as BodyPart;
+            messageService.info(playerId, `Targeting bias set to: ${bodyPart}`);
+            return;
+        }
+
+        // 2. Check if it's an NPC
+        const pPos = player?.getComponent(Position);
+        if (!pPos) return;
+
+        const { name, ordinal } = CombatUtils.parseTargetName(arg);
+        const roomNPCs = engine.getEntitiesWithComponent(NPC).filter(e => {
+            const npc = e.getComponent(NPC);
+            const pos = e.getComponent(Position);
+            return npc && pos && npc.typeName.toLowerCase().includes(name.toLowerCase()) &&
+                pos.x === pPos.x && pos.y === pPos.y;
+        });
+
+        const target = roomNPCs[ordinal - 1];
+        if (target) {
+            stats.targetId = target.id;
+            const npcComp = target.getComponent(NPC);
+            messageService.success(playerId, `You are now targeting ${npcComp?.typeName || 'the target'}.`);
+        } else {
+            messageService.error(playerId, `Invalid target or body part: ${arg}.`);
         }
     }
 

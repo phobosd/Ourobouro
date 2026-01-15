@@ -69,6 +69,12 @@ export class MovementSystem extends System {
 
             const combatStats = entity.getComponent(CombatStats);
             if (combatStats) {
+                // Check fatigue for movement
+                if (combatStats.fatigue < 1) {
+                    this.messageService.info(entityId, "You are too exhausted to move!");
+                    continue;
+                }
+
                 const roomEntities = engine.getEntitiesWithComponent(Position);
 
                 // Check if any hostile entity in the room is engaged with us at close range
@@ -120,6 +126,7 @@ export class MovementSystem extends System {
                 // Reset engagement tier on room change
                 if (combatStats) {
                     combatStats.engagementTier = EngagementTier.DISENGAGED;
+                    combatStats.fatigue = Math.max(0, combatStats.fatigue - 1); // Consume 1 fatigue per move
                 }
 
                 // Trigger look

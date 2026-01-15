@@ -668,7 +668,25 @@ input:checked+.slider-toggle:before {
   color: white;
 }
 
-.confirm-btn-no {
-  background: #333;
-  color: white;
+@keyframes pulsate-crit {
+  0% {
+    text-shadow: 0 0 5px #00ff41;
+    color: #00ff41;
+  }
+
+  50% {
+    text-shadow: 0 0 20px #00ff41, 0 0 10px #ffffff;
+    color: #ccffcc;
+  }
+
+  100% {
+    text-shadow: 0 0 5px #00ff41;
+    color: #00ff41;
+  }
+}
+
+.text-crit-pulse {
+  animation: pulsate-crit 0.5s infinite;
+  font-weight: bold;
+  font-size: 1.1em;
 }

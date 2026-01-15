@@ -3,6 +3,8 @@ import { Entity } from '../ecs/Entity';
 import { Server } from 'socket.io';
 import { IEngine } from '../ecs/IEngine';
 import { MessageService } from '../services/MessageService';
+import { CombatStats } from '../components/CombatStats';
+import { NPC } from '../components/NPC';
 
 // New Combat System Modules
 import { CombatUtils } from './combat/CombatUtils';
@@ -54,15 +56,15 @@ export class CombatSystem extends System {
     }
 
     handleManeuver(playerId: string, direction: 'CLOSE' | 'WITHDRAW', engine: IEngine, targetName?: string): void {
-        ManeuverHandler.handleManeuver(playerId, direction, engine, this.messageService, targetName);
+        ManeuverHandler.handleManeuver(playerId, direction, engine, this.messageService, this.io, targetName);
     }
 
     handleAdvance(playerId: string, targetName: string, engine: IEngine): void {
-        ManeuverHandler.handleAdvance(playerId, targetName, engine, this.messageService);
+        ManeuverHandler.handleAdvance(playerId, targetName, engine, this.messageService, this.io);
     }
 
     handleRetreat(playerId: string, targetName: string, engine: IEngine): void {
-        ManeuverHandler.handleRetreat(playerId, targetName, engine, this.messageService);
+        ManeuverHandler.handleRetreat(playerId, targetName, engine, this.messageService, this.io);
     }
 
     handleFlee(playerId: string, direction: string | undefined, engine: IEngine): void {
@@ -79,6 +81,10 @@ export class CombatSystem extends System {
 
     handleAppraise(playerId: string, targetName: string, engine: IEngine): void {
         CombatLogger.handleAppraise(playerId, targetName, engine, this.messageService);
+    }
+
+    handleBalance(playerId: string, engine: IEngine): void {
+        CombatLogger.handleBalance(playerId, engine, this.messageService);
     }
 
     handleTarget(playerId: string, part: string, engine: IEngine): void {
@@ -104,7 +110,15 @@ export class CombatSystem extends System {
     // --- ECS Update Loop ---
 
     update(engine: IEngine, deltaTime: number): void {
-        AutomationManager.processAutomatedActions(engine, this.messageService);
+        AutomationManager.processAutomatedActions(engine, this.messageService, this.io);
         AutomationManager.processRegeneration(engine, deltaTime);
+
+        // Send combat state updates to players periodically (approx every 200ms)
+        if (Math.random() < 0.2) {
+            const players = engine.getEntitiesWithComponent(CombatStats).filter(e => !e.hasComponent(NPC));
+            players.forEach(player => {
+                CombatLogger.sendCombatState(player.id, engine, this.io);
+            });
+        }
     }
 }

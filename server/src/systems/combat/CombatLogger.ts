@@ -8,6 +8,7 @@ import { EngagementTier } from '../../types/CombatTypes';
 import { CombatUtils } from './CombatUtils';
 import { HealthDescriptor } from '../../utils/HealthDescriptor';
 import { Stats } from '../../components/Stats';
+import { Server } from 'socket.io';
 
 export type HitType = 'crushing' | 'solid' | 'marginal' | 'miss';
 
@@ -81,6 +82,17 @@ export class CombatLogger {
         if (balance >= 0.5) return "somewhat off balance";
         if (balance >= 0.3) return "badly balanced";
         return "very badly balanced";
+    }
+
+    static handleBalance(playerId: string, engine: IEngine, messageService: MessageService) {
+        const player = WorldQuery.getEntityById(engine, playerId);
+        const stats = player?.getComponent(CombatStats);
+
+        if (!player || !stats) return;
+
+        const balanceStr = this.getBalanceDescription(stats.balance);
+        const percentage = Math.floor(stats.balance * 100);
+        messageService.info(playerId, `You are ${balanceStr} (${percentage}%).`);
     }
 
     static handleAssess(playerId: string, engine: IEngine, messageService: MessageService) {
@@ -167,5 +179,86 @@ export class CombatLogger {
             const balanceDesc = this.getBalanceDescription(tStats.balance);
             messageService.info(playerId, `\n[APPRAISAL: ${npc.typeName}]\n${detailedStatus}\nBalance: ${balanceDesc}\n`);
         }
+    }
+
+    static sendCombatState(playerId: string, engine: IEngine, io: Server) {
+        const player = WorldQuery.getEntityById(engine, playerId);
+        const stats = player?.getComponent(CombatStats);
+        const pos = player?.getComponent(Position);
+        const playerStats = player?.getComponent(Stats);
+
+        if (!player || !stats || !pos) return;
+
+        // Determine if in combat (hostile target or engaged)
+        const inCombat = stats.isHostile || stats.engagementTier !== EngagementTier.DISENGAGED;
+
+        if (!inCombat) {
+            io.to(playerId).emit('combat-state', { inCombat: false });
+            return;
+        }
+
+        const maxFatigue = playerStats ? (playerStats.attributes.get('CON')?.value || 10) * 10 : 100;
+
+        const state: any = {
+            inCombat: true,
+            player: {
+                balance: stats.balance,
+                balanceDesc: this.getBalanceDescription(stats.balance),
+                fatigue: stats.fatigue,
+                maxFatigue: maxFatigue,
+                engagementTier: stats.engagementTier
+            },
+            target: null,
+            nearby: []
+        };
+
+        // Find all NPCs in the room
+        const targets = WorldQuery.findNPCsAt(engine, pos.x, pos.y);
+
+        // Identify primary target
+        let engagedTarget = targets.find(t => {
+            const tStats = t.getComponent(CombatStats);
+            return tStats?.targetId === playerId || (tStats?.engagementTier === stats.engagementTier && stats.engagementTier !== EngagementTier.DISENGAGED);
+        });
+
+        // If no engaged target, but we have a targetId, try to find that
+        if (!engagedTarget && stats.targetId) {
+            engagedTarget = targets.find(t => t.id === stats.targetId);
+        }
+
+        if (engagedTarget) {
+            const tStats = engagedTarget.getComponent(CombatStats);
+            const npcComp = engagedTarget.getComponent(NPC);
+            if (tStats && npcComp) {
+                state.target = {
+                    id: engagedTarget.id,
+                    name: npcComp.typeName,
+                    hp: tStats.hp,
+                    maxHp: tStats.maxHp,
+                    status: HealthDescriptor.getStatusDescriptor(tStats.hp, tStats.maxHp),
+                    balance: tStats.balance,
+                    balanceDesc: this.getBalanceDescription(tStats.balance),
+                    range: tStats.engagementTier
+                };
+            }
+        }
+
+        // Populate nearby
+        for (const npc of targets) {
+            if (engagedTarget && npc.id === engagedTarget.id) continue;
+            const tStats = npc.getComponent(CombatStats);
+            const npcComp = npc.getComponent(NPC);
+            if (!tStats || !npcComp) continue;
+
+            state.nearby.push({
+                id: npc.id,
+                name: npcComp.typeName,
+                isHostile: tStats.isHostile,
+                balanceDesc: this.getBalanceDescription(tStats.balance),
+                range: tStats.engagementTier
+            });
+        }
+
+        io.to(playerId).emit('combat-state', state);
     }
 }

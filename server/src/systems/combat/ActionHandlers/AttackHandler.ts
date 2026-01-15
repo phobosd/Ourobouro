@@ -38,11 +38,11 @@ export class AttackHandler {
 
         const combatStats = attacker.getComponent(CombatStats);
         if (combatStats) {
-            if (combatStats.fatigue < 2) {
+            if (combatStats.fatigue < 4) {
                 messageService.info(attackerId, "You are too exhausted to attack!");
                 return;
             }
-            combatStats.fatigue -= 2;
+            combatStats.fatigue -= 4;
             combatStats.pendingMove = moveType || 'attack';
         }
 
@@ -198,6 +198,13 @@ export class AttackHandler {
         const cursorSpeed = weapon.difficulty.speed * (1 - (skillLevel * 0.05));
 
         const tiers = Object.values(EngagementTier);
+
+        // Auto-engage for ranged weapons if currently disengaged
+        if (combatStats.engagementTier === EngagementTier.DISENGAGED && weapon.range > 0) {
+            combatStats.engagementTier = EngagementTier.MISSILE;
+            messageService.info(attackerId, `You raise your ${weapon.name} and engage at missile range.`);
+        }
+
         const targetTierIndex = tiers.indexOf(targetCombatStats.engagementTier);
         const attackerTierIndex = tiers.indexOf(combatStats.engagementTier);
         const effectiveTierIndex = Math.max(attackerTierIndex, targetTierIndex);
@@ -302,14 +309,17 @@ export class AttackHandler {
         const attackerPower = CombatCalculator.calculateAttackerPower(attacker, weapon, skillName);
         const defenderPower = CombatCalculator.calculateDefenderPower(target, engine, attackType);
 
-        const margin = attackerPower - defenderPower;
+        let margin = attackerPower - defenderPower;
         let combatLog = `\n<combat>You attack <error>${targetNPC?.typeName || 'the target'}</error> with your ${weapon.name}!\n`;
         let observerLog = `\n<combat>A combatant attacks ${targetNPC?.typeName || 'the target'} with their ${weapon.name}!\n`;
 
         let effectiveHitType: any = 'miss';
         if (hitType !== 'miss') {
+            if (hitType === 'crit') {
+                margin += 15; // Bonus for perfect sync
+                combatLog += `\n<success>[PERFECT SYNC] Precision Bonus!</success>`;
+            }
             effectiveHitType = CombatCalculator.determineHitType(margin);
-            if (hitType === 'crit' && effectiveHitType !== 'crushing') effectiveHitType = 'crushing';
         }
 
         const flavor = CombatLogger.getAttackFlavor(weapon.category, effectiveHitType);
@@ -322,7 +332,52 @@ export class AttackHandler {
                 targetCombatStats.balance = Math.max(0.0, targetCombatStats.balance - 0.2);
                 targetCombatStats.balance = Math.max(0.0, targetCombatStats.balance - 0.2);
                 const crushSeverity = HealthDescriptor.getDamageDescriptor(crushingDamage);
-                combatLog += `<combat-hit>${flavor.hitLabel} You land a ${crushSeverity} on ${targetNPC?.typeName || 'the target'}!</combat-hit>\n`;
+
+                // Extravagant Critical Hit Description
+                // Extravagant Critical Hit Description
+                let critDesc = "";
+                const targetName = targetNPC?.typeName || 'the target';
+
+                if (weapon.category === 'blade' || weapon.category === 'sword' || weapon.category === 'katana') {
+                    const variants = [
+                        `\n<combat-crit>*** CRITICAL SEVERANCE ***\nYour ${weapon.name} flashes in a deadly arc, carving deep into ${targetName} with a spray of crimson mist! The wound is horrific!</combat-crit>`,
+                        `\n<combat-crit>*** ARTERY SEVERED ***\nA precise slash opens a fountain of blood! ${targetName} staggers as their life force spills onto the pavement!</combat-crit>`,
+                        `\n<combat-crit>*** SURGICAL PRECISION ***\nYou slip your ${weapon.name} past their guard, piercing a vital organ! ${targetName} gasps in shock!</combat-crit>`,
+                        `\n<combat-crit>*** LIMB MAIMER ***\nYour blade bites deep into muscle and bone! ${targetName} screams as the limb hangs by a thread!</combat-crit>`,
+                        `\n<combat-crit>*** ELEGANT EXECUTION ***\nA blur of motion, a flash of steel. You strike with perfect form, leaving ${targetName} bleeding from a massive gash!</combat-crit>`
+                    ];
+                    critDesc = variants[Math.floor(Math.random() * variants.length)];
+                } else if (weapon.category === 'blunt' || weapon.category === 'brawling') {
+                    const variants = [
+                        `\n<combat-crit>*** BONE SHATTERING IMPACT ***\nYou connect with sickening force! The sound of ${targetName}'s bones snapping echoes through the air as they are violently thrown back!</combat-crit>`,
+                        `\n<combat-crit>*** CONCUSSIVE FORCE ***\nYou slam into ${targetName} with the force of a freight train! Their eyes roll back as they crumble!</combat-crit>`,
+                        `\n<combat-crit>*** RIB CRACKER ***\nA thunderous blow to the chest! You hear the distinct crunch of ribs giving way as ${targetName} doubles over!</combat-crit>`,
+                        `\n<combat-crit>*** JAW BREAKER ***\nYou catch ${targetName} flush on the chin! Teeth fly and blood sprays as their head snaps back violently!</combat-crit>`,
+                        `\n<combat-crit>*** INTERNAL HEMORRHAGE ***\nThe impact ripples through ${targetName}'s body, rupturing organs! They cough up blood, stunned by the heavy blow!</combat-crit>`
+                    ];
+                    critDesc = variants[Math.floor(Math.random() * variants.length)];
+                } else if (weapon.range > 0) {
+                    const variants = [
+                        `\n<combat-crit>*** HEADSHOT ***\nA perfect shot! The round obliterates matter and bone, exiting ${targetName} in a gruesome shower of debris!</combat-crit>`,
+                        `\n<combat-crit>*** CENTER MASS ***\nYou drill a round straight into ${targetName}'s chest! The impact knocks them off their feet, gasping for air!</combat-crit>`,
+                        `\n<combat-crit>*** VITAL ORGAN HIT ***\nThe shot pierces ${targetName}'s defenses, tearing through soft tissue! They clutch the wound in agony!</combat-crit>`,
+                        `\n<combat-crit>*** ARMOR PIERCING ***\nYour shot punches clean through armor and flesh alike! ${targetName} is thrown backward by the kinetic energy!</combat-crit>`,
+                        `\n<combat-crit>*** PRECISION STRIKE ***\nYou thread the needle, landing a shot in a chink in their armor! ${targetName} howls as the projectile finds its mark!</combat-crit>`
+                    ];
+                    critDesc = variants[Math.floor(Math.random() * variants.length)];
+                } else {
+                    const variants = [
+                        `\n<combat-crit>*** DEVASTATING BLOW ***\nYou unleash a strike of pure destruction! ${targetName} is mangled by the sheer force of the impact!</combat-crit>`,
+                        `\n<combat-crit>*** OVERWHELMING POWER ***\nYou strike with such ferocity that ${targetName} is lifted off their feet and slammed into the ground!</combat-crit>`,
+                        `\n<combat-crit>*** BRUTAL IMPACT ***\nA savage hit that leaves ${targetName} dazed and broken! The sound of the impact echoes in the room!</combat-crit>`,
+                        `\n<combat-crit>*** MERCILESS STRIKE ***\nYou exploit a weakness, driving your attack home with lethal intent! ${targetName} reels from the pain!</combat-crit>`,
+                        `\n<combat-crit>*** CATASTROPHIC HIT ***\nYour attack connects perfectly, dealing massive trauma! ${targetName} looks visibly shaken and battered!</combat-crit>`
+                    ];
+                    critDesc = variants[Math.floor(Math.random() * variants.length)];
+                }
+
+                combatLog += critDesc;
+                // combatLog += `<combat-hit>${flavor.hitLabel} You land a ${crushSeverity} on ${targetNPC?.typeName || 'the target'}!</combat-hit>\n`;
                 observerLog += `<combat-hit>${flavor.obsLabel}</combat-hit>\n`;
                 combatLog += WoundManager.applyWoundToTarget(target, attackerCombatStats.targetLimb || BodyPart.Chest, 5);
                 combatLog += "\n[STUN] Target is reeling!";
@@ -330,8 +385,8 @@ export class AttackHandler {
             case 'solid':
                 const solidDamage = Math.floor((weapon.damage * 1.0 + (margin * 0.2)) * damageMultiplier);
                 targetCombatStats.hp -= solidDamage;
-                targetCombatStats.balance = Math.max(0.0, targetCombatStats.balance - 0.05);
-                targetCombatStats.balance = Math.max(0.0, targetCombatStats.balance - 0.05);
+                attackerCombatStats.balance = Math.min(1.0, attackerCombatStats.balance + 0.08);
+                targetCombatStats.balance = Math.max(0.0, targetCombatStats.balance - 0.1);
                 const solidSeverity = HealthDescriptor.getDamageDescriptor(solidDamage);
                 combatLog += `<combat-hit>${flavor.hitLabel} You land a ${solidSeverity} on ${targetNPC?.typeName || 'the target'}!</combat-hit>\n`;
                 combatLog += `Target loses balance!`;
@@ -478,19 +533,25 @@ export class AttackHandler {
         const npcPos = npc.getComponent(Position);
         if (!npcStats || !targetStats || !npcPos) return;
 
-        if (!CombatUtils.checkRoundtime(npc, messageService, true)) return;
-
         const inventory = npc.getComponent(Inventory);
         let weaponCategory = 'natural';
         let isRanged = false;
+        let weaponEntity: Entity | undefined;
         if (inventory && inventory.rightHand) {
-            const weaponEntity = WorldQuery.getEntityById(engine, inventory.rightHand);
+            weaponEntity = WorldQuery.getEntityById(engine, inventory.rightHand);
             const weapon = weaponEntity?.getComponent(Weapon);
             if (weapon) {
                 weaponCategory = weapon.category;
                 isRanged = weapon.range > 0;
             }
         }
+
+        // Auto-update target engagement if they are disengaged
+        if (targetStats.engagementTier === EngagementTier.DISENGAGED) {
+            targetStats.engagementTier = isRanged ? EngagementTier.MISSILE : EngagementTier.MELEE;
+        }
+
+        if (!CombatUtils.checkRoundtime(npc, messageService, true)) return;
 
         const attackerPower = npcStats.attack + (npcStats.balance * 20) + (Math.random() * 5);
         const defenderPower = CombatCalculator.calculateDefenderPower(target, engine, isRanged ? 'RANGED' : 'MELEE');
@@ -515,7 +576,6 @@ export class AttackHandler {
         let combatLog = `\n<combat><error>${npcComp?.typeName || 'The enemy'}</error> attacks you!\n`;
         let observerLog = `\n<combat><error>${npcComp?.typeName || 'The enemy'}</error> attacks another combatant!\n`;
 
-
         const flavor = CombatLogger.getAttackFlavor(weaponCategory, effectiveHitType);
 
         if (targetBuffer && targetBuffer.isExecuting && (effectiveHitType === 'solid' || effectiveHitType === 'crushing')) {
@@ -530,21 +590,33 @@ export class AttackHandler {
                 const crushingDamage = Math.floor(npcStats.attack * 1.5);
                 targetStats.hp -= crushingDamage;
                 npcStats.balance = Math.min(1.0, npcStats.balance + 0.1);
-                targetStats.balance = Math.max(0.0, targetStats.balance - 0.2);
+                targetStats.balance = Math.max(0.0, targetStats.balance - 0.3);
                 combatLog += `<combat-hit>${flavor.hitLabel} ${npcComp?.typeName} ${flavor.npcAction}! You take ${crushingDamage} damage!</combat-hit>\n`;
+
+                const npcName = npcComp?.typeName || 'The enemy';
+                const npcCritVariants = [
+                    `\n<combat-crit>*** SAVAGE MAULING ***\n${npcName} tears into you with primal fury! The pain is blinding as claws or weapons rend flesh!</combat-crit>`,
+                    `\n<combat-crit>*** CRUSHING ASSAULT ***\n${npcName} lands a heavy blow that knocks the wind out of you! You struggle to stay standing!</combat-crit>`,
+                    `\n<combat-crit>*** LETHAL PRECISION ***\n${npcName} strikes a vital spot! You feel a sharp, burning pain as your health plummets!</combat-crit>`,
+                    `\n<combat-crit>*** BRUTAL TAKEDOWN ***\n${npcName} sweeps your defenses aside and slams you with a devastating attack! The world spins!</combat-crit>`,
+                    `\n<combat-crit>*** VICIOUS GORE ***\n${npcName} unleashes a gruesome attack, leaving you bleeding and battered! The sight is horrifying!</combat-crit>`
+                ];
+                combatLog += npcCritVariants[Math.floor(Math.random() * npcCritVariants.length)];
                 observerLog += `<combat-hit>${flavor.obsLabel}</combat-hit>\n`;
                 combatLog += WoundManager.applyWoundToTarget(target, BodyPart.Chest, 5);
                 break;
             case 'solid':
                 const solidDamage = Math.floor(npcStats.attack * 0.8);
                 targetStats.hp -= solidDamage;
-                targetStats.balance = Math.max(0.0, targetStats.balance - 0.1);
+                npcStats.balance = Math.min(1.0, npcStats.balance + 0.08);
+                targetStats.balance = Math.max(0.0, targetStats.balance - 0.15);
                 combatLog += `<combat-hit>${flavor.hitLabel} ${npcComp?.typeName} ${flavor.npcAction}! You take ${solidDamage} damage!</combat-hit>\n`;
                 observerLog += `<combat-hit>${flavor.obsLabel}</combat-hit>\n`;
                 break;
             case 'marginal':
                 const marginalDamage = Math.floor(npcStats.attack * 0.3);
                 targetStats.hp -= marginalDamage;
+                targetStats.balance = Math.max(0.0, targetStats.balance - 0.05);
 
                 if (targetStats.parry > 50 && !isRanged) {
                     combatLog += `<combat-hit>[PARRY] You partially deflect ${npcComp?.typeName}'s attack! You take ${marginalDamage} damage.</combat-hit>\n`;
@@ -563,6 +635,7 @@ export class AttackHandler {
                         momentum.add(5);
                         combatLog += `\n<success>[MOMENTUM] Defensive parry builds your flow! (+5)</success>`;
                     }
+                    targetStats.balance = Math.min(1.0, targetStats.balance + 0.05);
 
                 } else if (targetStats.shield > 50) {
                     combatLog += `<combat-hit>[BLOCK] You catch most of ${npcComp?.typeName}'s attack on your shield! You take ${marginalDamage} damage.</combat-hit>\n`;
@@ -573,6 +646,7 @@ export class AttackHandler {
                         momentum.add(2);
                         combatLog += `\n<success>[MOMENTUM] Shield block maintains your presence. (+2)</success>`;
                     }
+                    targetStats.balance = Math.min(1.0, targetStats.balance + 0.05);
                 } else {
                     combatLog += `<combat-hit>${flavor.hitLabel} ${npcComp?.typeName} ${flavor.npcAction}. You take ${marginalDamage} damage.</combat-hit>\n`;
                 }
@@ -596,6 +670,7 @@ export class AttackHandler {
                         momentum.add(10);
                         combatLog += `\n<success>[MOMENTUM] Perfect parry! Your flow surges! (+10)</success>`;
                     }
+                    targetStats.balance = Math.min(1.0, targetStats.balance + 0.05);
 
                 } else if (targetStats.evasion > 50) {
                     combatLog += `<combat-miss>[EVADE] You skillfully dodge ${npcComp?.typeName}'s attack!</combat-miss>\n`;
@@ -606,6 +681,7 @@ export class AttackHandler {
                         momentum.add(5);
                         combatLog += `\n<success>[MOMENTUM] Evasion keeps you in the flow. (+5)</success>`;
                     }
+                    targetStats.balance = Math.min(1.0, targetStats.balance + 0.05);
 
                 } else if (targetStats.shield > 50) {
                     combatLog += `<combat-miss>[BLOCK] You block ${npcComp?.typeName}'s attack with your shield!</combat-miss>\n`;
@@ -616,6 +692,7 @@ export class AttackHandler {
                         momentum.add(5);
                         combatLog += `\n<success>[MOMENTUM] Solid block! (+5)</success>`;
                     }
+                    targetStats.balance = Math.min(1.0, targetStats.balance + 0.05);
 
                 } else {
                     combatLog += `<combat-miss>${flavor.hitLabel} ${npcComp?.typeName} ${flavor.npcAction}!</combat-miss>\n`;

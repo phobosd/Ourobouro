@@ -1,5 +1,8 @@
 import { CommandRegistry, CommandContext } from './CommandRegistry';
 import { CombatActionType, CombatBuffer } from '../components/CombatBuffer';
+import { Inventory } from '../components/Inventory';
+import { Weapon } from '../components/Weapon';
+import { WorldQuery } from '../utils/WorldQuery';
 
 const handleBufferAction = (ctx: CommandContext, type: CombatActionType) => {
     const player = ctx.engine.getEntity(ctx.socketId);
@@ -26,6 +29,9 @@ const handleBufferAction = (ctx: CommandContext, type: CombatActionType) => {
                 break;
             case CombatActionType.SLICE:
                 ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'slice');
+                break;
+            case CombatActionType.SHOOT:
+                ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine, 'shoot');
                 break;
             case CombatActionType.PARRY:
                 ctx.systems.combat.handleImmediateParry(ctx.socketId, ctx.engine);
@@ -62,9 +68,35 @@ export const registerCombatCommands = (registry: CommandRegistry) => {
         aliases: ['kill', 'fight'],
         description: 'Attack a target',
         execute: (ctx) => {
-            const targetName = ctx.args.join(' ');
-            ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine);
+            const player = ctx.engine.getEntity(ctx.socketId);
+            const buffer = player?.getComponent(CombatBuffer);
+
+            if (buffer && buffer.isBuilding) {
+                // Determine appropriate action based on weapon
+                const inventory = player?.getComponent(Inventory);
+                let actionType = CombatActionType.SLASH; // Default
+
+                if (inventory && inventory.rightHand) {
+                    const weaponEntity = WorldQuery.getEntityById(ctx.engine, inventory.rightHand);
+                    const weapon = weaponEntity?.getComponent(Weapon);
+                    if (weapon && weapon.range > 0) {
+                        actionType = CombatActionType.SHOOT;
+                    }
+                }
+
+                handleBufferAction(ctx, actionType);
+            } else {
+                const targetName = ctx.args.join(' ');
+                ctx.systems.combat.handleAttack(ctx.socketId, targetName, ctx.engine);
+            }
         }
+    });
+
+    registry.register({
+        name: 'shoot',
+        aliases: ['fire'],
+        description: 'Shoot a target or add SHOOT to buffer',
+        execute: (ctx) => handleBufferAction(ctx, CombatActionType.SHOOT)
     });
 
     registry.register({
@@ -295,13 +327,13 @@ export const registerCombatCommands = (registry: CommandRegistry) => {
     registry.register({
         name: 'target',
         aliases: [],
-        description: 'Set targeting bias (Usage: target <body_part>)',
+        description: 'Set targeting bias or switch target (Usage: target <body_part> | <npc_name>)',
         execute: (ctx) => {
-            const part = ctx.args[0];
-            if (part) {
-                ctx.systems.combat.handleTarget(ctx.socketId, part, ctx.engine);
+            const arg = ctx.args.join(' ');
+            if (arg) {
+                ctx.systems.combat.handleTarget(ctx.socketId, arg, ctx.engine);
             } else {
-                ctx.messageService.info(ctx.socketId, 'Usage: target <body_part>');
+                ctx.messageService.info(ctx.socketId, 'Usage: target <body_part> | <npc_name>');
             }
         }
     });
@@ -323,5 +355,14 @@ export const registerCombatCommands = (registry: CommandRegistry) => {
             const targetName = ctx.args.join(' ');
             ctx.systems.combat.handleAppraise(ctx.socketId, targetName, ctx.engine);
         }
+    });
+    registry.register({
+        name: 'balance',
+        aliases: ['bal'],
+        description: 'Check your current balance',
+        execute: (ctx) => {
+            ctx.systems.combat.handleBalance(ctx.socketId, ctx.engine);
+        },
+        ignoresRoundtime: true
     });
 };

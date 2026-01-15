@@ -95,6 +95,7 @@ export class SequenceHandler {
             case CombatActionType.SLASH: delay = 1500; break;
             case CombatActionType.THRUST: delay = 2000; break;
             case CombatActionType.PARRY: delay = 1000; break;
+            case CombatActionType.SHOOT: delay = 1000; break;
         }
 
         // Wait for roundtime (simulated)
@@ -175,6 +176,10 @@ export class SequenceHandler {
             case CombatActionType.THRUST:
                 messageService.combat(playerId, `\n[BUFFER] You deliver a powerful THRUST!`);
                 orchestrator.handleSyncResult(playerId, targetId, 'hit', engine, 1.5 * multiplier);
+                break;
+            case CombatActionType.SHOOT:
+                messageService.combat(playerId, `\n[BUFFER] You fire your weapon!`);
+                orchestrator.handleSyncResult(playerId, targetId, 'hit', engine, 1.0 * multiplier, 'shoot');
                 break;
             case CombatActionType.STUMBLE:
                 messageService.combat(playerId, `\n[BUFFER] You STUMBLE blindly!`);

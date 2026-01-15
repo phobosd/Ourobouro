@@ -104,28 +104,13 @@ export const GuideOverlay: React.FC<GuideOverlayProps> = ({ content, onClose }) 
 
                 if (!inTable) {
                     inTable = true;
-                    // We'll always show headers if the table has matching rows, or if the header itself matches
-                    // But for simplicity in a line-by-line filter, let's just check if this specific line matches
-                    if (matchesSearch) {
-                        elements.push(
-                            <table key={index}>
-                                <thead>
-                                    <tr>
-                                        {cells.map((cell, i) => <th key={i}>{parseInlineStyles(cell)}</th>)}
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                        );
-                    }
-                    return;
                 }
 
                 if (matchesSearch) {
                     elements.push(
-                        <div key={index} className="table-row" style={{ display: 'flex', borderBottom: '1px solid #333' }}>
+                        <div key={index} className="table-row" style={{ display: 'flex', borderBottom: '1px solid #333', padding: '5px 0' }}>
                             {cells.map((cell, i) => (
-                                <div key={i} style={{ flex: 1, padding: '5px', borderRight: '1px solid #333' }}>
+                                <div key={i} style={{ flex: 1, padding: '0 5px', borderRight: i < cells.length - 1 ? '1px solid #333' : 'none' }}>
                                     {parseInlineStyles(cell)}
                                 </div>
                             ))}

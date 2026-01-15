@@ -24,7 +24,8 @@ export class CombatCalculator {
         const balance = combatStats.balance;
 
         // Attacker_Power = (Skill * 0.6) + (Agility * 0.4) + (Current_Balance * 20)
-        const power = (skill * 0.6) + (agi * 0.4) + (balance * 20);
+        // Adjusting balance weight to make the mini-game (balance management) crucial for high power
+        const power = (skill * 0.6) + (agi * 0.4) + (balance * 25); // Reduced from 30 to 25 to balance crit rate
         console.log(`[CombatDebug] AttackerPower: Skill(${effectiveSkillName})=${skill}, AGI=${agi}, Bal=${balance} => Power=${power}`);
         return power;
     }
@@ -106,9 +107,28 @@ export class CombatCalculator {
     }
 
     static determineHitType(margin: number): HitType {
-        if (margin > 15) return 'crushing';
-        if (margin > 0) return 'solid';
-        if (margin > -5) return 'marginal';
+        // Margin is (AttackerPower - DefenderPower)
+
+        // Critical Hit Calculation (Probabilistic)
+        // Even with a high margin, a crit is not guaranteed unless overwhelmingly superior.
+        if (margin > 30) {
+            // Base crit chance starts at 0% at margin 30
+            // Increases by 2% for every point of margin above 30
+            // Margin 35 -> 10% chance
+            // Margin 40 -> 20% chance
+            // Margin 55 -> 50% chance
+            // Margin 80 -> 100% chance
+            const critChance = (margin - 30) * 0.02;
+
+            // Roll for crit
+            if (Math.random() < critChance) {
+                return 'crushing';
+            }
+            return 'solid'; // Fallback to solid hit if crit fails
+        }
+
+        if (margin > 5) return 'solid';
+        if (margin > -10) return 'marginal';
         return 'miss';
     }
 

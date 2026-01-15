@@ -11,9 +11,11 @@ import { AutomatedAction } from '../../../components/AutomatedAction';
 import { WorldQuery } from '../../../utils/WorldQuery';
 import { MessageService } from '../../../services/MessageService';
 import { CombatUtils } from '../CombatUtils';
+import { Server } from 'socket.io';
+import { CombatLogger } from '../CombatLogger';
 
 export class ManeuverHandler {
-    static handleManeuver(playerId: string, direction: 'CLOSE' | 'WITHDRAW', engine: IEngine, messageService: MessageService, targetName?: string): void {
+    static handleManeuver(playerId: string, direction: 'CLOSE' | 'WITHDRAW', engine: IEngine, messageService: MessageService, io: Server, targetName?: string): void {
         const player = WorldQuery.getEntityById(engine, playerId);
         if (!player) return;
 
@@ -53,10 +55,10 @@ export class ManeuverHandler {
             return;
         }
 
-        this.performManeuver(player, target, direction, engine, messageService);
+        this.performManeuver(player, target, direction, engine, messageService, io);
     }
 
-    static performManeuver(player: Entity, target: Entity, direction: 'CLOSE' | 'WITHDRAW', engine: IEngine, messageService: MessageService): 'SUCCESS' | 'FAILURE' | 'MAX_RANGE' | 'FAIL_STOP' {
+    static performManeuver(player: Entity, target: Entity, direction: 'CLOSE' | 'WITHDRAW', engine: IEngine, messageService: MessageService, io: Server): 'SUCCESS' | 'FAILURE' | 'MAX_RANGE' | 'FAIL_STOP' {
         const stats = player.getComponent(CombatStats);
         const playerStats = player.getComponent(Stats);
         const stance = player.getComponent(Stance);
@@ -72,7 +74,7 @@ export class ManeuverHandler {
             }
         }
 
-        if (stats.fatigue < 5) {
+        if (stats.fatigue < 10) {
             messageService.info(playerId, "You are too exhausted to maneuver!");
             return 'FAIL_STOP';
         }
@@ -95,7 +97,7 @@ export class ManeuverHandler {
             }
         }
 
-        stats.fatigue -= 5;
+        stats.fatigue -= 10;
 
         const targetStats = target.getComponent(Stats);
         const playerAgility = playerStats.attributes.get('AGI')?.value || 10;
@@ -138,6 +140,10 @@ export class ManeuverHandler {
                         }
                     }
 
+                    // Force UI update
+                    if (!player.hasComponent(NPC)) CombatLogger.sendCombatState(player.id, engine, io);
+                    if (!target.hasComponent(NPC)) CombatLogger.sendCombatState(target.id, engine, io);
+
                     CombatUtils.applyRoundtime(player, 1);
                     if (effectiveTierIndex + 1 === tiers.length - 1) return 'MAX_RANGE';
                     return 'SUCCESS';
@@ -163,6 +169,10 @@ export class ManeuverHandler {
                         }
                     }
 
+                    // Force UI update
+                    if (!player.hasComponent(NPC)) CombatLogger.sendCombatState(player.id, engine, io);
+                    if (!target.hasComponent(NPC)) CombatLogger.sendCombatState(target.id, engine, io);
+
                     CombatUtils.applyRoundtime(player, 1);
                     if (effectiveTierIndex - 1 === 0) return 'MAX_RANGE';
                     return 'SUCCESS';
@@ -180,12 +190,12 @@ export class ManeuverHandler {
         return 'FAILURE';
     }
 
-    static handleAdvance(playerId: string, targetName: string, engine: IEngine, messageService: MessageService) {
-        this.initiateAutomatedManeuver(playerId, targetName, 'ADVANCE', engine, messageService);
+    static handleAdvance(playerId: string, targetName: string, engine: IEngine, messageService: MessageService, io: Server) {
+        this.initiateAutomatedManeuver(playerId, targetName, 'ADVANCE', engine, messageService, io);
     }
 
-    static handleRetreat(playerId: string, targetName: string, engine: IEngine, messageService: MessageService) {
-        this.initiateAutomatedManeuver(playerId, targetName, 'RETREAT', engine, messageService);
+    static handleRetreat(playerId: string, targetName: string, engine: IEngine, messageService: MessageService, io: Server) {
+        this.initiateAutomatedManeuver(playerId, targetName, 'RETREAT', engine, messageService, io);
     }
 
     static handleFlee(playerId: string, direction: string | undefined, engine: IEngine, messageService: MessageService): void {
@@ -206,7 +216,7 @@ export class ManeuverHandler {
         }
     }
 
-    private static initiateAutomatedManeuver(playerId: string, targetName: string, type: 'ADVANCE' | 'RETREAT', engine: IEngine, messageService: MessageService) {
+    private static initiateAutomatedManeuver(playerId: string, targetName: string, type: 'ADVANCE' | 'RETREAT', engine: IEngine, messageService: MessageService, io: Server) {
         const player = WorldQuery.getEntityById(engine, playerId);
         if (!player) return;
 
@@ -256,7 +266,7 @@ export class ManeuverHandler {
         messageService.info(playerId, `You begin to ${type.toLowerCase()} on ${target.getComponent(NPC)?.typeName}...`);
 
         if (CombatUtils.checkRoundtime(player, messageService, true)) {
-            const result = this.performManeuver(player, target, type === 'ADVANCE' ? 'CLOSE' : 'WITHDRAW', engine, messageService);
+            const result = this.performManeuver(player, target, type === 'ADVANCE' ? 'CLOSE' : 'WITHDRAW', engine, messageService, io);
 
             // If we just reached MELEE range via ADVANCE, stop there
             const stats = player.getComponent(CombatStats);

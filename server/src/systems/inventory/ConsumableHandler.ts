@@ -4,6 +4,7 @@ import { Inventory } from '../../components/Inventory';
 import { Item } from '../../components/Item';
 import { Container } from '../../components/Container';
 import { CombatStats } from '../../components/CombatStats';
+import { Stats } from '../../components/Stats';
 import { Entity } from '../../ecs/Entity';
 import { MessageService } from '../../services/MessageService';
 import { ParserUtils } from '../../utils/ParserUtils';
@@ -73,9 +74,13 @@ export class ConsumableHandler {
             messageService.success(entityId, `You use the medkit and heal for ${actualHeal} HP.`);
             used = true;
         } else if (name.includes('stimpack')) {
-            combatStats.fatigue = 0;
+            const playerStats = player.getComponent(Stats);
+            const con = playerStats?.attributes.get('CON')?.value || 10;
+            const maxFatigue = con * 10;
+
+            combatStats.fatigue = maxFatigue; // Restore to max
             combatStats.balance = 1.0;
-            messageService.success(entityId, `You use the stimpack. You feel a surge of energy! Your fatigue is gone and your balance is restored.`);
+            messageService.success(entityId, `You use the stimpack. You feel a surge of energy! Your stamina is fully restored.`);
             used = true;
         } else if (name.includes('bandage')) {
             const healAmount = 15;
@@ -92,8 +97,12 @@ export class ConsumableHandler {
             messageService.success(entityId, `You take the painkillers and heal for ${actualHeal} HP.`);
             used = true;
         } else if (name.includes('water bottle')) {
-            combatStats.fatigue = Math.max(0, combatStats.fatigue - 20);
-            messageService.success(entityId, `You drink the water. It's refreshing! Your fatigue decreases.`);
+            const playerStats = player.getComponent(Stats);
+            const con = playerStats?.attributes.get('CON')?.value || 10;
+            const maxFatigue = con * 10;
+
+            combatStats.fatigue = Math.min(maxFatigue, combatStats.fatigue + 20); // Restore 20 fatigue
+            messageService.success(entityId, `You drink the water. It's refreshing! You regain some stamina.`);
             used = true;
         }
 

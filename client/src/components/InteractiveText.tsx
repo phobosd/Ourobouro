@@ -121,6 +121,12 @@ export const ParseMessage: React.FC<{ text: string; socket: Socket | null }> = (
                     <ParseMessage text={content} socket={socket} />
                 </span>
             );
+        } else if (tag === 'combat-crit') {
+            parts.push(
+                <span key={`tag-${match.index}`} className="text-crit-pulse">
+                    <ParseMessage text={content} socket={socket} />
+                </span>
+            );
         } else {
             parts.push(
                 <InteractiveTag key={`tag-${match.index}`} tag={tag} content={content} attributes={attributes} socket={socket} />

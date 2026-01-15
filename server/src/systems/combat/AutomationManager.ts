@@ -10,9 +10,10 @@ import { MessageService } from '../../services/MessageService';
 import { CombatUtils } from './CombatUtils';
 import { ManeuverHandler } from './ActionHandlers/ManeuverHandler';
 import { EngagementTier } from '../../types/CombatTypes';
+import { Server } from 'socket.io';
 
 export class AutomationManager {
-    static processAutomatedActions(engine: IEngine, messageService: MessageService): void {
+    static processAutomatedActions(engine: IEngine, messageService: MessageService, io: Server): void {
         const automatedEntities = engine.getEntitiesWithComponent(AutomatedAction);
         for (const entity of automatedEntities) {
             const action = entity.getComponent(AutomatedAction);
@@ -40,7 +41,7 @@ export class AutomationManager {
 
             // Perform Action
             if (action.type === 'ADVANCE') {
-                const result = ManeuverHandler.performManeuver(entity, target, 'CLOSE', engine, messageService);
+                const result = ManeuverHandler.performManeuver(entity, target, 'CLOSE', engine, messageService, io);
 
                 const stats = entity.getComponent(CombatStats);
                 if (stats?.engagementTier === EngagementTier.MELEE) {
@@ -51,7 +52,7 @@ export class AutomationManager {
                     messageService.info(entity.id, "You stop advancing.");
                 }
             } else if (action.type === 'RETREAT') {
-                const result = ManeuverHandler.performManeuver(entity, target, 'WITHDRAW', engine, messageService);
+                const result = ManeuverHandler.performManeuver(entity, target, 'WITHDRAW', engine, messageService, io);
                 if (result === 'MAX_RANGE' || result === 'FAIL_STOP') {
                     entity.removeComponent(AutomatedAction);
                     messageService.info(entity.id, "You stop retreating.");
@@ -68,9 +69,17 @@ export class AutomationManager {
             const playerStats = entity.getComponent(Stats);
 
             if (stats && playerStats) {
-                // Balance regens over time (0.05 per second)
+                // Balance regens over time (0.01 per second - reduced from 0.05 to emphasize active recovery)
                 if (stats.balance < 1.0) {
-                    const regenRate = 0.05 * (deltaTime / 1000);
+                    let regenRate = 0.01 * (deltaTime / 1000);
+
+                    // Increased regen when disengaged or retreated (not in melee)
+                    if (stats.engagementTier === EngagementTier.DISENGAGED) {
+                        regenRate = 0.05 * (deltaTime / 1000); // 5x faster when safe
+                    } else if (stats.engagementTier !== EngagementTier.MELEE) {
+                        regenRate = 0.025 * (deltaTime / 1000); // 2.5x faster when at range
+                    }
+
                     stats.balance = Math.min(1.0, stats.balance + regenRate);
                 }
 

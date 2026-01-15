@@ -6,6 +6,7 @@ export enum CombatActionType {
     SLICE = 'SLICE',
     PARRY = 'PARRY',
     THRUST = 'THRUST',
+    SHOOT = 'SHOOT',
     REBOOT = 'REBOOT', // Malware
     STUMBLE = 'STUMBLE' // Scrambled action
 }
