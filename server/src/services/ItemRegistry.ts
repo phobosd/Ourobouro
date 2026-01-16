@@ -131,7 +131,14 @@ export class ItemRegistry {
     }
 
     public getAllItems(): ItemDefinition[] {
-        return Array.from(this.items.values());
+        // Deduplicate by ID since items are stored multiple times (by id, name, shortName)
+        const allValues = Array.from(this.items.values());
+        const uniqueItems = new Map<string, ItemDefinition>();
+        for (const item of allValues) {
+            uniqueItems.set(item.id, item);
+        }
+        Logger.info('ItemRegistry', `getAllItems: ${allValues.length} total values, ${uniqueItems.size} unique items`);
+        return Array.from(uniqueItems.values());
     }
 
     public getUniqueItemNames(): string[] {

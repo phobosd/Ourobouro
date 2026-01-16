@@ -51,7 +51,7 @@
             "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
             "model": "imagen-4.0-generate-001",
             "roles": [],
-            "apiKey": "AIzaSyCx-qvhIVbokIemauB-rX-3URSVX0uTHd0"
+            "apiKey": ""
         },
         "profile_x1habh": {
             "id": "profile_x1habh",
@@ -62,7 +62,7 @@
             "roles": [
                 "IMAGE"
             ],
-            "apiKey": "sk_fWe3x1zBcLOLwm9rk6Clj2DljZBYMKtU"
+            "apiKey": ""
         }
     },
     "bannedWords": [

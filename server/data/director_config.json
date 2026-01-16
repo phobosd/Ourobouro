@@ -2,6 +2,6 @@
     "glitchConfig": {
         "mobCount": 3,
         "itemCount": 5,
-        "legendaryChance": 0.3
+        "legendaryChance": 0.5
     }
 }

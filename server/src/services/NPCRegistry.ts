@@ -162,6 +162,7 @@ export class NPCRegistry {
                     if (updates.faction) json.faction = updates.faction;
                     if (updates.role) json.role = updates.role;
                     if (updates.stats) json.stats = updates.stats;
+                    if (updates.portrait !== undefined) json.portrait = updates.portrait;
 
                     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
                     Logger.info('NPCRegistry', `Updated generated NPC file: ${file}`);
