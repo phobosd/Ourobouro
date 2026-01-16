@@ -51,7 +51,7 @@ export const useGameSocket = () => {
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
-            addSystemLine('Connected to Ouroboro Server...');
+            addSystemLine('Connected to Zenith-9 Server...');
             // Request initial map data
             setTimeout(() => {
                 newSocket.emit('command', 'map');

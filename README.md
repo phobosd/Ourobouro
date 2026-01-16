@@ -1,4 +1,4 @@
-# Ouroboro
+# Zenith-9
 
 A cyberpunk-themed MUD (Multi-User Dungeon) with an innovative **Neural Pulse** timing-based combat system.
 
@@ -58,7 +58,7 @@ For developers and AI agents, please refer to [AGENTS.md](./AGENTS.md). It conta
 ```bash
 # Clone the repository
 git clone https://github.com/phobosd/Ourobouro.git
-cd Ouroboro
+cd Zenith-9
 
 # Install server dependencies
 cd server
@@ -97,7 +97,7 @@ For a comprehensive guide on commands, combat, and game mechanics, please refer 
 ## 🏗️ Architecture
 
 ### Overarching System Diagram
-The Ouroboro ecosystem consists of the Game Client, Game Server, Admin Dashboard, and external AI services.
+The Zenith-9 ecosystem consists of the Game Client, Game Server, Admin Dashboard, and external AI services.
 
 ```mermaid
 graph TD
@@ -146,7 +146,7 @@ graph TD
 - **AI Integration**: Custom LLM Service with Guardrails
 
 ### 🛠️ Admin Dashboard (`/admin`)
-Ouroboro includes a comprehensive Admin Dashboard for real-time world management and content generation.
+Zenith-9 includes a comprehensive Admin Dashboard for real-time world management and content generation.
 - **World Map**: Visualize and manage procedurally generated chunks.
 - **Content Registry**: Search, edit, and delete Items and NPCs live.
 - **AI Director**: Manually trigger generation of new content (NPCs, Mobs, Items, Quests, Rooms).
@@ -157,7 +157,7 @@ For a detailed guide on using the dashboard, see the [Admin Guide](./docs/ADMIN_
 
 ### Project Structure
 ```
-Ouroboro/
+Zenith-9/
 ├── client/               # React frontend
 │   ├── src/
 │   │   ├── components/   # UI components

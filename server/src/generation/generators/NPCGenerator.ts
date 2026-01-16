@@ -118,7 +118,7 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
                 
                 Return ONLY a JSON object with fields: name, description, behavior, role, and rationale.`;
 
-                const creativeRes = await llm.chat(creativePrompt, "You are the lead narrative designer for Ouroboro.", LLMRole.CREATIVE);
+                const creativeRes = await llm.chat(creativePrompt, "You are the lead narrative designer for Zenith-9.", LLMRole.CREATIVE);
                 const creativeData = LLMService.parseJson(creativeRes.text);
 
                 if (creativeData.name) name = creativeData.name;
@@ -173,7 +173,7 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
                 Return ONLY a JSON object with fields: health, attack, defense.
                 Ensure the stats reflect the NPC's description and archetype. An 'aggressive' NPC should generally have higher attack.`;
 
-                const logicRes = await llm.chat(logicPrompt, "You are a game balance engineer for Ouroboro. You ensure NPCs are challenging but fair.", LLMRole.LOGIC);
+                const logicRes = await llm.chat(logicPrompt, "You are a game balance engineer for Zenith-9. You ensure NPCs are challenging but fair.", LLMRole.LOGIC);
                 const logicData = LLMService.parseJson(logicRes.text);
 
                 if (logicData.health) stats.health = Math.max(1, Math.min(budgets.maxNPCHealth, logicData.health));

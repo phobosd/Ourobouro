@@ -15,7 +15,8 @@
         },
         "behavior": "aggressive",
         "canMove": false,
-        "role": "mob"
+        "role": "mob",
+        "portrait": "/assets/portraits/giant_rat.jpg"
     },
     {
         "id": "cyber_thug",
@@ -33,7 +34,8 @@
         },
         "behavior": "aggressive",
         "canMove": true,
-        "role": "mob"
+        "role": "mob",
+        "portrait": "/assets/portraits/cyber_thug.jpg"
     },
     {
         "id": "dancer",
@@ -50,7 +52,8 @@
             "defense": 2
         },
         "canMove": false,
-        "role": "civilian"
+        "role": "civilian",
+        "portrait": "/assets/portraits/dancer.jpg"
     },
     {
         "id": "ripperdoc",
@@ -67,7 +70,8 @@
             "defense": 3
         },
         "canMove": false,
-        "role": "vendor"
+        "role": "vendor",
+        "portrait": "/assets/portraits/ripperdoc.jpg"
     },
     {
         "id": "street_vendor",
@@ -84,7 +88,8 @@
             "defense": 1
         },
         "canMove": false,
-        "role": "vendor"
+        "role": "vendor",
+        "portrait": "/assets/portraits/street_vendor.jpg"
     },
     {
         "id": "street_samurai",
@@ -102,7 +107,8 @@
         },
         "behavior": "aggressive",
         "canMove": true,
-        "role": "guard"
+        "role": "guard",
+        "portrait": "/assets/portraits/street_samurai.jpg"
     },
     {
         "id": "fixer",

@@ -33,7 +33,7 @@ export class QuestGenerator extends BaseGenerator<QuestPayload> {
                 
                 Return ONLY a JSON object with fields: title, description, rationale.`;
 
-                const creativeRes = await llm.chat(creativePrompt, "You are a Fixer in the world of Ouroboro.", LLMRole.CREATIVE);
+                const creativeRes = await llm.chat(creativePrompt, "You are a Fixer in the world of Zenith-9.", LLMRole.CREATIVE);
                 const creativeData = LLMService.parseJson(creativeRes.text);
 
                 if (creativeData.title) title = creativeData.title;
@@ -65,7 +65,7 @@ export class QuestGenerator extends BaseGenerator<QuestPayload> {
                 Return ONLY a JSON object with fields: gold, xp.
                 Ensure the rewards reflect the difficulty and stakes described in the quest.`;
 
-                const logicRes = await llm.chat(logicPrompt, "You are a game balance engineer for Ouroboro.", LLMRole.LOGIC);
+                const logicRes = await llm.chat(logicPrompt, "You are a game balance engineer for Zenith-9.", LLMRole.LOGIC);
                 const logicData = LLMService.parseJson(logicRes.text);
 
                 if (logicData.gold !== undefined) rewards.gold = Math.min(budgets.maxGoldDrop, logicData.gold);

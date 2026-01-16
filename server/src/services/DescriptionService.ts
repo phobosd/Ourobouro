@@ -276,7 +276,7 @@ ${npcDescriptions}`.trim();
      * Generates a full 20x20 city map.
      */
     static generateFullMap(playerPos: Position, engine: IEngine): string {
-        let mapOutput = MessageFormatter.title('[Ouroboro City Map]') + '\n';
+        let mapOutput = MessageFormatter.title('[Zenith-9 City Map]') + '\n';
         const width = 20;
         const height = 20;
 

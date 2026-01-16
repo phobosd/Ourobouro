@@ -44,7 +44,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
                 
                 Return ONLY a JSON object with fields: name, type, description, rationale, slot (optional).`;
 
-                const creativeRes = await llm.chat(creativePrompt, "You are a master item crafter for Ouroboro.", LLMRole.CREATIVE);
+                const creativeRes = await llm.chat(creativePrompt, "You are a master item crafter for Zenith-9.", LLMRole.CREATIVE);
                 const creativeData = LLMService.parseJson(creativeRes.text);
 
                 if (creativeData.name) name = creativeData.name;
@@ -69,7 +69,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
 
         if (llm) {
             try {
-                const logicPrompt = `Balance the mechanics for this item to fit the Ouroboro game engine.
+                const logicPrompt = `Balance the mechanics for this item to fit the Zenith-9 game engine.
                 
                 Item Details:
                 - Name: ${name}
@@ -108,7 +108,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
                 
                 Return ONLY a JSON object with the allowed fields for the item type.`;
 
-                const logicRes = await llm.chat(logicPrompt, "You are a game balance engineer for Ouroboro.", LLMRole.LOGIC);
+                const logicRes = await llm.chat(logicPrompt, "You are a game balance engineer for Zenith-9.", LLMRole.LOGIC);
                 const logicData = LLMService.parseJson(logicRes.text);
 
                 if (itemType === 'weapon') {

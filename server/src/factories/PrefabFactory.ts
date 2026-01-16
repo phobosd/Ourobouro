@@ -264,6 +264,7 @@ export class PrefabFactory {
                 entity.addComponent(new Stats());
                 entity.addComponent(new CombatBuffer(3));
                 entity.addComponent(new WoundTable());
+                entity.addComponent(new Visuals('E', 'white', 0, '/assets/portraits/giant_rat.jpg'));
                 break;
             case 'cyber thug':
                 entity.addComponent(new NPC(
@@ -278,6 +279,7 @@ export class PrefabFactory {
                 entity.addComponent(new Stats());
                 entity.addComponent(new CombatBuffer(3));
                 entity.addComponent(new WoundTable());
+                entity.addComponent(new Visuals('E', 'white', 0, '/assets/portraits/cyber_thug.jpg'));
                 break;
             case 'dancer':
                 entity.addComponent(new NPC(
@@ -290,6 +292,7 @@ export class PrefabFactory {
                 entity.addComponent(new Stats());
                 entity.addComponent(new CombatBuffer(3));
                 entity.addComponent(new WoundTable());
+                entity.addComponent(new Visuals('E', 'white', 0, '/assets/portraits/dancer.jpg'));
                 break;
             case 'ripperdoc':
                 entity.addComponent(new NPC(
@@ -302,6 +305,7 @@ export class PrefabFactory {
                 entity.addComponent(new Stats());
                 entity.addComponent(new CombatBuffer(3));
                 entity.addComponent(new WoundTable());
+                entity.addComponent(new Visuals('E', 'white', 0, '/assets/portraits/ripperdoc.jpg'));
                 break;
             case 'street vendor':
                 entity.addComponent(new NPC(
@@ -314,6 +318,7 @@ export class PrefabFactory {
                 entity.addComponent(new Stats());
                 entity.addComponent(new CombatBuffer(3));
                 entity.addComponent(new WoundTable());
+                entity.addComponent(new Visuals('E', 'white', 0, '/assets/portraits/street_vendor.jpg'));
                 break;
             case 'street samurai':
                 entity.addComponent(new NPC(
@@ -330,6 +335,7 @@ export class PrefabFactory {
                 entity.addComponent(samuraiStats);
                 entity.addComponent(new CombatBuffer(5));
                 entity.addComponent(new WoundTable());
+                entity.addComponent(new Visuals('E', 'white', 0, '/assets/portraits/street_samurai.jpg'));
                 break;
             case 'fixer':
                 entity.addComponent(new NPC(

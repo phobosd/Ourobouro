@@ -9,9 +9,9 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: ouroboro
+      POSTGRES_USER: zenith9
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: ouroboro_db
+      POSTGRES_DB: zenith9_db
     ports:
       - "5432:5432"
     volumes:

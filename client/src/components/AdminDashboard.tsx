@@ -406,7 +406,7 @@ export const AdminDashboard: React.FC = () => {
             {/* Header */}
             <div className="admin-header">
                 <div>
-                    <h1 className="text-neon-blue">Ouroboro World Director</h1>
+                    <h1 className="text-neon-blue">Zenith-9 World Director</h1>
                     <div className="status-indicator">
                         <div className={`dot ${socket?.connected ? 'dot-online' : 'dot-offline'}`} />
                         <span>{socket?.connected ? 'SYSTEM ONLINE' : 'SYSTEM OFFLINE'}</span>

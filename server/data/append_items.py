@@ -2,7 +2,7 @@
 import json
 import os
 
-items_path = r'c:\Users\andyp\Ouroboro\server\data\items.json'
+items_path = r'c:\Users\andyp\Zenith-9\server\data\items.json'
 
 new_items = [
     # Neon-Ronin Set (Agility/Stealth)

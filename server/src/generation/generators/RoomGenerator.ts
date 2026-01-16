@@ -33,7 +33,7 @@ export class RoomGenerator extends BaseGenerator<RoomPayload> {
                 
                 Return ONLY a JSON object with fields: name, description, rationale.`;
 
-                const response = await llm.chat(prompt, "You are the lead architect for the Ouroboro sprawl. Your style is brutalist, neon-soaked, and claustrophobic. You describe spaces through light, sound, and decay.", LLMRole.CREATIVE);
+                const response = await llm.chat(prompt, "You are the lead architect for the Zenith-9 sprawl. Your style is brutalist, neon-soaked, and claustrophobic. You describe spaces through light, sound, and decay.", LLMRole.CREATIVE);
                 const data = LLMService.parseJson(response.text);
 
                 if (data.name) name = data.name;

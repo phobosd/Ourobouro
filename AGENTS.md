@@ -1,6 +1,6 @@
-# Ouroboro: Technical Knowledge Base for AI Agents
+# Zenith-9: Technical Knowledge Base for AI Agents
 
-Welcome, Architect. This document is your primary source of truth for the Ouroboro game engine. It is designed to provide you with an instant mental model of the system and "Golden Path" recipes for implementation.
+Welcome, Architect. This document is your primary source of truth for the Zenith-9 game engine. It is designed to provide you with an instant mental model of the system and "Golden Path" recipes for implementation.
 
 ---
 
@@ -16,6 +16,24 @@ As an agent, you are responsible for maintaining the integrity of this knowledge
     - A **lore element** or **world-building detail** that affects gameplay is established.
     - **Environmental effects** or hazards are added.
 3.  **No Browser Testing**: Do not use the browser subagent to test features or UI. The user will handle all browser-based verification.
+
+### 🔄 Server Management Scripts
+
+The `server/` directory contains PowerShell scripts for managing the server process. **Use these instead of manual process management**:
+
+- **`start_server.ps1`**: Starts the development server with `npm run dev`
+- **`restart_server.ps1`**: Kills any process on port 3000 and starts a fresh server instance
+- **`kill_server.ps1`**: Terminates all processes listening on port 3000
+
+**Usage**: When you need to restart the server (e.g., after code changes that don't auto-reload), use:
+```powershell
+.\server\restart_server.ps1
+```
+
+**Note**: The server uses `nodemon` which auto-restarts on file changes in `src/**/*`. Manual restarts are only needed for:
+- Changes to `package.json` dependencies
+- Changes to configuration files outside `src/`
+- When the server crashes or hangs
 
 ## 🏗 System Architecture
 
@@ -297,7 +315,7 @@ Use the `GameEventBus` to decouple systems:
    ```
 
 ### 🧪 Testing Framework
-Ouroboro uses **Jest** for unit testing:
+Zenith-9 uses **Jest** for unit testing:
 - **Location**: Tests are located in `**/__tests__/*.test.ts`.
 - **Running**: Use `npm test` to run the suite.
 - **Mocking**: Use `jest.mock('uuid')` or similar for deterministic tests.

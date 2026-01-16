@@ -378,6 +378,8 @@ io.on('connection', (socket) => {
     observationSystem.handleLook(socket.id, engine);
 
     // Check for aggressive NPCs in the spawn room
+    // DISABLED: Prevents aggressive NPCs from auto-targeting players on spawn
+    /*
     const spawnPos = player.getComponent(Position)!;
     const npcsInRoom = WorldQuery.findNPCsAt(engine, spawnPos.x, spawnPos.y);
     for (const npc of npcsInRoom) {
@@ -393,6 +395,7 @@ io.on('connection', (socket) => {
             messageService.combat(socket.id, `<enemy>${npcComp.typeName} notices you and prepares to attack!</enemy>`);
         }
     }
+    */
 
     socket.on('command', (cmd: string) => {
         const result = CommandSchema.safeParse(cmd);

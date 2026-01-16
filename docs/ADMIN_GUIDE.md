@@ -1,10 +1,10 @@
 # Admin Dashboard Guide
 
-The Admin Dashboard is the control center for the Ouroboro game world. It allows administrators to manage the AI Director, oversee content generation, configure guardrails, and manipulate the game state in real-time.
+The Admin Dashboard is the control center for the Zenith-9 game world. It allows administrators to manage the AI Director, oversee content generation, configure guardrails, and manipulate the game state in real-time.
 
 ## Architecture
 
-The Ouroboro system integrates Large Language Models (LLMs) into the core game loop through a "World Director" system. This system acts as an intermediary between the raw creativity of the LLM and the strict rules of the game engine.
+The Zenith-9 system integrates Large Language Models (LLMs) into the core game loop through a "World Director" system. This system acts as an intermediary between the raw creativity of the LLM and the strict rules of the game engine.
 
 ```mermaid
 graph TD

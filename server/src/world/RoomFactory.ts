@@ -200,16 +200,17 @@ export class RoomFactory {
 
         const roll = Math.random();
 
+        // DISABLED: Aggressive NPC spawns (cyber thug, street samurai) to prevent combat on world generation
         switch (type) {
             case 1: // Street
-                if (roll < 0.15) spawn('street samurai');
-                else if (roll < 0.25) spawn('street vendor');
-                else if (roll < 0.35) spawn('cyber thug');
+                // if (roll < 0.15) spawn('street samurai'); // DISABLED: Aggressive
+                if (roll < 0.25) spawn('street vendor');
+                // else if (roll < 0.35) spawn('cyber thug'); // DISABLED: Aggressive
                 break;
             case 2: // Plaza
                 if (roll < 0.30) spawn('street vendor');
-                else if (roll < 0.40) spawn('street samurai');
-                else if (roll < 0.50) spawn('cyber thug');
+                // else if (roll < 0.40) spawn('street samurai'); // DISABLED: Aggressive
+                // else if (roll < 0.50) spawn('cyber thug'); // DISABLED: Aggressive
                 break;
             case 5: // Club
                 if (roll < 0.60) spawn('dancer');

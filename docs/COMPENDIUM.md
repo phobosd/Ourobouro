@@ -1,6 +1,6 @@
-# Ouroboro Compendium
+# Zenith-9 Compendium
 
-This document serves as a comprehensive reference for all Non-Player Characters (NPCs) and Items within the Ouroboro world. It is intended to be a living document, updated whenever new content is added or existing content is modified.
+This document serves as a comprehensive reference for all Non-Player Characters (NPCs) and Items within the Zenith-9 world. It is intended to be a living document, updated whenever new content is added or existing content is modified.
 
 ## NPCs (Non-Player Characters)
 

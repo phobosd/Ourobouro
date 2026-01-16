@@ -1,6 +1,6 @@
-# Ouroboro User's Guide
+# Zenith-9 User's Guide
 
-Welcome to Ouroboro, a cyberpunk text-based RPG. This guide will help you navigate the dark, neon-lit streets, manage your inventory, and survive combat.
+Welcome to Zenith-9, a cyberpunk text-based RPG. This guide will help you navigate the dark, neon-lit streets, manage your inventory, and survive combat.
 
 ## Table of Contents
 1. [Basic Commands](#basic-commands)
@@ -32,18 +32,18 @@ Welcome to Ouroboro, a cyberpunk text-based RPG. This guide will help you naviga
 
 ## The Sprawl & Its Districts
 
-The world of Ouroboro is divided into several distinct sectors, each with its own atmosphere and dangers.
+The world of Zenith-9 is divided into several distinct sectors, each with its own atmosphere and dangers.
 
 *   **Chiba City**: The industrial heart, filled with rain-slicked streets and heavy manufacturing.
 *   **The Sprawl**: The central urban hub, home to the Arcology Plaza and major corporate headquarters.
 *   **Straylight**: The high-end district where the elite reside in gleaming towers of glass and chrome.
 *   **The Matrix (Cyberspace)**: A digital mirror of the physical world, accessible via `jack_in`. It contains specialized nodes like **Data-Stream Conduits** and **Encrypted Sub-Nodes**.
 *   **The Glitch Zone**: An unstable, procedurally generated dungeon accessed through the Glitch Door in the Central Plaza.
-*   **Dynamic Expansion**: The world of Ouroboro is constantly growing. New sectors, shops, and alleyways are added dynamically by the AI Director. Check your `map` frequently to discover new locations.
+*   **Dynamic Expansion**: The world of Zenith-9 is constantly growing. New sectors, shops, and alleyways are added dynamically by the AI Director. Check your `map` frequently to discover new locations.
 
 ## NPC Behavior & Interaction
 
-The citizens of Ouroboro are not static. They have their own lives and agendas.
+The citizens of Zenith-9 are not static. They have their own lives and agendas.
 
 *   **Roaming**: Most NPCs are capable of moving between rooms. You might see a Street Samurai patrol the Chiba district or a Thug wander into the Central Plaza.
 *   **Barks**: NPCs will periodically "bark" dialogue lines. These lines reflect their personality, archetype, and current mood. A Ripperdoc might complain about the cost of medical supplies, while a Turing Police agent will issue stern warnings about illegal AI activity.
@@ -77,7 +77,7 @@ Navigate the world using cardinal directions: `north` (`n`), `south` (`s`), `eas
     *   `use <item name>` (e.g., `use medkit`)
 
 ### Item Rarity
-Items in Ouroboro are classified by rarity, which determines their power and value. You can identify an item's rarity by its color in the terminal:
+Items in Zenith-9 are classified by rarity, which determines their power and value. You can identify an item's rarity by its color in the terminal:
 
 *   **Common** (Grey): Standard street-grade gear.
 *   **Uncommon** (Green): Reliable tech with slight improvements.
@@ -96,7 +96,7 @@ Consumables provide vital recovery and buffs. Most are destroyed upon use.
 *   **Water Bottle**: Reduces **Fatigue** by 20.
 
 ### Stance & Posture
-There are two types of "stance" in Ouroboro: **Physical Posture** and **Combat Stance**.
+There are two types of "stance" in Zenith-9: **Physical Posture** and **Combat Stance**.
 
 **Physical Posture**:
 Affects your energy regeneration and ability to move.
@@ -111,7 +111,7 @@ Determines how you defend yourself in a fight (Evasion vs. Parry vs. Shield). Se
 
 ## Combat System
 
-Combat in Ouroboro is a high-stakes, real-time tactical experience. It combines traditional command-based interactions with a modern "Action Queuing" system for advanced maneuvers.
+Combat in Zenith-9 is a high-stakes, real-time tactical experience. It combines traditional command-based interactions with a modern "Action Queuing" system for advanced maneuvers.
 
 ### 1. Attributes & Combat Stats
 Your character's physical and mental capabilities directly impact your survival.
@@ -220,7 +220,7 @@ Heavy hits can cause lasting damage:
 *   **Malware**: Certain advanced enemies (like the Turing Police) can inject malware like `REBOOT.EXE` into your buffer, forcing a system shutdown.
 
 ### 7. NPC Health & Status
-In Ouroboro, you cannot see the exact Hit Points of your enemies. Instead, you must rely on visual cues and observation.
+In Zenith-9, you cannot see the exact Hit Points of your enemies. Instead, you must rely on visual cues and observation.
 
 *   **Visual Cues**: When you `look` at an NPC, their description will include a status line (e.g., "Status: They look Battered.").
 *   **Combat Feedback**: Your attacks will be described by their severity rather than raw numbers.
@@ -329,7 +329,7 @@ A hidden chamber filled with ancient tech and mysterious artifacts. It contains 
 
 ## World Events & Bosses
 
-The world of Ouroboro is dynamic and ever-changing. The AI Director may occasionally trigger large-scale events or manifest powerful entities.
+The world of Zenith-9 is dynamic and ever-changing. The AI Director may occasionally trigger large-scale events or manifest powerful entities.
 
 ### ⚠️ World Events (Mob Invasions)
 When the city's security is breached, a **Mob Invasion** may occur.

@@ -1,2 +1,2 @@
-Write-Host "Starting Ouroboro server..." -ForegroundColor Cyan
+Write-Host "Starting Zenith-9 server..." -ForegroundColor Cyan
 npm run dev
