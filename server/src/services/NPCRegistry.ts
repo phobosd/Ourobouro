@@ -14,8 +14,10 @@ export interface NPCDefinition {
     behavior?: string;
     dialogue?: string[];
     faction?: string;
+    role?: string;
     tags?: string[];
     canMove?: boolean;
+    portrait?: string;
 }
 
 export class NPCRegistry {
@@ -81,8 +83,10 @@ export class NPCRegistry {
                         behavior: npc.behavior,
                         dialogue: npc.dialogue,
                         faction: npc.faction,
+                        role: npc.role,
                         tags: npc.tags,
-                        canMove: npc.canMove ?? true
+                        canMove: npc.canMove ?? true,
+                        portrait: npc.portrait
                     };
 
                     this.npcs.set(def.id.toString().trim(), def);
@@ -156,6 +160,7 @@ export class NPCRegistry {
                     if (updates.name) json.name = updates.name;
                     if (updates.description) json.description = updates.description;
                     if (updates.faction) json.faction = updates.faction;
+                    if (updates.role) json.role = updates.role;
                     if (updates.stats) json.stats = updates.stats;
 
                     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));

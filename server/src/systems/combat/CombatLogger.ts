@@ -76,6 +76,57 @@ export class CombatLogger {
         }
     }
 
+    static getCriticalHitFlavor(category: string, targetName: string): string {
+        const cat = category.toLowerCase();
+        let variants: string[] = [];
+
+        if (cat.includes('blade') || cat.includes('sword') || cat.includes('katana')) {
+            variants = [
+                `\n<combat-crit>*** CRITICAL SEVERANCE ***\nYour weapon flashes in a deadly arc, carving deep into ${targetName} with a spray of crimson mist! The wound is horrific!</combat-crit>`,
+                `\n<combat-crit>*** ARTERY SEVERED ***\nA precise slash opens a fountain of blood! ${targetName} staggers as their life force spills onto the pavement!</combat-crit>`,
+                `\n<combat-crit>*** SURGICAL PRECISION ***\nYou slip your weapon past their guard, piercing a vital organ! ${targetName} gasps in shock!</combat-crit>`,
+                `\n<combat-crit>*** LIMB MAIMER ***\nYour blade bites deep into muscle and bone! ${targetName} screams as the limb hangs by a thread!</combat-crit>`,
+                `\n<combat-crit>*** ELEGANT EXECUTION ***\nA blur of motion, a flash of steel. You strike with perfect form, leaving ${targetName} bleeding from a massive gash!</combat-crit>`
+            ];
+        } else if (cat.includes('blunt') || cat.includes('brawling')) {
+            variants = [
+                `\n<combat-crit>*** BONE SHATTERING IMPACT ***\nYou connect with sickening force! The sound of ${targetName}'s bones snapping echoes through the air as they are violently thrown back!</combat-crit>`,
+                `\n<combat-crit>*** CONCUSSIVE FORCE ***\nYou slam into ${targetName} with the force of a freight train! Their eyes roll back as they crumble!</combat-crit>`,
+                `\n<combat-crit>*** RIB CRACKER ***\nA thunderous blow to the chest! You hear the distinct crunch of ribs giving way as ${targetName} doubles over!</combat-crit>`,
+                `\n<combat-crit>*** JAW BREAKER ***\nYou catch ${targetName} flush on the chin! Teeth fly and blood sprays as their head snaps back violently!</combat-crit>`,
+                `\n<combat-crit>*** INTERNAL HEMORRHAGE ***\nThe impact ripples through ${targetName}'s body, rupturing organs! They cough up blood, stunned by the heavy blow!</combat-crit>`
+            ];
+        } else if (cat.includes('pistol') || cat.includes('rifle') || cat.includes('smg') || cat.includes('shotgun')) {
+            variants = [
+                `\n<combat-crit>*** HEADSHOT ***\nA perfect shot! The round obliterates matter and bone, exiting ${targetName} in a gruesome shower of debris!</combat-crit>`,
+                `\n<combat-crit>*** CENTER MASS ***\nYou drill a round straight into ${targetName}'s chest! The impact knocks them off their feet, gasping for air!</combat-crit>`,
+                `\n<combat-crit>*** VITAL ORGAN HIT ***\nThe shot pierces ${targetName}'s defenses, tearing through soft tissue! They clutch the wound in agony!</combat-crit>`,
+                `\n<combat-crit>*** ARMOR PIERCING ***\nYour shot punches clean through armor and flesh alike! ${targetName} is thrown backward by the kinetic energy!</combat-crit>`,
+                `\n<combat-crit>*** PRECISION STRIKE ***\nYou thread the needle, landing a shot in a chink in their armor! ${targetName} howls as the projectile finds its mark!</combat-crit>`
+            ];
+        } else {
+            variants = [
+                `\n<combat-crit>*** DEVASTATING BLOW ***\nYou unleash a strike of pure destruction! ${targetName} is mangled by the sheer force of the impact!</combat-crit>`,
+                `\n<combat-crit>*** OVERWHELMING POWER ***\nYou strike with such ferocity that ${targetName} is lifted off their feet and slammed into the ground!</combat-crit>`,
+                `\n<combat-crit>*** BRUTAL IMPACT ***\nA savage hit that leaves ${targetName} dazed and broken! The sound of the impact echoes in the room!</combat-crit>`,
+                `\n<combat-crit>*** MERCILESS STRIKE ***\nYou exploit a weakness, driving your attack home with lethal intent! ${targetName} reels from the pain!</combat-crit>`,
+                `\n<combat-crit>*** CATASTROPHIC HIT ***\nYour attack connects perfectly, dealing massive trauma! ${targetName} looks visibly shaken and battered!</combat-crit>`
+            ];
+        }
+        return variants[Math.floor(Math.random() * variants.length)];
+    }
+
+    static getNPCCriticalHitFlavor(npcName: string): string {
+        const variants = [
+            `\n<combat-crit>*** SAVAGE MAULING ***\n${npcName} tears into you with primal fury! The pain is blinding as claws or weapons rend flesh!</combat-crit>`,
+            `\n<combat-crit>*** CRUSHING ASSAULT ***\n${npcName} lands a heavy blow that knocks the wind out of you! You struggle to stay standing!</combat-crit>`,
+            `\n<combat-crit>*** LETHAL PRECISION ***\n${npcName} strikes a vital spot! You feel a sharp, burning pain as your health plummets!</combat-crit>`,
+            `\n<combat-crit>*** BRUTAL TAKEDOWN ***\n${npcName} sweeps your defenses aside and slams you with a devastating attack! The world spins!</combat-crit>`,
+            `\n<combat-crit>*** VICIOUS GORE ***\n${npcName} unleashes a gruesome attack, leaving you bleeding and battered! The sight is horrifying!</combat-crit>`
+        ];
+        return variants[Math.floor(Math.random() * variants.length)];
+    }
+
     static getBalanceDescription(balance: number): string {
         if (balance >= 0.9) return "solidly balanced";
         if (balance >= 0.7) return "balanced";

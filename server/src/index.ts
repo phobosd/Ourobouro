@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -55,6 +56,7 @@ import { GuardrailService } from './services/GuardrailService';
 import { SnapshotService } from './services/SnapshotService';
 import { PublisherService } from './services/PublisherService';
 import { HealthDescriptor } from './utils/HealthDescriptor';
+import { NPCRegistry } from './services/NPCRegistry';
 
 import { registerMovementCommands } from './commands/MovementCommands';
 import { registerCombatCommands } from './commands/CombatCommands';
@@ -77,6 +79,7 @@ ItemRegistry.getInstance();
 
 const app = express();
 app.use(cors());
+app.use('/assets', express.static(path.join(process.cwd(), '../client/public/assets')));
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
@@ -147,7 +150,7 @@ const dungeonService = DungeonService.getInstance(engine, messageService);
 const movementSystem = new MovementSystem(io, messageService);
 const interactionSystem = new InteractionSystem(io);
 const inventorySystem = new InventorySystem(io);
-const npcSystem = new NPCSystem(io, messageService);
+const npcSystem = new NPCSystem(io, messageService, director.getLLM());
 const combatSystem = new CombatSystem(engine, io, messageService);
 const cyberspaceSystem = new CyberspaceSystem(io, messageService);
 const atmosphereSystem = new AtmosphereSystem(messageService);
@@ -391,7 +394,6 @@ io.on('connection', (socket) => {
         }
     }
 
-
     socket.on('command', (cmd: string) => {
         const result = CommandSchema.safeParse(cmd);
         if (!result.success) {
@@ -460,13 +462,6 @@ io.on('connection', (socket) => {
             if (entity) {
                 const itemComp = entity.getComponent(Item);
                 if (itemComp) {
-                    // Construct item details from the component directly
-                    // We might need to look up the template for some static data if not on component
-                    // But for now, let's assume component + registry fallback for description
-
-                    // Try to find the template to get description/attributes if missing
-                    // We don't store templateId on Item component currently, which is a limitation.
-                    // But we can try to match by name again in registry for static data.
                     const template = ItemRegistry.getInstance().getItem(itemComp.name) ||
                         ItemRegistry.getInstance().getAllItems().find(i => i.name === itemComp.name);
 
@@ -475,7 +470,6 @@ io.on('connection', (socket) => {
                         description: itemComp.description || template?.description || "No description.",
                         weight: itemComp.weight,
                         rarity: itemComp.rarity || template?.rarity,
-                        // Use component data for dynamic stats if available, otherwise template
                         extraData: {
                             damage: (entity.getComponent(Weapon) as any)?.damage || template?.extraData?.damage,
                             range: (entity.getComponent(Weapon) as any)?.range || template?.extraData?.range,
@@ -491,10 +485,7 @@ io.on('connection', (socket) => {
 
         // 2. Fallback to Registry Lookup by Name
         if (!item) {
-            // Try to find by name or ID
             item = ItemRegistry.getInstance().getItem(itemName);
-
-            // If not found, try to find by shortName (case insensitive search in registry)
             if (!item) {
                 const allItems = ItemRegistry.getInstance().getAllItems();
                 item = allItems.find(i => i.name.toLowerCase() === itemName.toLowerCase() || i.shortName.toLowerCase() === itemName.toLowerCase());
@@ -523,12 +514,10 @@ io.on('connection', (socket) => {
 
         let npcEntity: Entity | undefined;
 
-        // 1. Try to find by Entity ID first (if provided)
         if (npcId) {
             npcEntity = engine.getEntity(npcId);
         }
 
-        // 2. Fallback: Find by name in the same room as player
         if (!npcEntity) {
             const player = engine.getEntity(socket.id);
             if (player) {
@@ -548,7 +537,6 @@ io.on('connection', (socket) => {
             const combatStats = npcEntity.getComponent(CombatStats);
             const inventory = npcEntity.getComponent(Inventory);
 
-            // Basic details
             const details: any = {
                 name: npcComp?.typeName || "Unknown",
                 description: npcComp?.description || "No description available.",
@@ -557,7 +545,6 @@ io.on('connection', (socket) => {
                 status: combatStats?.isHostile ? "Hostile" : "Neutral"
             };
 
-            // Equipment summary
             if (inventory) {
                 const equipment: string[] = [];
                 if (inventory.rightHand) {
@@ -568,7 +555,6 @@ io.on('connection', (socket) => {
                     const item = WorldQuery.getEntityById(engine, inventory.leftHand);
                     if (item) equipment.push(`Left Hand: ${item.getComponent(Item)?.name}`);
                 }
-                // Could add worn items too if desired
                 if (equipment.length > 0) {
                     details.equipment = equipment;
                 }
@@ -586,8 +572,30 @@ io.on('connection', (socket) => {
     });
 });
 
+// API Routes
+app.get('/api/llm/balance/:profileId', async (req, res) => {
+    try {
+        const profileId = req.params.profileId;
+        const config = director.guardrails.getConfig();
+        const profile = Object.values(config.llmProfiles).find(p => p.id === profileId);
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        const balanceInfo = await director.llm.getProviderBalance(profile);
+        res.json(balanceInfo);
+    } catch (error) {
+        Logger.error('API', `Failed to fetch balance: ${error}`);
+        res.status(500).json({ error: 'Failed to fetch balance' });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 
 httpServer.listen(PORT, () => {
-    Logger.info('Server', `Server running on port ${PORT}`);
+    Logger.info('Server', `Game Server running on port ${PORT}`);
+    Logger.info('Server', 'Forcing registry reload...');
+    NPCRegistry.getInstance().reloadGeneratedNPCs();
+    ItemRegistry.getInstance().reloadGeneratedItems();
 });

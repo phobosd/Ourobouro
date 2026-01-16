@@ -337,8 +337,14 @@ ${npcDescriptions}`.trim();
 
         let desc = `
 ${MessageFormatter.title(`[${npcComp.typeName}]`)}
-<desc>${npcComp.description}</desc>
 `.trim();
+
+        const visuals = npc.getComponent(Visuals);
+        if (visuals && visuals.portrait) {
+            desc += `\n<portrait>\n${visuals.portrait}\n</portrait>`;
+        }
+
+        desc += `\n<desc>${npcComp.description}</desc>`;
 
         const combatStats = npc.getComponent(CombatStats);
         if (combatStats) {

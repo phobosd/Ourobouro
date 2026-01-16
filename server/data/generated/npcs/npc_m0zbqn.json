@@ -72,5 +72,6 @@
     "flavor": {
       "rationale": "Chromeclaw controls a small territory in the Glitch Area, using his brute strength and cybernetic enhancements to extort money from anyone who dares enter. He thrives on the chaos of the leaking Matrix and preys on those destabilized by it."
     }
-  }
+  },
+  "role": "mob"
 }

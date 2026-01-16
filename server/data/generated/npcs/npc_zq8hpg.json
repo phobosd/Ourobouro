@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The Inkweaver's existence is attributed to the unchecked flow of industrial waste and experimental bioluminescent chemicals into the city sewers. The chemical compounds reacted with local rat populations, triggering rapid mutation, while their proximity to abandoned squid farms provided genetic material for the formation of tentacles."
     }
-  }
+  },
+  "role": "mob"
 }

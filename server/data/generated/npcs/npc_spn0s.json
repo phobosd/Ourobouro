@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "Spinecrawlers are drawn to areas of high electromagnetic interference, such as the sewer system and dark alleys where discarded technology accumulates. They feed on data-leaks and residual energy emitted by malfunctioning electronics, using their spines to absorb these emissions."
     }
-  }
+  },
+  "role": "mob"
 }

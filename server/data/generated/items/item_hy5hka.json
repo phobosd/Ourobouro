@@ -1,0 +1,25 @@
+{
+  "id": "item_hy5hka",
+  "name": "Void Ripper",
+  "shortName": "voidripper",
+  "description": "A sleek, black handgun forged from neutronium and fitted with a phase-shift projector. It fires projectiles that momentarily vanish before reappearing at the target's location.",
+  "type": "weapon",
+  "rarity": "legendary",
+  "cost": 1000,
+  "weight": 3.3,
+  "attributes": {
+    "damage": 25,
+    "magSize": 20,
+    "weight": 100
+  },
+  "portrait": "https://gen.pollinations.ai/image/Realistic%203D%20render%20of%20a%20sleek%20black%20Void%20Ripper%20handgun%20forged%20from%20neutronium%2C%20fitted%20with%20a%20phase-shift%20projector%2C%20firing%20a%20projectile%20that%20momentarily%20vanishes%20before%20reappearing%20at%20its%20target's%20location.%20Studio%20lighting.%20Isolated%20on%20a%20dark%20grey%20background.%20Cyberpunk%20aesthetic.%20Centered%20product%20shot%2C%20high%20detail.%20Focus%20on%20metallic%20textures%2C%20glowing%20components%2C%20and%20realistic%20wear%20and%20tear%2C%20scratches%2C%20and%20imperfections.%208k%20resolution.?width=1024&height=1024&nologo=true&model=flux&key=sk_fWe3x1zBcLOLwm9rk6Clj2DljZBYMKtU",
+  "_metadata": {
+    "proposalId": "c3479f5b-a75c-4502-839e-849a81a4b8b5",
+    "generatedAt": 1768577450719,
+    "publishedAt": 1768577450719,
+    "seed": "jksxz",
+    "flavor": {
+      "rationale": "High-level assassins or covert operatives would prize this weapon for its ability to bypass defenses and strike unseen."
+    }
+  }
+}

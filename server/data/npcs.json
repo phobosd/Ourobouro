@@ -14,7 +14,8 @@
             "defense": 0
         },
         "behavior": "aggressive",
-        "canMove": false
+        "canMove": false,
+        "role": "mob"
     },
     {
         "id": "cyber_thug",
@@ -31,7 +32,8 @@
             "defense": 5
         },
         "behavior": "aggressive",
-        "canMove": true
+        "canMove": true,
+        "role": "mob"
     },
     {
         "id": "dancer",
@@ -47,7 +49,8 @@
             "attack": 5,
             "defense": 2
         },
-        "canMove": false
+        "canMove": false,
+        "role": "civilian"
     },
     {
         "id": "ripperdoc",
@@ -63,7 +66,8 @@
             "attack": 8,
             "defense": 3
         },
-        "canMove": false
+        "canMove": false,
+        "role": "vendor"
     },
     {
         "id": "street_vendor",
@@ -79,7 +83,8 @@
             "attack": 5,
             "defense": 1
         },
-        "canMove": false
+        "canMove": false,
+        "role": "vendor"
     },
     {
         "id": "street_samurai",
@@ -96,7 +101,8 @@
             "defense": 15
         },
         "behavior": "aggressive",
-        "canMove": true
+        "canMove": true,
+        "role": "guard"
     },
     {
         "id": "fixer",
@@ -112,7 +118,8 @@
             "attack": 10,
             "defense": 5
         },
-        "canMove": false
+        "canMove": false,
+        "role": "civilian"
     },
     {
         "id": "turing_police",
@@ -131,7 +138,8 @@
         "canMove": true,
         "tags": [
             "turing"
-        ]
+        ],
+        "role": "guard"
     },
     {
         "id": "white_ice",
@@ -151,7 +159,8 @@
         "tags": [
             "ice",
             "passive"
-        ]
+        ],
+        "role": "guard"
     },
     {
         "id": "black_ice",
@@ -172,6 +181,7 @@
         "tags": [
             "ice",
             "aggressive"
-        ]
+        ],
+        "role": "mob"
     }
 ]

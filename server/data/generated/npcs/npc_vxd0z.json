@@ -39,5 +39,6 @@
     "flavor": {
       "rationale": "Born from the anomaly that has appeared in the city, The Conduit is an emergent digital consciousness attempting to assimilate all data networks. It seeks to expand its influence by consuming every piece of information it can find, transforming itself into a living weapon against humanity. Its purpose: To rewrite reality according to its own corrupted logic and purge everything deemed 'non-essential'."
     }
-  }
+  },
+  "role": "boss"
 }

@@ -5,13 +5,14 @@ import { Logger } from '../utils/Logger';
 export enum LLMRole {
     CREATIVE = 'CREATIVE',
     LOGIC = 'LOGIC',
+    IMAGE = 'IMAGE',
     DEFAULT = 'DEFAULT'
 }
 
 export interface LLMProfile {
     id: string;
     name: string;
-    provider: 'local' | 'gemini' | 'openai';
+    provider: 'local' | 'gemini' | 'openai' | 'pollinations';
     baseUrl: string;
     apiKey?: string;
     model: string;

@@ -19,6 +19,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Position } from '../components/Position';
 import { Loot } from '../components/Loot';
+import { NPC } from '../components/NPC';
+import { ImageDownloader } from '../utils/ImageDownloader';
 
 export enum DirectorLogLevel {
     INFO = 'info',
@@ -37,10 +39,10 @@ export interface DirectorLogEntry {
 export class WorldDirector {
     private io: Server;
     private adminNamespace: any;
-    private guardrails: GuardrailService;
+    public guardrails: GuardrailService;
     private snapshots: SnapshotService;
     private publisher: PublisherService;
-    private llm: LLMService;
+    public llm: LLMService;
 
     // Generators
     private npcGen: NPCGenerator;
@@ -68,6 +70,10 @@ export class WorldDirector {
     };
 
     private configPath = path.join(process.cwd(), 'data', 'director_config.json');
+
+    public getLLM(): LLMService {
+        return this.llm;
+    }
 
     constructor(io: Server, guardrails: GuardrailService, snapshots: SnapshotService, publisher: PublisherService, engine: Engine) {
         this.io = io;
@@ -452,22 +458,36 @@ export class WorldDirector {
 
                 switch (data.type) {
                     case 'NPC':
-                        proposal = await this.npcGen.generate(config, this.llm, { generatedBy: 'Manual' });
+                        proposal = await this.npcGen.generate(config, this.llm, {
+                            generatedBy: 'Manual',
+                            existingNames: NPCRegistry.getInstance().getAllNPCs().map(n => n.name)
+                        });
                         break;
                     case 'MOB':
-                        proposal = await this.npcGen.generate(config, this.llm, { generatedBy: 'Manual', subtype: 'MOB' });
+                        proposal = await this.npcGen.generate(config, this.llm, {
+                            generatedBy: 'Manual',
+                            subtype: 'MOB',
+                            existingNames: NPCRegistry.getInstance().getAllNPCs().map(n => n.name)
+                        });
                         break;
                     case 'BOSS':
                         proposal = await this.generateBoss();
                         break;
                     case 'ITEM':
-                        proposal = await this.itemGen.generate(config, this.llm, { generatedBy: 'Manual', ...data.payload });
+                        proposal = await this.itemGen.generate(config, this.llm, {
+                            generatedBy: 'Manual',
+                            ...data.payload,
+                            existingNames: ItemRegistry.getInstance().getAllItems().map(i => i.name)
+                        });
                         break;
                     case 'QUEST':
                         proposal = await this.questGen.generate(config, this.llm, { generatedBy: 'Manual' });
                         break;
                     case 'WORLD_EXPANSION':
-                        proposal = await this.roomGen.generate(config, this.llm, { generatedBy: 'Manual' });
+                        proposal = await this.roomGen.generate(config, this.llm, {
+                            generatedBy: 'Manual',
+                            existingNames: RoomRegistry.getInstance().getAllRooms().map(r => r.name)
+                        });
                         break;
                     case 'EVENT':
                         await this.triggerWorldEvent(data.payload?.eventType || 'MOB_INVASION');
@@ -541,7 +561,9 @@ export class WorldDirector {
 
             socket.on('director:get_npcs', () => {
                 const npcs = NPCRegistry.getInstance().getAllNPCs();
+                this.log(DirectorLogLevel.INFO, `Client requested NPCs. Found ${npcs.length} total.`);
                 const uniqueNPCs = Array.from(new Map(npcs.map(npc => [npc.id, npc])).values());
+                this.log(DirectorLogLevel.INFO, `Sending ${uniqueNPCs.length} unique NPCs.`);
                 socket.emit('director:npcs_update', uniqueNPCs);
             });
 
@@ -556,14 +578,118 @@ export class WorldDirector {
                 }
             });
 
-            socket.on('director:update_npc', (data: { id: string, updates: any }) => {
-                if (NPCRegistry.getInstance().updateNPC(data.id, data.updates)) {
-                    this.log(DirectorLogLevel.SUCCESS, `Updated NPC: ${data.id}`);
-                    const npcs = NPCRegistry.getInstance().getAllNPCs();
-                    const uniqueNPCs = Array.from(new Map(npcs.map(npc => [npc.id, npc])).values());
-                    this.adminNamespace.emit('director:npcs_update', uniqueNPCs);
+            socket.on('director:generate_portrait', async (id: string) => {
+                const npc = NPCRegistry.getInstance().getNPC(id);
+                if (!npc) {
+                    this.log(DirectorLogLevel.ERROR, `Cannot generate portrait: NPC ${id} not found.`);
+                    return;
+                }
+
+                this.log(DirectorLogLevel.INFO, `Generating portrait for ${npc.name}...`);
+
+                const prompt = `A cyberpunk style portrait of ${npc.name}, ${npc.description}. Role: ${npc.role}, Faction: ${npc.faction}. High quality, detailed, digital art.`;
+
+                try {
+                    const imageUrl = await this.llm.generateImage(prompt);
+                    if (imageUrl) {
+                        const filename = `${id}.jpg`;
+                        const localPath = await ImageDownloader.downloadImage(imageUrl, filename);
+
+                        if (localPath) {
+                            if (NPCRegistry.getInstance().updateNPC(id, { portrait: localPath })) {
+                                this.log(DirectorLogLevel.SUCCESS, `Portrait generated and saved for ${npc.name}`);
+                                const npcs = NPCRegistry.getInstance().getAllNPCs();
+                                const uniqueNPCs = Array.from(new Map(npcs.map(n => [n.id, n])).values());
+                                this.adminNamespace.emit('director:npcs_update', uniqueNPCs);
+                            } else {
+                                this.log(DirectorLogLevel.ERROR, `Failed to update NPC record for ${npc.name}`);
+                            }
+                        } else {
+                            this.log(DirectorLogLevel.ERROR, `Failed to download generated image for ${npc.name}`);
+                        }
+                    } else {
+                        this.log(DirectorLogLevel.ERROR, `LLM failed to generate image URL for ${npc.name}`);
+                    }
+                } catch (err) {
+                    this.log(DirectorLogLevel.ERROR, `Error generating portrait for ${npc.name}: ${err}`);
+                }
+            });
+
+            socket.on('director:spawn_roaming_npc', (id: string) => {
+                this.log(DirectorLogLevel.INFO, `Spawning roaming NPC: ${id} at 10,10`);
+                const npc = PrefabFactory.createNPC(id);
+                if (npc) {
+                    // Force position to 10,10
+                    let pos = npc.getComponent(Position);
+                    if (!pos) {
+                        pos = new Position(10, 10);
+                        npc.addComponent(pos);
+                    } else {
+                        pos.x = 10;
+                        pos.y = 10;
+                    }
+
+                    // Force roaming behavior
+                    const npcComp = npc.getComponent(NPC);
+                    if (npcComp) {
+                        npcComp.canMove = true;
+                    }
+
+                    // Add to engine
+                    this.engine.addEntity(npc);
+                    PrefabFactory.equipNPC(npc, this.engine);
+
+                    this.log(DirectorLogLevel.SUCCESS, `Spawned roaming NPC ${id} at 10,10`);
                 } else {
-                    this.log(DirectorLogLevel.ERROR, `Failed to update NPC: ${data.id}`);
+                    this.log(DirectorLogLevel.ERROR, `Failed to spawn roaming NPC: ${id} (not found in registry)`);
+                }
+            });
+
+            // Snapshot Management
+            socket.on('snapshot:list', async () => {
+                const list = await this.snapshots.listSnapshots();
+                socket.emit('snapshot:list_update', list);
+            });
+
+            socket.on('snapshot:create', async (name?: string) => {
+                try {
+                    this.log(DirectorLogLevel.INFO, `Creating snapshot: ${name || 'manual'}...`);
+                    await this.snapshots.createSnapshot(name);
+                    this.log(DirectorLogLevel.SUCCESS, `Snapshot created successfully.`);
+
+                    const list = await this.snapshots.listSnapshots();
+                    this.adminNamespace.emit('snapshot:list_update', list);
+                } catch (err) {
+                    this.log(DirectorLogLevel.ERROR, `Failed to create snapshot: ${err}`);
+                }
+            });
+
+            socket.on('snapshot:restore', async (id: string) => {
+                try {
+                    this.log(DirectorLogLevel.WARN, `RESTORING SNAPSHOT: ${id}. System will be temporarily unavailable.`);
+                    await this.snapshots.restoreSnapshot(id);
+                    this.log(DirectorLogLevel.SUCCESS, `Snapshot ${id} restored successfully. RESTARTING REGISTRIES.`);
+
+                    // Reload all registries after restore
+                    ItemRegistry.getInstance().reloadGeneratedItems();
+                    NPCRegistry.getInstance().reloadGeneratedNPCs();
+                    RoomRegistry.getInstance().reloadGeneratedRooms();
+
+                    this.log(DirectorLogLevel.INFO, `System state restored to ${id}.`);
+                } catch (err) {
+                    this.log(DirectorLogLevel.ERROR, `Failed to restore snapshot: ${err}`);
+                }
+            });
+
+            socket.on('snapshot:delete', async (id: string) => {
+                try {
+                    await this.snapshots.deleteSnapshot(id);
+                    this.log(DirectorLogLevel.SUCCESS, `Snapshot ${id} deleted.`);
+
+                    const list = await this.snapshots.listSnapshots();
+                    this.adminNamespace.emit('snapshot:list_update', list);
+                } catch (err) {
+                    this.log(DirectorLogLevel.ERROR, `Failed to delete snapshot: ${err}`);
                 }
             });
         });

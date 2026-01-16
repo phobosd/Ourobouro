@@ -14,6 +14,7 @@ import { Armor } from '../components/Armor';
 import { IsRoom } from '../components/IsRoom';
 import { Description } from '../components/Description';
 import { Atmosphere } from '../components/Atmosphere';
+import { Visuals } from '../components/Visuals';
 
 import { ItemRegistry } from '../services/ItemRegistry';
 import { NPCRegistry } from '../services/NPCRegistry';
@@ -236,6 +237,11 @@ export class PrefabFactory {
             entity.addComponent(new Stats());
             entity.addComponent(new CombatBuffer(3));
 
+            // Add Visuals if portrait exists
+            if (def.portrait) {
+                entity.addComponent(new Visuals('E', 'white', 0, def.portrait));
+            }
+
             // Handle Special Tags
             if (def.tags?.includes('ice')) {
                 entity.addComponent(new IsICE(def.name));
@@ -252,9 +258,9 @@ export class PrefabFactory {
                     "A massive, mutated rodent the size of a large dog. Its fur is matted and greasy, patchy in places where scarred, pink skin shows through. Its eyes glow with a sickly, radioactive green luminescence, twitching erratically. You can hear its heavy, wheezing breath and smell the acrid stench of decay and sewage that clings to it.",
                     false,
                     '',
-                    true // isAggressive
+                    false // isAggressive
                 ));
-                entity.addComponent(new CombatStats(30, 8, 2, true));
+                entity.addComponent(new CombatStats(30, 8, 2, false));
                 entity.addComponent(new Stats());
                 entity.addComponent(new CombatBuffer(3));
                 entity.addComponent(new WoundTable());
@@ -266,7 +272,7 @@ export class PrefabFactory {
                     "A lean, dangerous figure leaning with practiced nonchalance. They wear a patchwork of scavenged leather and matte-black synthetic plates. A glowing red cybernetic implant replaces their left eye, scanning you with mechanical precision, while their right hand hovers near a holster. A low hum emanates from their enhanced limbs, and they smell of ozone and cheap tobacco.",
                     true,
                     '',
-                    true // isAggressive
+                    false // isAggressive
                 ));
                 entity.addComponent(new CombatStats(60, 12, 6));
                 entity.addComponent(new Stats());
@@ -316,7 +322,7 @@ export class PrefabFactory {
                     "A razor-edged warrior with chrome-plated limbs and retractable mono-filament claws. Their eyes are replaced by a multi-spectrum sensor array, and they move with a fluid, predatory grace that suggests heavy synaptic acceleration.",
                     true,
                     '',
-                    true // isAggressive
+                    false // isAggressive
                 ));
                 entity.addComponent(new CombatStats(80, 12, 8));
                 const samuraiStats = new Stats();
@@ -373,10 +379,10 @@ export class PrefabFactory {
                     "A dark, swirling vortex of malevolent code. It is an aggressive intrusion countermeasure designed to physically damage the brain of any hacker it encounters.",
                     false,
                     '',
-                    true // isAggressive
+                    false // isAggressive
                 ));
                 entity.addComponent(new IsICE('Black ICE'));
-                entity.addComponent(new CombatStats(140, 22, 12, true)); // Lethal
+                entity.addComponent(new CombatStats(140, 22, 12, false)); // Lethal
                 break;
             default:
                 return null;

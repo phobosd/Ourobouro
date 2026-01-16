@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "These creatures are the result of unregulated bio-augmentation experiments conducted by a rogue corporation. Dumped into the city's sewers and alleys after being deemed too dangerous for further study, they now thrive in the darkness, feeding on any organic matter they can find and defending their territory aggressively."
     }
-  }
+  },
+  "role": "mob"
 }

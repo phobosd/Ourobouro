@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { Proposal, ProposalStatus } from '../generation/proposals/schemas';
+import { Proposal, ProposalStatus, ProposalType } from '../generation/proposals/schemas';
+import { ImageDownloader } from '../utils/ImageDownloader';
 
 export class PublisherService {
     private generatedDir: string;
@@ -28,6 +29,18 @@ export class PublisherService {
     public async publish(proposal: Proposal): Promise<string> {
         if (proposal.status !== ProposalStatus.APPROVED) {
             throw new Error(`Cannot publish proposal in status: ${proposal.status}`);
+        }
+
+        // Handle Image Download for NPCs
+        if (proposal.type === ProposalType.NPC && (proposal.payload as any).portrait) {
+            const portraitUrl = (proposal.payload as any).portrait;
+            if (portraitUrl && portraitUrl.startsWith('http')) {
+                const filename = `${proposal.payload.id}.jpg`;
+                const localPath = await ImageDownloader.downloadImage(portraitUrl, filename);
+                if (localPath) {
+                    (proposal.payload as any).portrait = localPath;
+                }
+            }
         }
 
         const typeDir = path.join(this.generatedDir, proposal.type.toLowerCase() + 's');

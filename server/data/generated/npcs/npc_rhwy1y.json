@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The Sparkwire Crawlers were originally bioengineered as pest control for the city's burgeoning cybernetic population. However, they escaped from their containment facility during an EMP surge and adapted to thrive in the dark, conductive environment of the sewers. The wires are a byproduct of the EMP exposure, which fused them with stray electrical lines, allowing them to draw power directly from the grid."
     }
-  }
+  },
+  "role": "mob"
 }

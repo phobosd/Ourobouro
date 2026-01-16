@@ -35,9 +35,11 @@ export const NPCPayloadSchema = z.object({
     behavior: z.string().optional(), // e.g., "aggressive", "merchant"
     dialogue: z.array(z.string()).optional(),
     faction: z.string().optional(),
+    role: z.string().optional(),
     equipment: z.array(z.string()).optional(), // Item IDs
     tags: z.array(z.string()).optional(),
-    canMove: z.boolean().default(true)
+    canMove: z.boolean().default(true),
+    portrait: z.string().optional()
 });
 
 // 2. Item Schema
@@ -55,7 +57,8 @@ export const ItemPayloadSchema = z.object({
         type: z.string(),
         value: z.number(),
         duration: z.number().optional()
-    })).optional()
+    })).optional(),
+    portrait: z.string().optional()
 });
 
 // 3. Quest Schema
@@ -98,7 +101,8 @@ export const RoomPayloadSchema = z.object({
     spawns: z.array(z.object({
         npcId: z.string(),
         chance: z.number()
-    })).optional()
+    })).optional(),
+    portrait: z.string().optional()
 });
 
 // 5. Event Schema

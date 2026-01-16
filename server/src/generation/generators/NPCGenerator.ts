@@ -7,7 +7,7 @@ const FIRST_NAMES = ['Jax', 'Kira', 'Vex', 'Zero', 'Nyx', 'Cipher', 'Echo', 'Raz
 const LAST_NAMES = ['Vance', 'Korp', 'Steel', 'Neon', 'Shadow', 'Flux', 'Void', 'Chrome', 'Glitch', 'Matrix'];
 
 const ARCHETYPES = [
-    { name: 'Thug', behavior: 'aggressive', healthMult: 0.8, attackMult: 1.2, defenseMult: 0.5 },
+    { name: 'Thug', behavior: 'cautious', healthMult: 0.8, attackMult: 1.2, defenseMult: 0.5 },
     { name: 'Merchant', behavior: 'neutral', healthMult: 1.0, attackMult: 0.5, defenseMult: 1.0 },
     { name: 'Corporate Agent', behavior: 'cautious', healthMult: 1.2, attackMult: 1.0, defenseMult: 1.2 },
     { name: 'Street Doc', behavior: 'friendly', healthMult: 0.9, attackMult: 0.3, defenseMult: 0.8 },
@@ -22,17 +22,17 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
         const isBoss = context?.subtype === 'BOSS';
 
         const MOB_ARCHETYPES = [
-            { name: 'Vermin', behavior: 'aggressive', healthMult: 0.4, attackMult: 0.8, defenseMult: 0.2 },
-            { name: 'Glitch Construct', behavior: 'aggressive', healthMult: 0.6, attackMult: 1.2, defenseMult: 0.4 },
-            { name: 'Rogue Drone', behavior: 'aggressive', healthMult: 0.5, attackMult: 1.0, defenseMult: 0.8 },
-            { name: 'Feral Mutant', behavior: 'aggressive', healthMult: 1.2, attackMult: 1.1, defenseMult: 0.6 }
+            { name: 'Vermin', behavior: 'cautious', healthMult: 0.4, attackMult: 0.8, defenseMult: 0.2 },
+            { name: 'Glitch Construct', behavior: 'neutral', healthMult: 0.6, attackMult: 1.2, defenseMult: 0.4 },
+            { name: 'Rogue Drone', behavior: 'neutral', healthMult: 0.5, attackMult: 1.0, defenseMult: 0.8 },
+            { name: 'Feral Mutant', behavior: 'cautious', healthMult: 1.2, attackMult: 1.1, defenseMult: 0.6 }
         ];
 
         const BOSS_ARCHETYPES = [
-            { name: 'Cyber-Monstrosity', behavior: 'aggressive', healthMult: 5.0, attackMult: 2.0, defenseMult: 2.0 },
-            { name: 'Rogue AI Avatar', behavior: 'aggressive', healthMult: 4.0, attackMult: 3.0, defenseMult: 1.5 },
-            { name: 'Corporate Hit-Squad Leader', behavior: 'aggressive', healthMult: 3.0, attackMult: 2.5, defenseMult: 2.5 },
-            { name: 'Mutated Alpha', behavior: 'aggressive', healthMult: 6.0, attackMult: 1.8, defenseMult: 1.2 }
+            { name: 'Cyber-Monstrosity', behavior: 'neutral', healthMult: 5.0, attackMult: 2.0, defenseMult: 2.0 },
+            { name: 'Rogue AI Avatar', behavior: 'neutral', healthMult: 4.0, attackMult: 3.0, defenseMult: 1.5 },
+            { name: 'Corporate Hit-Squad Leader', behavior: 'cautious', healthMult: 3.0, attackMult: 2.5, defenseMult: 2.5 },
+            { name: 'Mutated Alpha', behavior: 'neutral', healthMult: 6.0, attackMult: 1.8, defenseMult: 1.2 }
         ];
 
         let archetype = isBoss
@@ -62,18 +62,9 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
                 ? `A repulsive ${archetype.name.toLowerCase()} lurking in the shadows.`
                 : `A ${archetype.name.toLowerCase()} seen wandering the neon-lit streets.`;
 
-        let dialogue = isBoss
-            ? ["YOU ARE BUT A GLITCH IN MY SYSTEM.", "OBSOLETE.", "PREPARE FOR DELETION.", "I AM THE END.", "YOUR DATA WILL BE CONSUMED."]
-            : isMob
-                ? ["*hisses*", "*screeches*", "*growls*", "*chitters*", "*beeps menacingly*"]
-                : [
-                    "Watch your back, choomba.",
-                    "Got any credits?",
-                    "The Matrix is watching."
-                ];
-
         let rationale = `Generated a ${archetype.name} to populate the area.`;
         let behavior = archetype.behavior;
+        let role = isBoss ? 'boss' : isMob ? 'mob' : 'civilian'; // Default role
 
         // 1. Creative Pass: Narrative & Flavor
         if (llm) {
@@ -87,44 +78,45 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
                 Mutation Trait: ${mutation}
                 Prominent Feature: ${bodyPart}
                 Current World Context: A massive anomaly has appeared in the city, birthing a legendary horror.
+                ${context?.existingNames ? `EXISTING NAMES (DO NOT USE): ${context.existingNames.join(', ')}` : ''}
                 
                 Requirements:
-                - Name: A POWERFUL, INTIMIDATING name (e.g., 'The ${mutation} ${bodyPart}', 'System-Breaker', 'Apex-${mutation}').
+                - Name: A POWERFUL, INTIMIDATING name (e.g., 'The ${mutation} ${bodyPart}', 'System-Breaker', 'Apex-${mutation}'). MUST NOT be in the existing names list.
                 - Description: 3-4 sentences describing its overwhelming presence, its ${mutation} aura, and its lethal ${bodyPart}.
                 - Behavior: MUST be 'aggressive'.
-                - Dialogue: 15 distinct, chilling lines or sounds.
                 - Rationale: Why is this boss here? What is its purpose?
                 
-                Return ONLY a JSON object with fields: name, description, behavior, dialogue, rationale.`
+                Return ONLY a JSON object with fields: name, description, behavior, rationale.`
                     : isMob
                         ? `Generate a UNIQUE cyberpunk creature/mob.
                 Archetype: ${archetype.name}
                 Mutation Trait: ${mutation}
                 Prominent Feature: ${bodyPart}
                 Current World Context: The city sewers and dark alleys are infested with diverse techno-organic horrors.
+                ${context?.existingNames ? `EXISTING NAMES (DO NOT USE): ${context.existingNames.join(', ')}` : ''}
                 
                 Requirements:
-                - Name: A CREATIVE, UNIQUE creature name based on the Mutation Trait (e.g., '${mutation} Stalker', '${mutation} Leech', 'Razor-${bodyPart}'). DO NOT USE GENERIC NAMES.
+                - Name: A CREATIVE, UNIQUE creature name based on the Mutation Trait (e.g., '${mutation} Stalker', '${mutation} Leech', 'Razor-${bodyPart}'). DO NOT USE GENERIC NAMES. MUST NOT be in the existing names list.
                 - Description: 2-3 sentences describing its physical appearance, focusing on its ${mutation} nature and ${bodyPart}.
                 - Behavior: MUST be 'aggressive'.
-                - Dialogue: 10 distinct sounds or noises it makes.
                 - Rationale: Why is this specific creature here?
                 
-                Return ONLY a JSON object with fields: name, description, behavior, dialogue, rationale.`
+                Return ONLY a JSON object with fields: name, description, behavior, rationale.`
 
                         : `Generate a unique cyberpunk NPC. 
                 Archetype: ${archetype.name}
                 Current World Context: The city is under heavy corporate surveillance. The Matrix is leaking into reality.
                 ${config.features.restrictedToGlitchArea ? "IMPORTANT: This NPC is in a highly unstable 'Glitch Area' and MUST be hostile/aggressive." : ""}
+                ${context?.existingNames ? `EXISTING NAMES (DO NOT USE): ${context.existingNames.join(', ')}` : ''}
                 
                 Requirements:
-                - Name: A gritty cyberpunk name (e.g., 'Rat-Byte', 'Sloane Vane').
+                - Name: A gritty cyberpunk name (e.g., 'Rat-Byte', 'Chrome-Jack'). MUST NOT be 'Sloane Vane'. MUST NOT be in the existing names list.
                 - Description: 2-3 sentences. Focus on their 'chrome' (cybernetics), their worn clothing, and their vibe.
-                - Behavior: Choose from [aggressive, neutral, cautious, friendly, elusive]. ${config.features.restrictedToGlitchArea ? "MUST be 'aggressive'." : ""}
-                - Dialogue: EXACTLY 50 distinct barks (short lines of dialogue). Use street slang, technical jargon, and flavor that fits their archetype.
+                - Behavior: Choose from [neutral, cautious, friendly, elusive, aggressive]. PREFER 'neutral' or 'cautious' unless the archetype suggests otherwise. ${config.features.restrictedToGlitchArea ? "MUST be 'aggressive'." : ""}
+                - Role: Choose from ['vendor', 'guard', 'civilian', 'mob']. Based on the archetype (${archetype.name}).
                 - Rationale: Why does this NPC exist in this specific district?
                 
-                Return ONLY a JSON object with fields: name, description, behavior, dialogue (array of 50 strings), and rationale.`;
+                Return ONLY a JSON object with fields: name, description, behavior, role, and rationale.`;
 
                 const creativeRes = await llm.chat(creativePrompt, "You are the lead narrative designer for Ouroboro.", LLMRole.CREATIVE);
                 const creativeData = LLMService.parseJson(creativeRes.text);
@@ -132,14 +124,25 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
                 if (creativeData.name) name = creativeData.name;
                 if (creativeData.description) description = creativeData.description;
                 if (creativeData.behavior) behavior = creativeData.behavior;
-                if (creativeData.dialogue && Array.isArray(creativeData.dialogue)) {
-                    dialogue = creativeData.dialogue.slice(0, isBoss ? 15 : isMob ? 10 : 50);
-                }
                 if (creativeData.rationale) rationale = creativeData.rationale;
+                if (creativeData.role) role = creativeData.role;
 
                 // Final override if restricted
                 if (config.features.restrictedToGlitchArea || isMob || isBoss) {
-                    behavior = 'aggressive';
+                    behavior = 'aggressive'; // Wait, user asked to turn OFF aggressive. But this is generator logic.
+                    // I should respect the previous change I made to turn off aggression?
+                    // The user said "turn off ALL aggressive NPCs in the world".
+                    // I previously changed the archetypes to be neutral/cautious.
+                    // But here I have explicit overrides.
+                    // I should probably remove this override or change it to 'cautious'.
+                    // However, the current task is just about roles.
+                    // I will leave the behavior override alone for now to avoid scope creep, or change it to 'cautious' if I want to be consistent.
+                    // The user's previous request was "turn off ALL aggressive NPCs".
+                    // So I SHOULD change this to 'cautious' or remove it.
+                    // But wait, the previous request was handled by modifying archetypes.
+                    // This block overrides behavior for glitch areas/mobs/bosses.
+                    // I should change this to 'cautious' to be safe.
+                    behavior = 'cautious';
                 }
             } catch (err) {
                 console.error('NPC Creative Pass failed:', err);
@@ -181,6 +184,27 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
             }
         }
 
+        // 3. Portrait Pass: AI Image Generation (via Pollinations.ai)
+        let portrait = "";
+        if (llm) {
+            try {
+                const portraitPrompt = `Create a highly detailed image generation prompt for a "realistic 3D digital art" portrait of the following cyberpunk NPC:
+                Name: ${name}
+                Description: ${description}
+                
+                Requirements for the prompt:
+                - Style: Realistic 3D render, Unreal Engine 5, cinematic lighting, cyberpunk aesthetic.
+                - Composition: Close-up portrait (head and shoulders).
+                - Details: Focus on skin textures, cybernetic implants, clothing materials, and atmospheric lighting (neon, grit).
+                - Format: Return ONLY the prompt text. No preamble, no quotes.`;
+
+                const portraitRes = await llm.chat(portraitPrompt, "You are an expert AI image prompt engineer.", LLMRole.CREATIVE);
+                portrait = await llm.generateImage(portraitRes.text.trim());
+            } catch (err) {
+                console.error('NPC Portrait Pass failed:', err);
+            }
+        }
+
         const payload: NPCPayload = {
             id: `npc_${Math.random().toString(36).substring(7)}`,
             name,
@@ -188,9 +212,10 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
             stats,
             behavior: behavior as any,
             faction: Math.random() > 0.5 ? 'Street' : 'Corporate',
+            role,
             tags: [archetype.name.toLowerCase()],
-            dialogue,
-            canMove: true
+            canMove: true,
+            portrait // Add portrait to payload
         };
 
         const proposal = this.generateBaseProposal(payload);

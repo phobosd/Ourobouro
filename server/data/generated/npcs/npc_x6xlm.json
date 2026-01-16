@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The Rustclaw Scavengers are drawn to areas with high concentrations of discarded cybernetics and electronic waste. Their mutation grants them the ability to consume rust, which allows their claws to grow stronger and sharper. The sewers and alleys provide ample opportunity for scavenging and hunting in darkness."
     }
-  }
+  },
+  "role": "mob"
 }

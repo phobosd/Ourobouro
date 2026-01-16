@@ -1,0 +1,27 @@
+{
+  "id": "npc_qjl64",
+  "name": "Razor-Spine Volatile",
+  "description": "This hulking construct stands on four legs and its back is covered in razor sharp spines that twitch erratically. The spines are tipped with a luminescent blue fluid, pulsing with barely contained energy. A single eye glows an unsettling red from the center of its head.",
+  "stats": {
+    "health": 175,
+    "attack": 60,
+    "defense": 20
+  },
+  "behavior": "aggressive",
+  "faction": "Street",
+  "tags": [
+    "glitch construct"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_qjl64.jpg",
+  "_metadata": {
+    "proposalId": "1a5d6e86-b257-4482-9f91-66d571362bee",
+    "generatedAt": 1768577433187,
+    "publishedAt": 1768577474184,
+    "seed": "yszum",
+    "flavor": {
+      "rationale": "The Volatile Spines react to environmental stimuli and emotional triggers, causing it to lash out violently at anything nearby. It's drawn to areas where volatile reactions are common, such as around malfunctioning cybernetics or unstable chemical compounds."
+    }
+  },
+  "role": "mob"
+}

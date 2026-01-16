@@ -1,0 +1,27 @@
+{
+  "id": "npc_nt0sqq",
+  "name": "Corvus Null",
+  "description": "His chrome is old and mismatched - a patched-up eye socket, corroded finger claws, and the faint blue glow of a neural implant behind his ear. He wears a worn leather jacket over a threadbare hoodie with ripped jeans held up by heavy chains. His eyes dart around nervously, constantly scanning for threats.",
+  "stats": {
+    "health": 235,
+    "attack": 67,
+    "defense": 20
+  },
+  "behavior": "Cautious",
+  "faction": "Street",
+  "tags": [
+    "hacker"
+  ],
+  "canMove": true,
+  "portrait": "https://gen.pollinations.ai/image/Realistic%203D%20render%2C%20Unreal%20Engine%205%2C%20cinematic%20lighting%2C%20cyberpunk%20aesthetic.%20Close-up%20portrait%20of%20Corvus%20Null's%20head%20and%20shoulders.%20He%20has%20a%20mismatched%20chrome%20eye%20socket%20with%20faint%20blue%20neural%20implant%20glow%20behind%20his%20ear%3B%20corroded%20finger%20claws%3B%20patched%20leather%20jacket%20over%20threadbare%20hoodie%3B%20ripped%20jeans%20held%20up%20by%20heavy%20chains.%20Skin%20textures%20are%20detailed%20-%20sweat%2C%20grime%2C%20scars.%20Cybernetic%20implants%20show%20wear%20and%20tear.%20Clothing%20materials%20have%20realistic%20folds%20and%20wrinkles.%20Atmospheric%20lighting%20includes%20neon%20signs%20and%20grit.%20Focus%20on%20skin%20textures%2C%20cybernetic%20implants%2C%20clothing%20materials%2C%20and%20atmospheric%20lighting%20(neon%2C%20grit).?width=1024&height=1024&nologo=true&model=flux&key=sk_fWe3x1zBcLOLwm9rk6Clj2DljZBYMKtU",
+  "_metadata": {
+    "proposalId": "a789466f-7388-4bae-830c-520f6c9e8f59",
+    "generatedAt": 1768576349775,
+    "publishedAt": 1768576398901,
+    "seed": "kkvg86",
+    "flavor": {
+      "rationale": "Corvus Null is a data broker who operates in the shadows of the corporate-controlled district known as 'The Grid'. He's trying to maintain anonymity while selling stolen information and evading surveillance."
+    }
+  },
+  "role": "civilian"
+}

@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The Neon Tentaclaw evolved from common sewer rats that scavenged near an abandoned cybernetics lab. Exposure to discarded nanites and bio-luminescent chemicals caused them to mutate, gaining their neon coloration and developing tentacles as a means of manipulating objects and defending themselves in the darkness."
     }
-  }
+  },
+  "role": "mob"
 }

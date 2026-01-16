@@ -24,9 +24,10 @@ export class RoomGenerator extends BaseGenerator<RoomPayload> {
             try {
                 const prompt = `Generate a unique cyberpunk location. 
                 Type: ${roomType.type}
+                ${context?.existingNames ? `EXISTING NAMES (DO NOT USE): ${context.existingNames.join(', ')}` : ''}
                 
                 Requirements:
-                - Name: An evocative name (e.g., 'The Black-Out Bar', 'Sector 7 Slums', 'Korp-Tower Lobby').
+                - Name: An evocative name (e.g., 'The Black-Out Bar', 'Sector 7 Slums', 'Korp-Tower Lobby'). MUST NOT be in the existing names list.
                 - Description: 2-3 sentences. Focus on the sensory details—flickering neon, the hum of servers, the rain on dirty glass, or the smell of cheap synthetic food.
                 - Rationale: How does this location fit into the decaying urban sprawl?
                 
@@ -46,6 +47,28 @@ export class RoomGenerator extends BaseGenerator<RoomPayload> {
         const x = context?.x ?? Math.floor(Math.random() * 100);
         const y = context?.y ?? Math.floor(Math.random() * 100);
 
+        // 2. Portrait Pass: AI Image Generation (via Pollinations.ai)
+        let portrait = "";
+        if (llm) {
+            try {
+                const portraitPrompt = `Create a highly detailed image generation prompt for a "realistic 3D environment render" of the following cyberpunk location:
+                Name: ${name}
+                Description: ${description}
+                Type: ${roomType.type}
+                
+                Requirements for the prompt:
+                - Style: Realistic 3D environment render, Unreal Engine 5, cinematic lighting, cyberpunk aesthetic.
+                - Composition: Wide-angle or atmospheric shot of the location.
+                - Details: Focus on architectural textures, neon lighting, weather effects (rain, fog), and environmental storytelling.
+                - Format: Return ONLY the prompt text. No preamble, no quotes.`;
+
+                const portraitRes = await llm.chat(portraitPrompt, "You are an expert AI image prompt engineer.", LLMRole.CREATIVE);
+                portrait = await llm.generateImage(portraitRes.text.trim());
+            } catch (err) {
+                console.error('Room Portrait Pass failed:', err);
+            }
+        }
+
         const payload: RoomPayload = {
             id: `room_${Math.random().toString(36).substring(7)}`,
             name,
@@ -54,7 +77,8 @@ export class RoomGenerator extends BaseGenerator<RoomPayload> {
             coordinates: { x, y, z: 0 },
             exits: {},
             features: [],
-            spawns: []
+            spawns: [],
+            portrait
         };
 
         const proposal = this.generateBaseProposal(payload);

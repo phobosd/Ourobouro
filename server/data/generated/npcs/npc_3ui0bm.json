@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The Limbspasm is a product of the city's rampant cybernetic waste, scavenged by rats who have undergone spontaneous mutation. The rat's scavenging instincts combined with its ability to fuse inorganic materials has resulted in these grotesque creatures that now infest the sewers and alleys."
     }
-  }
+  },
+  "role": "mob"
 }

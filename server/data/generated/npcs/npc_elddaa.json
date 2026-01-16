@@ -39,5 +39,6 @@
     "flavor": {
       "rationale": "An unknown anomaly ripped a hole in reality above Neo-Kyoto. From this tear flowed an alien fungal growth that rapidly consumed everything it touched—plants, animals, and even inorganic materials. The Apex Fungal emerged as the apex of this infestation, its mind fused with the collective intelligence of the fungi. It sees humanity as nothing more than fuel for its own expansion, a vessel to spread its spores across the world."
     }
-  }
+  },
+  "role": "boss"
 }

@@ -1,0 +1,27 @@
+{
+  "id": "npc_yp635",
+  "name": "Sloane Vane",
+  "description": "Vane is a wiry figure perpetually hunched over a battered datapad, her fingers flying across the keys. Her chrome eye glints in the neon light, mismatched against her shaved head and faded leather jacket. She emits an aura of quiet intensity, like she's always on the verge of discovering something important.",
+  "stats": {
+    "health": 250,
+    "attack": 60,
+    "defense": 20
+  },
+  "behavior": "Cautious",
+  "faction": "Street",
+  "tags": [
+    "hacker"
+  ],
+  "canMove": true,
+  "portrait": "https://gen.pollinations.ai/image/realistic%203D%20render%2C%20Unreal%20Engine%205%20cinematic%20lighting%20cyberpunk%20aesthetic%2C%20close-up%20portrait%20of%20Sloane%20Vane%20head%20and%20shoulders%2C%20wirey%20figure%20hunched%20over%20a%20battered%20datapad%20fingers%20flying%20across%20keys%2C%20chrome%20eye%20glints%20in%20neon%20light%20mismatched%20shaved%20head%20faded%20leather%20jacket%20quiet%20intensity%20like%20she's%20always%20on%20the%20verge%20of%20discovering%20something%20important%20skin%20textures%20cybernetic%20implants%20clothing%20materials%20atmospheric%20lighting%20neon%20grit%208k%20resolution.?width=1024&height=1024&nologo=true&model=flux&key=sk_fWe3x1zBcLOLwm9rk6Clj2DljZBYMKtU",
+  "_metadata": {
+    "proposalId": "fe5a3b7c-8e8b-407e-8bfd-7074f8fad39b",
+    "generatedAt": 1768576550865,
+    "publishedAt": 1768576679240,
+    "seed": "jm9enr",
+    "flavor": {
+      "rationale": "Sloane operates out of a hidden room in an abandoned noodle shop in Little Tokyo. It offers her a degree of anonymity while still keeping her close enough to the corporate district for quick access when she needs it."
+    }
+  },
+  "role": "civilian"
+}

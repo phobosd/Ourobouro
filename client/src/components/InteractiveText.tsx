@@ -127,6 +127,31 @@ export const ParseMessage: React.FC<{ text: string; socket: Socket | null }> = (
                     <ParseMessage text={content} socket={socket} />
                 </span>
             );
+        } else if (tag === 'portrait') {
+            const isUrl = content.trim().startsWith('http') || content.trim().startsWith('/assets');
+            if (isUrl) {
+                parts.push(
+                    <img
+                        key={`tag-${match.index}`}
+                        src={content.trim()}
+                        alt="Character Portrait"
+                        className="terminal-portrait-img"
+                        style={{
+                            maxWidth: '300px',
+                            maxHeight: '300px',
+                            border: '1px solid #333',
+                            margin: '10px 0',
+                            display: 'block'
+                        }}
+                    />
+                );
+            } else {
+                parts.push(
+                    <pre key={`tag-${match.index}`} className="terminal-portrait">
+                        {content}
+                    </pre>
+                );
+            }
         } else {
             parts.push(
                 <InteractiveTag key={`tag-${match.index}`} tag={tag} content={content} attributes={attributes} socket={socket} />

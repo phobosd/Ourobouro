@@ -15,9 +15,21 @@ const COMMANDS = [
     'punch', 'jab', 'headbutt', 'uppercut', 'iaijutsu', 'iai', 'slice'
 ];
 
+interface AutocompleteData {
+    spawnables: string[];
+    skills: string[];
+    stats: string[];
+    roomObjects: string[];
+    roomNPCs: string[];
+    roomItems: string[];
+    inventory: string[];
+    containers: string[];
+    equipped: string[];
+}
+
 export const useTerminalInput = (
     socket: Socket | null,
-    autocompleteData: any,
+    autocompleteData: AutocompleteData,
     triggerGlitch: () => void,
     addSystemLine: (text: string) => void
 ) => {

@@ -6,7 +6,8 @@ export class Visuals extends Component {
     constructor(
         public char: string,
         public color: string,
-        public glitchRate: number = 0
+        public glitchRate: number = 0,
+        public portrait: string = ""
     ) {
         super();
     }

@@ -11,7 +11,7 @@ import { NPC } from '../../../components/NPC';
 import { WorldQuery } from '../../../utils/WorldQuery';
 import { MessageService } from '../../../services/MessageService';
 import { CombatUtils } from '../CombatUtils';
-import { AttackHandler } from './AttackHandler';
+import { PlayerAttackHandler } from './PlayerAttackHandler';
 
 export class SpecialHandler {
     static handleIaijutsu(playerId: string, targetName: string, engine: IEngine, messageService: MessageService, io: Server): void {
@@ -76,7 +76,7 @@ export class SpecialHandler {
         momentum.consume(50);
 
         // Execute a powerful attack
-        AttackHandler.handleSyncResult(playerId, target.id, 'crit', engine, messageService, io, 2.5, 'iaijutsu');
+        PlayerAttackHandler.handleSyncResult(playerId, target.id, 'crit', engine, messageService, io, 2.5, 'iaijutsu');
         CombatUtils.applyRoundtime(player, 4);
     }
 }

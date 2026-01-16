@@ -7,6 +7,7 @@ import { IEngine } from '../ecs/IEngine';
 import { MessageService } from '../services/MessageService';
 import { GameEventBus, GameEventType } from '../utils/GameEventBus';
 
+import { LLMService } from '../generation/llm/LLMService';
 import { NPCMovementHandler } from './npc/NPCMovementHandler';
 import { NPCBehaviorHandler } from './npc/NPCBehaviorHandler';
 import { NPCCombatHandler } from './npc/NPCCombatHandler';
@@ -18,11 +19,13 @@ export class NPCSystem extends System {
     private lastMoveTime: Map<string, number> = new Map();
     private combatSystem: any;
     private engine?: IEngine;
+    private llm?: LLMService;
 
-    constructor(io: Server, messageService: MessageService) {
+    constructor(io: Server, messageService: MessageService, llm?: LLMService) {
         super();
         this.io = io;
         this.messageService = messageService;
+        this.llm = llm;
 
         // Subscribe to player movement
         GameEventBus.getInstance().subscribe(GameEventType.PLAYER_MOVED, (payload) => {
@@ -71,7 +74,7 @@ export class NPCSystem extends System {
         // 2. Random Barks (every 10-20 seconds)
         if (!this.lastBarkTime.has(npc.id)) this.lastBarkTime.set(npc.id, now);
         if (now - this.lastBarkTime.get(npc.id)! > 10000 + Math.random() * 10000) {
-            NPCBehaviorHandler.bark(npc, npcComp, pos, engine, this.messageService);
+            NPCBehaviorHandler.bark(npc, npcComp, pos, engine, this.messageService, this.llm);
             this.lastBarkTime.set(npc.id, now);
         }
 

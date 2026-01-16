@@ -1,0 +1,27 @@
+{
+  "id": "npc_j7klek",
+  "name": "Chrome-Whisper",
+  "description": "A grizzled street doc with cybernetic enhancements grafted into her face and arms, she wears patched fatigues over reinforced leggings. Her movements are slow but deliberate, giving off an air of weary professionalism. She has a fondness for black coffee and the scent of burning oil.",
+  "stats": {
+    "health": 235,
+    "attack": 62,
+    "defense": 18
+  },
+  "behavior": "cautious",
+  "faction": "Corporate",
+  "tags": [
+    "street doc"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_j7klek.jpg",
+  "_metadata": {
+    "proposalId": "189f137b-ad85-4d05-b3ee-bb1495618e55",
+    "generatedAt": 1768577249211,
+    "publishedAt": 1768577258255,
+    "seed": "kvids",
+    "flavor": {
+      "rationale": "Chrome-Whisper's street cred combined with her knowledge of cybernetics makes her invaluable to those who need illegal modifications or repairs, especially in a district under heavy corporate surveillance. She prefers to keep a low profile and deal discreetly."
+    }
+  },
+  "role": "civilian"
+}

@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The Ironjaw Gnawer is a scavenger that has adapted to the harsh conditions of the city's sewers and dark alleys. Its armored plating protects it from physical attacks, while its fangs allow it to tear through metal and flesh alike as it hunts for food in these forgotten places."
     }
-  }
+  },
+  "role": "mob"
 }

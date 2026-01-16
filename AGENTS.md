@@ -15,6 +15,7 @@ As an agent, you are responsible for maintaining the integrity of this knowledge
     - A **major mechanic** is added (e.g., the Combat Buffer, Flow State, or specialized weapon traits like Smart-Link).
     - A **lore element** or **world-building detail** that affects gameplay is established.
     - **Environmental effects** or hazards are added.
+3.  **No Browser Testing**: Do not use the browser subagent to test features or UI. The user will handle all browser-based verification.
 
 ## 🏗 System Architecture
 
@@ -411,4 +412,5 @@ To implement a "Gravity Puzzle" where 3 switches must be "Down":
 *   **Inventory Logic**: Fixed item pickup to prioritize the right hand.
 *   **Visuals**: Reduced brightness of portal and puzzle object highlighting for better readability.
 *   **NPC Health System**: Replaced exact NPC HP with a descriptive system (Visual Cues, Damage Severity, Appraise Command).
+*   **Combat Refactoring**: Split `AttackHandler.ts` into `PlayerAttackHandler.ts` and `NPCAttackHandler.ts` to prepare for advanced AI behaviors and separate concerns.
 

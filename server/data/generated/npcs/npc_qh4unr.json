@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The sewers are a hub for discarded technology. The Sparkling Volatiles have evolved to consume this tech, incorporating it into their bodies and gaining volatile energy boosts. They congregate in areas with high concentrations of discarded electronics and react aggressively to any perceived threat."
     }
-  }
+  },
+  "role": "mob"
 }

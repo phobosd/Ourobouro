@@ -70,5 +70,6 @@
     "flavor": {
       "rationale": "Echo Static operates in the Lower Sprawl district as a freelance hacker providing data access and system breaches for those desperate enough to pay. This location is perfect because of its high criminal activity, making it easier for him to blend in while also attracting clients seeking illicit information or services that wouldn't be available elsewhere. His presence adds an element of danger and unpredictability to the district, as he can both aid and hinder players depending on their actions."
     }
-  }
+  },
+  "role": "civilian"
 }

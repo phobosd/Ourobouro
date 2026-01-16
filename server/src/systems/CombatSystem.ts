@@ -11,7 +11,8 @@ import { CombatUtils } from './combat/CombatUtils';
 import { CombatLogger } from './combat/CombatLogger';
 import { ReloadHandler } from './combat/ActionHandlers/ReloadHandler';
 import { ManeuverHandler } from './combat/ActionHandlers/ManeuverHandler';
-import { AttackHandler } from './combat/ActionHandlers/AttackHandler';
+import { PlayerAttackHandler } from './combat/ActionHandlers/PlayerAttackHandler';
+import { NPCAttackHandler } from './combat/ActionHandlers/NPCAttackHandler';
 import { SequenceHandler } from './combat/ActionHandlers/SequenceHandler';
 import { SpecialHandler } from './combat/ActionHandlers/SpecialHandler';
 import { DefenseHandler } from './combat/ActionHandlers/DefenseHandler';
@@ -32,19 +33,19 @@ export class CombatSystem extends System {
     // --- Command Handlers (Entry Points) ---
 
     handleAttack(attackerId: string, targetName: string, engine: IEngine, moveType?: string): void {
-        AttackHandler.handleAttack(attackerId, targetName, engine, this.messageService, this.io, moveType);
+        PlayerAttackHandler.handleAttack(attackerId, targetName, engine, this.messageService, this.io, moveType);
     }
 
     handleSyncResult(attackerId: string, targetId: string, hitType: 'crit' | 'hit' | 'miss', engine: IEngine, damageMultiplier: number = 1.0, moveType?: string): void {
-        AttackHandler.handleSyncResult(attackerId, targetId, hitType, engine, this.messageService, this.io, damageMultiplier, moveType);
+        PlayerAttackHandler.handleSyncResult(attackerId, targetId, hitType, engine, this.messageService, this.io, damageMultiplier, moveType);
     }
 
     handleImmediateParry(playerId: string, engine: IEngine): void {
-        AttackHandler.handleImmediateParry(playerId, engine, this.messageService);
+        PlayerAttackHandler.handleImmediateParry(playerId, engine, this.messageService);
     }
 
     handleNPCAttack(npcId: string, targetId: string, engine: IEngine): void {
-        AttackHandler.handleNPCAttack(npcId, targetId, engine, this.messageService, this.io);
+        NPCAttackHandler.handleNPCAttack(npcId, targetId, engine, this.messageService, this.io);
     }
 
     handleReload(playerId: string, engine: IEngine): void {

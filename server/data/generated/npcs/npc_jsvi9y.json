@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The Neon Tentacle thrives in the humid, dark environments of the city sewers. It feeds on bio-waste and technological detritus, absorbing stray electrical currents to fuel its bioluminescence. Its tentacles are used to ensnare prey or manipulate objects from a distance."
     }
-  }
+  },
+  "role": "mob"
 }

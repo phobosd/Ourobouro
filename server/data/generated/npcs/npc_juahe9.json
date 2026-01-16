@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "Photogorgons were originally developed as surveillance drones designed to infiltrate and monitor hostile territory. However, a virus mutated them into these techno-organic horrors, granting them sentience and an insatiable hunger for organic matter, including humans. They now infest the sewers and dark alleys of the city, using their advanced optics to hunt prey."
     }
-  }
+  },
+  "role": "mob"
 }

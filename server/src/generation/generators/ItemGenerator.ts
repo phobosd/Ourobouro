@@ -33,9 +33,10 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
                 Suggested Type: ${itemType}
                 Rarity: ${rarity}
                 ${context?.hint ? `Specific Request: ${context.hint}` : ''}
+                ${context?.existingNames ? `EXISTING NAMES (DO NOT USE): ${context.existingNames.join(', ')}` : ''}
                 
                 Requirements:
-                - Name: A punchy, tech-heavy name.
+                - Name: A punchy, tech-heavy name. MUST NOT be in the existing names list.
                 - Type: You may change the type if it fits the name better. Choose from: [weapon, armor, consumable, cyberware].
                 - Description: 1-2 sentences of atmospheric flavor text.
                 - Rationale: Why would a player find this in a cyberpunk dystopia?
@@ -138,6 +139,28 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
             ? Math.round((1 + Math.random() * 4) * 10) / 10
             : Math.round((0.1 + Math.random() * 1.9) * 10) / 10;
 
+        // 3. Portrait Pass: AI Image Generation (via Pollinations.ai)
+        let portrait = "";
+        if (llm) {
+            try {
+                const portraitPrompt = `Create a highly detailed image generation prompt for a "realistic 3D digital art" icon of the following cyberpunk item:
+                Name: ${name}
+                Description: ${description}
+                Type: ${itemType}
+                
+                Requirements for the prompt:
+                - Style: Realistic 3D render, studio lighting, isolated on a dark background, cyberpunk aesthetic.
+                - Composition: Centered product shot, high detail.
+                - Details: Focus on metallic textures, glowing components, and realistic wear and tear.
+                - Format: Return ONLY the prompt text. No preamble, no quotes.`;
+
+                const portraitRes = await llm.chat(portraitPrompt, "You are an expert AI image prompt engineer.", LLMRole.CREATIVE);
+                portrait = await llm.generateImage(portraitRes.text.trim());
+            } catch (err) {
+                console.error('Item Portrait Pass failed:', err);
+            }
+        }
+
         const payload: ItemPayload = {
             id: `item_${Math.random().toString(36).substring(7)}`,
             name,
@@ -147,7 +170,8 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
             rarity: rarity as any,
             cost,
             weight,
-            attributes
+            attributes,
+            portrait
         };
 
         const proposal = this.generateBaseProposal(payload);

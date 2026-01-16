@@ -16,16 +16,16 @@
     "features": {
         "requireHumanApproval": true,
         "autoSnapshotHighRisk": true,
-        "enableNPCs": true,
-        "enableItems": true,
-        "enableQuests": true,
-        "enableExpansions": true,
+        "enableNPCs": false,
+        "enableItems": false,
+        "enableQuests": false,
+        "enableExpansions": false,
         "restrictedToGlitchArea": false
     },
     "llmProfiles": {
         "default": {
             "id": "default",
-            "name": "Default Local",
+            "name": "Creative",
             "provider": "local",
             "baseUrl": "http://192.168.68.111:1234/v1",
             "model": "gemma-3-starshine-12b",
@@ -35,7 +35,7 @@
         },
         "profile_fmxkmf9": {
             "id": "profile_fmxkmf9",
-            "name": "New Profil",
+            "name": "Logic",
             "provider": "local",
             "baseUrl": "http://192.168.68.111:1234/v1",
             "model": "deepseek-r1-distill-qwen-7b",
@@ -43,6 +43,26 @@
                 "LOGIC",
                 "DEFAULT"
             ]
+        },
+        "profile_6ogpwt": {
+            "id": "profile_6ogpwt",
+            "name": "Gemini",
+            "provider": "gemini",
+            "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+            "model": "imagen-4.0-generate-001",
+            "roles": [],
+            "apiKey": "AIzaSyCx-qvhIVbokIemauB-rX-3URSVX0uTHd0"
+        },
+        "profile_x1habh": {
+            "id": "profile_x1habh",
+            "name": "Pollinations (Image)",
+            "provider": "pollinations",
+            "baseUrl": "https://gen.pollinations.ai",
+            "model": "flux",
+            "roles": [
+                "IMAGE"
+            ],
+            "apiKey": "sk_fWe3x1zBcLOLwm9rk6Clj2DljZBYMKtU"
         }
     },
     "bannedWords": [

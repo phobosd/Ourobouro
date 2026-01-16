@@ -34,5 +34,6 @@
     "flavor": {
       "rationale": "The Radiant Wireweave is a byproduct of the city's rampant industrial pollution and unchecked experimentation with radiation containment. They thrive in the dark, damp environments of the sewers where they scavenge discarded electronics for spare parts to modify themselves further."
     }
-  }
+  },
+  "role": "mob"
 }

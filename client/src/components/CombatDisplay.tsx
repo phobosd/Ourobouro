@@ -36,7 +36,7 @@ interface Props {
 
 export const CombatDisplay: React.FC<Props> = ({ socket }) => {
     const [state, setState] = useState<CombatState | null>(null);
-    const [position, setPosition] = useState({ x: window.innerWidth - 640, y: 20 });
+    const [position, setPosition] = useState({ x: window.innerWidth - 700, y: 20 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
@@ -151,12 +151,6 @@ export const CombatDisplay: React.FC<Props> = ({ socket }) => {
                     <div className="stat-row">
                         <span className="label">Range:</span>
                         <span className="value">{state.target.range}</span>
-                    </div>
-                    <div className="hp-bar-container">
-                        <div
-                            className="hp-bar"
-                            style={{ width: `${(state.target.hp / state.target.maxHp) * 100}%` }}
-                        />
                     </div>
                 </div>
             )}

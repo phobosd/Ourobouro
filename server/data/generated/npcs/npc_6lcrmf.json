@@ -1,0 +1,31 @@
+{
+  "id": "npc_6lcrmf",
+  "name": "Apex-Armored",
+  "description": "A colossal figure clad in shimmering plates of armor that seem to shift and writhe with an internal energy. Its limbs are grotesquely elongated, ending in razor-sharp claws capable of tearing through steel like paper. A single red optic pulses from its helmeted head, scanning for prey.",
+  "stats": {
+    "health": 90,
+    "attack": 134,
+    "defense": 40
+  },
+  "behavior": "aggressive",
+  "faction": "Street",
+  "tags": [
+    "boss",
+    "aggressive"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_6lcrmf.jpg",
+  "equipment": [
+    "item_hy5hka"
+  ],
+  "_metadata": {
+    "proposalId": "1ec77c0c-9fc7-4782-b050-ea80d3ccde18",
+    "generatedAt": 1768577440299,
+    "publishedAt": 1768577472838,
+    "seed": "yrt265",
+    "flavor": {
+      "rationale": "Apex-Armored has been drawn to the anomaly's energy signature and perceives it as a threat to its existence. It seeks to neutralize it by any means necessary."
+    }
+  },
+  "role": "boss"
+}

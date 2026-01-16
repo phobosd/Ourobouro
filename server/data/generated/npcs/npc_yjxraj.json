@@ -1,0 +1,27 @@
+{
+  "id": "npc_yjxraj",
+  "name": "Chrome-Jack",
+  "description": "A grizzled street doc with chrome eyes and a network of scars crisscrossing his face, Chrome-Jack wears patched leather gloves over thick cybernetic fingers. His clothes are worn but clean, the kind you might find hanging in a high-end haberdashery if they hadn't been scavenged from corporate waste bins. He has a weary look about him, and speaks with quiet authority.",
+  "stats": {
+    "health": 200,
+    "attack": 60,
+    "defense": 18
+  },
+  "behavior": "Neutral",
+  "faction": "Street",
+  "tags": [
+    "street doc"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_yjxraj.jpg",
+  "_metadata": {
+    "proposalId": "683ca9cb-d7fa-4a00-8b81-372488d89cad",
+    "generatedAt": 1768577119355,
+    "publishedAt": 1768577128475,
+    "seed": "phtfia",
+    "flavor": {
+      "rationale": "Chrome-Jack operates out of a hidden clinic in the lower levels, where he treats both humans and synthetics injured by the city's brutal realities. His services are expensive but discreet, making him essential for those who want to avoid corporate surveillance or rogue Turing Police."
+    }
+  },
+  "role": "civilian"
+}
