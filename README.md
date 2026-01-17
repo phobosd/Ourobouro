@@ -4,35 +4,39 @@ A cyberpunk-themed MUD (Multi-User Dungeon) with an innovative **Neural Pulse** 
 
 ## 🎮 Features
 
-### Core Gameplay
-- **Persistent World**: 20x20 procedurally generated cyberpunk city
-- **Real-time Multiplayer**: WebSocket-based server with Redis persistence
-- **Entity Component System (ECS)**: Optimized with component indexing for high-performance queries
-- **Structured Messaging**: Type-safe JSON protocol for rich client-side rendering
-- **Input Validation**: Zod-powered schema validation for all network events
-- **Robust Persistence**: Redis-backed state management with complex object reconstruction
-- **Rich Inventory System**: Hands, equipment slots, and container management
-- **Character Stats**: Attributes (STR, AGI, CON, INT, CHA) and Skills (Marksmanship, Hacking, etc.)
+### 🖥️ Modern Cyberpunk Interface
+Zenith-9 bridges the gap between classic MUDs and modern RPGs with a high-fidelity, reactive UI:
+
+- **Dynamic Portraits**: AI-generated character art for NPCs, bringing the inhabitants of Zenith-9 to life.
+- **Mouse-Over Tooltips**: Hover over items in your inventory or NPCs in the room to see detailed stats, descriptions, and combat data instantly.
+- **Real-time Nav Map**: A persistent, live-updating map of your surroundings with point-of-interest markers.
+- **Rich Character Sheets**: Detailed visualization of attributes, combat stats, and skill progression.
+
+![Game Interface](./docs/images/game_interface.png)
+*The modern Zenith-9 interface featuring dynamic portraits and character data.*
+
+![Inventory Tooltips](./docs/images/inventory_tooltip.png)
+*Advanced mouse-over tooltips for inventory management.*
 
 ### 🎯 Neural Pulse Combat System
-Revolutionary timing-based combat with client-side rendering for zero-lag responsiveness:
+A revolutionary timing-based combat system that rewards skill and precision:
 
-- **Animated Sync Bar**: Real-time ASCII cursor movement
-- **Skill-Based Timing**: Press `F` to fire when cursor hits your target zone
-- **Three Hit Types**:
-  - **[==] CRIT ZONE** - 2x damage + System Breach effect
-  - **[|] HIT MARKERS** - Normal damage
-  - **[-] MISS ZONE** - No damage
-- **System Breach Effects**: 5 unique critical effects (Neural Feedback, Optic Glitch, Armor Shred, etc.)
-- **Dynamic Difficulty**: Scales with player Agility and Skill Level
-- **Combat Flow & Momentum**: Accumulate momentum through successful strikes to reach "Peak" state and unleash devastating techniques like Iaijutsu.
-- **Consumables System**: Use medkits, stimpacks, and other items to manage health, fatigue, and balance in real-time.
+- **Animated Sync Bar**: A high-stakes timing mini-game. Press `SPACE` or `F` when the cursor hits the sweet spot to land devastating blows.
+- **Combat Buffer (`COMBAT_BUFFER.EXE`)**: Queue up multiple maneuvers (Slice, Stumble, etc.) and execute them in a fluid sequence.
+- **Flow & Momentum**: Successful strikes build **Flow**, unlocking advanced techniques and increasing your combat effectiveness.
+- **Combat Assessment**: Real-time tactical overlay showing your balance, stamina, and your target's status.
+- **System Breach Effects**: Critical hits can trigger unique debuffs like Neural Feedback, Optic Glitch, and Armor Shred.
 
-### World & NPCs
-- **Diverse Zones**: Streets, plaza, shops, clinic, nightclub, park
-- **Living NPCs**: Cyber Thugs, Street Vendors, Giant Rats
-- **ASCII Portraits**: Unique character art for each NPC type
-- **Dynamic Dialogue**: 100+ contextual NPC barks
+![Active Combat](./docs/images/combat_active.png)
+*High-intensity combat featuring the Sync Bar and Tactical Assessment.*
+
+![Combat Buffer](./docs/images/combat_buffer_executing.png)
+*The Combat Buffer executing a sequence of maneuvers.*
+
+### 🏙️ World & NPCs
+- **Persistent World**: A 20x20 procedurally generated city with diverse zones (Plazas, Nightclubs, Ripperdoc Clinics).
+- **Living Ecosystem**: NPCs with dynamic dialogue, unique behaviors, and AI-driven life cycles.
+- **MMO Foundation**: Built for high-concurrency multiplayer with Redis-backed persistence.
 
 ---
 
