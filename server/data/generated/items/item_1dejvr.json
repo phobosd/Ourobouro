@@ -1,0 +1,26 @@
+{
+  "id": "item_1dejvr",
+  "name": "Neural Cascade",
+  "shortName": "neuralcascade",
+  "description": "A neuro-interface implant that allows the user to process information at superhuman speeds. The device is housed within a sleek titanium casing and connects directly to the occipital lobe.",
+  "type": "weapon",
+  "rarity": "legendary",
+  "cost": 500,
+  "weight": 4.4,
+  "attributes": {
+    "slot": "neural",
+    "damage": 25,
+    "range": 100,
+    "weight": 20
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "24acba37-3cc1-4498-b5a4-08c5e9ee7358",
+    "generatedAt": 1768784615137,
+    "publishedAt": 1768784615137,
+    "seed": "trekoo",
+    "flavor": {
+      "rationale": "This advanced neural interface would be developed by corporations seeking an edge in competitive industries, such as finance or data analysis. It could also be sought after by military forces for improved situational awareness and reaction times."
+    }
+  }
+}

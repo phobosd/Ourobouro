@@ -2,6 +2,25 @@
 
 The Admin Dashboard is the control center for the Zenith-9 game world. It allows administrators to manage the AI Director, oversee content generation, configure guardrails, and manipulate the game state in real-time.
 
+## Table of Contents
+1. [Architecture](#architecture)
+2. [Features & Usage](#features--usage)
+    - [1. Director Control](#1-director-control)
+    - [2. Guardrails & Budgets](#2-guardrails--budgets)
+    - [3. Content Approvals](#3-content-approvals)
+    - [4. LLM Configuration](#4-llm-configuration)
+    - [5. World Map (Expansions)](#5-world-map-expansions)
+    - [6. Item & NPC Management](#6-item--npc-management)
+    - [7. Snapshots](#7-snapshots)
+    - [8. Logs](#8-logs)
+    - [9. World Events & Bosses](#9-world-events--bosses)
+    - [10. Loot System](#10-loot-system)
+3. [Autonomous Operations](#11-autonomous-operations)
+    - [The Automation Loop](#the-automation-loop)
+    - [Personality-Driven Logic](#personality-driven-logic)
+    - [The Approval Workflow](#the-approval-workflow)
+    - [Persistence](#persistence)
+
 ## Architecture
 
 The Zenith-9 system integrates Large Language Models (LLMs) into the core game loop through a "World Director" system. This system acts as an intermediary between the raw creativity of the LLM and the strict rules of the game engine.
@@ -113,7 +132,13 @@ Manage world state backups.
 ### 8. Logs
 A real-time feed of system events.
 
-### 9. World Events & Bosses
+### 9. Director's Inner Thoughts
+Located at the bottom of the Director tab, this section provides real-time transparency into the AI's autonomous decision-making process.
+*   **Decision Logic**: See the exact rolls and thresholds for Aggression, Expansion, and Chaos checks.
+*   **Status Updates**: Monitor why the Director chose to skip an action (e.g., "No suitable expansion spots found").
+*   **Transparency**: Useful for debugging personality settings and ensuring the AI is operating as expected.
+
+### 10. World Events & Bosses
 The Director can orchestrate large-scale events and generate powerful adversaries to challenge players.
 
 *   **World Events (Mob Invasion)**:
@@ -132,4 +157,33 @@ The Director can orchestrate large-scale events and generate powerful adversarie
 All NPCs (including Bosses and Invasion Mobs) now participate in a dynamic loot system.
 *   **On Death**: When an NPC is defeated, it drops all items in its inventory (hands and equipment) and any items defined in its `Loot` component onto the ground.
 *   **Visibility**: A message is broadcast to the attacker when loot is dropped.
+
+### 12. Autonomous Operations
+
+The World Director is designed to operate autonomously when **Resumed**, driving the game's narrative and world growth without constant manual intervention.
+
+#### The Automation Loop
+The Director runs a background "Automation Loop" every 10 seconds. During each tick, it evaluates the current game state and its own **Personality Traits** to decide if it should take action.
+
+#### Personality-Driven Logic
+The probability of autonomous actions is scaled by the sliders in the **Director Personality** card:
+*   **Expansion (Autonomous World Growth)**:
+    *   **Logic**: If enabled, the Director periodically attempts to grow the map.
+    *   **Connected Expansion**: To ensure the world remains navigable, the Director uses "Adjacency Logic." It scans the live game engine for existing rooms and only proposes new rooms in empty coordinates immediately adjacent (North, South, East, or West) to an existing room.
+    *   **End-of-Map Growth**: This ensures the city grows outwards from its current "ends" rather than appearing in disconnected clusters.
+*   **Aggression (Autonomous Threats)**:
+    *   **Logic**: High aggression increases the chance of the Director triggering random world events, such as Mob Invasions or spawning elite patrols near active players.
+*   **Chaos (Autonomous Anomalies)**:
+    *   **Logic**: Influences the "weirdness" of generated content and the frequency of unexpected glitches or environmental shifts.
+
+#### The Approval Workflow
+Even when operating autonomously, the Director is subject to **Guardrails**:
+*   **Proposals**: If `Require Approval` is enabled, autonomous rooms, NPCs, and items will appear in the **Approvals** tab as drafts. They only enter the live game once an admin clicks **Approve & Publish**.
+*   **Auto-Publishing**: If `Require Approval` is disabled, the Director will publish its creations directly to the game engine, allowing for a truly "living" and ever-changing world.
+
+#### Persistence
+All Director settings are persistent. The following are saved to `data/director_config.json` and survive server reboots:
+*   **Operational State**: Whether the Director was Paused or Resumed.
+*   **Personality Sliders**: The exact values and enabled/disabled status of Chaos, Aggression, and Expansion.
+*   **Glitch Configuration**: Settings for mob counts and legendary drop rates.
 

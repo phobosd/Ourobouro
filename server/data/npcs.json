@@ -53,7 +53,7 @@
         },
         "canMove": false,
         "role": "civilian",
-        "portrait": "/assets/portraits/dancer.jpg"
+        "portrait": "assets\\portraits\\dancer.jpg"
     },
     {
         "id": "ripperdoc",

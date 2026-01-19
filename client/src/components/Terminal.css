@@ -126,6 +126,12 @@
   text-shadow: 0 0 5px #0088ff;
 }
 
+.text-player {
+  color: #ffffff;
+  font-weight: bold;
+  text-shadow: 0 0 3px #ffffff;
+}
+
 .text-enemy {
   color: #ff0000;
   font-weight: bold;

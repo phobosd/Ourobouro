@@ -13,11 +13,22 @@ export class CompendiumService {
 
             const npcs = NPCRegistry.getInstance().getAllNPCs();
             const items = ItemRegistry.getInstance().getAllItems();
-
             // Deduplicate NPCs (they are stored by ID and Name in the registry)
             const uniqueNPCs = new Map<string, NPCDefinition>();
             npcs.forEach(npc => uniqueNPCs.set(npc.id, npc));
-            const sortedNPCs = Array.from(uniqueNPCs.values()).sort((a, b) => a.name.localeCompare(b.name));
+            const sortedNPCs = Array.from(uniqueNPCs.values())
+                .filter(npc => {
+                    // Filter out invasion mobs and temporary event bosses
+                    // We check the 'generatedBy' field which is now available in NPCDefinition
+                    if (npc.generatedBy === 'Event:Invasion') return false;
+                    if (npc.generatedBy === 'Event:Boss') return false;
+
+                    // Also check tags as a fallback for older entities
+                    if (npc.tags?.includes('invasion_mob')) return false;
+
+                    return true;
+                })
+                .sort((a, b) => a.name.localeCompare(b.name));
 
             // Deduplicate Items (already handled by getAllItems in ItemRegistry)
             const sortedItems = items.sort((a, b) => a.name.localeCompare(b.name));

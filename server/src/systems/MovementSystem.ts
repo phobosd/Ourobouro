@@ -113,7 +113,7 @@ export class MovementSystem extends System {
                 const fromX = pos.x;
                 const fromY = pos.y;
 
-                console.log(`[Movement] Player ${entityId} moved to ${targetX}, ${targetY}`);
+                // console.log(`[Movement] Player ${entityId} moved to ${targetX}, ${targetY}`);
                 pos.x = targetX;
                 pos.y = targetY;
 
@@ -191,7 +191,7 @@ export class MovementSystem extends System {
 
                     // Reset engagement tier for ALL NPCs when player enters (ensures fresh encounters)
                     if (npcCombat.targetId === entityId) {
-                        console.log(`[Movement] Resetting ${npcComp.typeName} (${npc.id}) engagement tier for returning player`);
+                        // console.log(`[Movement] Resetting ${npcComp.typeName} (${npc.id}) engagement tier for returning player`);
                         npcCombat.engagementTier = EngagementTier.DISENGAGED;
                     }
 
@@ -200,7 +200,7 @@ export class MovementSystem extends System {
                         npcCombat.isHostile = true;
                         npcCombat.targetId = entityId;
                         npcCombat.engagementTier = EngagementTier.DISENGAGED; // Start at disengaged
-                        console.log(`[Movement] ${npcComp.typeName} (${npc.id}) detected player ${entityId} entering room`);
+                        // console.log(`[Movement] ${npcComp.typeName} (${npc.id}) detected player ${entityId} entering room`);
                         this.messageService.combat(entityId, `<enemy>${npcComp.typeName} notices you and prepares to attack!</enemy>`);
                     }
                 }

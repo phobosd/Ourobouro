@@ -3,6 +3,7 @@ import { Logger } from '../../utils/Logger';
 
 export interface LLMResponse {
     text: string;
+    model: string;
     usage?: {
         promptTokens: number;
         completionTokens: number;
@@ -48,27 +49,32 @@ export class LLMService {
     /**
      * Generate an image using a model assigned to the IMAGE role.
      */
-    public async generateImage(prompt: string, role: LLMRole = LLMRole.IMAGE): Promise<string> {
+    public async generateImage(prompt: string, role: LLMRole = LLMRole.IMAGE): Promise<{ url: string; model: string }> {
         const profile = this.getProfileForRole(role);
 
         if (!profile) {
             Logger.warn('LLMService', `No IMAGE profile found. Falling back to placeholder.`);
-            return "";
+            return { url: "", model: "none" };
         }
 
         Logger.info('LLMService', `Generating image via: ${profile.name} | Model: ${profile.model}`);
 
+        let url = "";
         if (profile.provider === 'openai') {
-            return this.generateOpenAIImage(profile, prompt);
+            url = await this.generateOpenAIImage(profile, prompt);
         } else if (profile.provider === 'gemini') {
-            return this.generateGeminiImage(profile, prompt);
+            url = await this.generateGeminiImage(profile, prompt);
         } else if (profile.provider === 'pollinations') {
-            return this.generatePollinationsImage(profile, prompt);
+            url = await this.generatePollinationsImage(profile, prompt);
+        } else if (profile.provider === 'stable-diffusion') {
+            url = await this.generateStableDiffusionImage(profile, prompt);
         } else {
             // Local providers usually don't support image gen via the same API
             // But we'll try the OpenAI-compatible image endpoint just in case
-            return this.generateOpenAIImage(profile, prompt);
+            url = await this.generateOpenAIImage(profile, prompt);
         }
+
+        return { url, model: profile.model };
     }
 
     private getProfileForRole(role: LLMRole): LLMProfile | undefined {
@@ -96,7 +102,12 @@ export class LLMService {
 
     private async callOpenAICompatible(profile: LLMProfile, prompt: string, systemPrompt: string): Promise<LLMResponse> {
         try {
-            const response = await fetch(`${profile.baseUrl}/chat/completions`, {
+            let baseUrl = profile.baseUrl.replace(/\/+$/, '');
+            // For local providers, if they don't have /v1, they often need it for OpenAI compatibility
+            if (profile.provider === 'local' && !baseUrl.endsWith('/v1') && !baseUrl.includes('/v1/')) {
+                baseUrl += '/v1';
+            }
+            const response = await fetch(`${baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -118,8 +129,12 @@ export class LLMService {
             }
 
             const data = await response.json();
+            if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
+                throw new Error(`OpenAI response missing choices or message content. Response: ${JSON.stringify(data)}`);
+            }
             return {
                 text: data.choices[0].message.content,
+                model: profile.model,
                 usage: {
                     promptTokens: data.usage?.prompt_tokens || 0,
                     completionTokens: data.usage?.completion_tokens || 0
@@ -163,6 +178,7 @@ export class LLMService {
             const data = await response.json();
             return {
                 text: data.candidates[0].content.parts[0].text,
+                model: profile.model,
                 usage: {
                     promptTokens: data.usageMetadata?.promptTokenCount || 0,
                     completionTokens: data.usageMetadata?.candidatesTokenCount || 0
@@ -302,6 +318,55 @@ export class LLMService {
         }
     }
 
+    private async generateStableDiffusionImage(profile: LLMProfile, prompt: string): Promise<string> {
+        try {
+            // Standard Automatic1111 API endpoint
+            const baseUrl = profile.baseUrl.replace(/\/+$/, '');
+            const url = `${baseUrl}/sdapi/v1/txt2img`;
+
+            Logger.info('LLMService', `Attempting Stable Diffusion generation at: ${url}`);
+
+            const body = {
+                prompt: `${prompt}, masterpiece, best quality, 8k, ultra detailed`,
+                negative_prompt: "photorealistic, real life, 3d render, octane render, photograph, dslr",
+                steps: 30,
+                width: 1024,
+                height: 1024,
+                cfg_scale: 7,
+                sampler_name: "DPM++ 2M SDE"
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': profile.apiKey ? `Bearer ${profile.apiKey}` : ''
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                Logger.error('LLMService', `Stable Diffusion Error (${response.status}): ${error}`);
+                return "";
+            }
+
+            const data = await response.json();
+
+            if (data.images && data.images.length > 0) {
+                Logger.info('LLMService', `Successfully generated image via Stable Diffusion`);
+                // A1111 returns base64 strings in the images array
+                return `data:image/png;base64,${data.images[0]}`;
+            } else {
+                Logger.error('LLMService', `Stable Diffusion response missing images. Response keys: ${Object.keys(data)}`);
+                return "";
+            }
+        } catch (err) {
+            Logger.error('LLMService', `Stable Diffusion generation failed: ${err}`);
+            return "";
+        }
+    }
+
     /**
      * Robustly parse JSON from an LLM response, stripping markdown and reasoning blocks.
      */
@@ -357,5 +422,96 @@ export class LLMService {
         }
 
         return { message: 'Balance check not supported for this provider' };
+    }
+
+    public async getAvailableModels(profile: LLMProfile): Promise<string[]> {
+        try {
+            const baseUrl = profile.baseUrl.replace(/\/+$/, '');
+            let url = '';
+            let method = 'GET';
+            let headers: any = { 'Content-Type': 'application/json' };
+            if (profile.apiKey) headers['Authorization'] = `Bearer ${profile.apiKey}`;
+
+            if (profile.provider === 'stable-diffusion') {
+                url = `${baseUrl}/sdapi/v1/sd-models`;
+            } else if (profile.provider === 'openai' || profile.provider === 'local') {
+                url = `${baseUrl}/models`;
+                // Local providers might need /v1/models
+                if (profile.provider === 'local' && !baseUrl.endsWith('/v1') && !baseUrl.includes('/v1/')) {
+                    url = `${baseUrl}/v1/models`;
+                }
+            } else if (profile.provider === 'gemini') {
+                url = `${baseUrl}/models?key=${profile.apiKey}`;
+            } else {
+                return [];
+            }
+
+            Logger.info('LLMService', `Fetching models from: ${url}`);
+            const response = await fetch(url, { method, headers });
+
+            if (!response.ok) {
+                Logger.warn('LLMService', `Failed to fetch models: ${response.status} ${response.statusText}`);
+                return [];
+            }
+
+            const data = await response.json();
+
+            if (profile.provider === 'stable-diffusion') {
+                // A1111 returns array of objects with 'title' and 'model_name'
+                return data.map((m: any) => m.title);
+            } else if (profile.provider === 'openai' || profile.provider === 'local') {
+                // OpenAI format: { data: [{ id: 'model-id', ... }] }
+                if (data.data && Array.isArray(data.data)) {
+                    return data.data.map((m: any) => m.id);
+                }
+            } else if (profile.provider === 'gemini') {
+                // Gemini format: { models: [{ name: 'models/gemini-pro', ... }] }
+                if (data.models && Array.isArray(data.models)) {
+                    return data.models.map((m: any) => m.name.replace('models/', ''));
+                }
+            }
+
+            return [];
+        } catch (err) {
+            Logger.error('LLMService', `Error fetching models: ${err}`);
+            return [];
+        }
+    }
+
+    public async getAvailableSamplers(profile: LLMProfile): Promise<string[]> {
+        try {
+            if (profile.provider !== 'stable-diffusion') {
+                return [];
+            }
+
+            const baseUrl = profile.baseUrl.replace(/\/+$/, '');
+            const url = `${baseUrl}/sdapi/v1/samplers`;
+
+            Logger.info('LLMService', `Fetching samplers from: ${url}`);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': profile.apiKey ? `Bearer ${profile.apiKey}` : ''
+                }
+            });
+
+            if (!response.ok) {
+                Logger.warn('LLMService', `Failed to fetch samplers: ${response.status} ${response.statusText}`);
+                return [];
+            }
+
+            const data = await response.json();
+            // A1111 returns array of objects with 'name', 'aliases', 'options'
+            if (Array.isArray(data)) {
+                return data.map((s: any) => s.name);
+            }
+
+            return [];
+        } catch (err) {
+            Logger.error('LLMService', `Error fetching samplers: ${err}`);
+            return [];
+        }
     }
 }

@@ -148,8 +148,7 @@ export function registerSocialCommands(registry: CommandRegistry) {
             allPlayers.forEach(p => {
                 const desc = p.getComponent(Description);
                 const role = p.getComponent(Role) as Role;
-
-                let line = `- ${desc?.title || "Unknown"}`;
+                let line = `- <player>${desc?.title || "Unknown"}</player>`;
                 if (role && role.value !== 'user') {
                     line += ` <span style="color: #ff0000">[${role.value.toUpperCase()}]</span>`;
                 }

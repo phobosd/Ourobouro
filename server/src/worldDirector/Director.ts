@@ -18,10 +18,12 @@ import { Engine } from '../ecs/Engine';
 import { ChunkSystem } from '../world/ChunkSystem';
 import * as fs from 'fs';
 import * as path from 'path';
+import { IsRoom } from '../components/IsRoom';
 import { Position } from '../components/Position';
 import { Loot } from '../components/Loot';
 import { NPC } from '../components/NPC';
 import { ImageDownloader } from '../utils/ImageDownloader';
+import { v4 as uuidv4 } from 'uuid';
 
 export enum DirectorLogLevel {
     INFO = 'info',
@@ -35,6 +37,14 @@ export interface DirectorLogEntry {
     level: DirectorLogLevel;
     message: string;
     context?: any;
+}
+
+interface ActiveEvent {
+    id: string;
+    type: string;
+    startTime: number;
+    duration: number;
+    entityIds: string[];
 }
 
 export class WorldDirector {
@@ -58,6 +68,8 @@ export class WorldDirector {
     private isPaused: boolean = true; // Start paused for safety
     private logs: DirectorLogEntry[] = [];
     private proposals: any[] = []; // Pending content proposals
+    private activeEvents: ActiveEvent[] = [];
+    private innerThoughts: { timestamp: number, thought: string }[] = [];
     private personality = {
         chaos: { value: 0.2, enabled: true },
         aggression: { value: 0.0, enabled: false },
@@ -85,6 +97,12 @@ export class WorldDirector {
         this.chunkSystem = new ChunkSystem(engine);
         this.llm = new LLMService(guardrails.getConfig().llmProfiles);
         this.adminNamespace = io.of('/admin');
+
+        // Subscribe to guardrail updates to keep LLM profiles in sync
+        this.guardrails.onUpdate((config) => {
+            this.llm.updateConfig(config.llmProfiles);
+            this.log(DirectorLogLevel.INFO, 'LLM Profiles updated from GuardrailService.');
+        });
 
         // Initialize Generators
         this.npcGen = new NPCGenerator();
@@ -141,14 +159,23 @@ export class WorldDirector {
         this.adminNamespace.emit('director:log', entry);
     }
 
+    private think(thought: string) {
+        const entry = { timestamp: Date.now(), thought };
+        this.innerThoughts.unshift(entry);
+        if (this.innerThoughts.length > 100) this.innerThoughts.pop();
+        this.adminNamespace.emit('director:thoughts_update', this.innerThoughts);
+    }
+
     public pause() {
         this.isPaused = true;
+        this.saveConfig();
         this.log(DirectorLogLevel.WARN, 'Director PAUSED.');
         this.adminNamespace.emit('director:status', this.getStatus());
     }
 
     public resume() {
         this.isPaused = false;
+        this.saveConfig();
         this.log(DirectorLogLevel.SUCCESS, 'Director RESUMED.');
         this.adminNamespace.emit('director:status', this.getStatus());
     }
@@ -198,10 +225,14 @@ export class WorldDirector {
         return { mobs, items };
     }
 
-    public async generateBoss() {
+    public async generateBoss(context?: any) {
         this.log(DirectorLogLevel.INFO, 'Generating BOSS...');
         try {
-            const proposal = await this.npcGen.generate(this.guardrails.getConfig(), this.llm, { generatedBy: 'Manual', subtype: 'BOSS' });
+            const proposal = await this.npcGen.generate(this.guardrails.getConfig(), this.llm, {
+                generatedBy: context?.generatedBy || 'Manual',
+                subtype: 'BOSS',
+                ...context
+            });
             if (proposal && proposal.payload) {
                 const payload = proposal.payload as NPCPayload;
                 payload.tags = ['boss', 'aggressive'];
@@ -212,7 +243,7 @@ export class WorldDirector {
                 payload.stats.defense = (payload.stats.defense || 5) * 2;
 
                 // Generate Legendary Loot for Boss
-                const itemProposal = await this.itemGen.generate(this.guardrails.getConfig(), this.llm, { subtype: 'LEGENDARY' });
+                const itemProposal = await this.itemGen.generate(this.guardrails.getConfig(), this.llm, { generatedBy: 'Boss:Loot', subtype: 'LEGENDARY' });
                 if (itemProposal && itemProposal.payload) {
                     // Auto-approve the item so it exists in the registry for the boss to "hold"
                     itemProposal.status = ProposalStatus.APPROVED;
@@ -235,17 +266,51 @@ export class WorldDirector {
         return null;
     }
 
-    public async triggerWorldEvent(eventType: string) {
+    public async triggerWorldEvent(eventType: string, force: boolean = false, durationOverride?: number) {
+        const config = this.guardrails.getConfig();
+
+        // Default Durations
+        const MOB_INVASION_DURATION = 30 * 60 * 1000; // 30 mins
+        const BOSS_EVENT_DURATION = 15 * 60 * 1000;   // 15 mins
+
+        if (config.features.requireHumanApproval && !force) {
+            this.think(`Creating proposal for World Event: ${eventType} (Approval Required)`);
+            const proposal: any = {
+                id: uuidv4(),
+                type: ProposalType.EVENT,
+                status: ProposalStatus.DRAFT,
+                payload: {
+                    id: `event_${Math.random().toString(36).substring(7)}`,
+                    type: eventType,
+                    description: `A massive ${eventType} is about to occur.`,
+                    duration: durationOverride || (eventType === 'BOSS_SPAWN' ? BOSS_EVENT_DURATION : MOB_INVASION_DURATION)
+                },
+                seed: Math.random().toString(),
+                generatedBy: 'Director',
+                createdAt: Date.now(),
+                flavor: {
+                    rationale: `High aggression levels (${(this.personality.aggression.value * 100).toFixed(0)}%) triggered a hostile world event.`
+                }
+            };
+            this.proposals.push(proposal);
+            this.adminNamespace.emit('director:proposals_update', this.proposals);
+            return;
+        }
+
         this.log(DirectorLogLevel.INFO, `Triggering World Event: ${eventType}`);
+        const eventId = uuidv4();
+        const entityIds: string[] = [];
+        let duration = durationOverride || 0;
 
         if (eventType === 'MOB_INVASION') {
+            duration = durationOverride || MOB_INVASION_DURATION;
             // Spawn 10-20 mobs in random locations
             const mobCount = 10 + Math.floor(Math.random() * 10);
-            this.log(DirectorLogLevel.WARN, `⚠️ MOB INVASION DETECTED! Spawning ${mobCount} entities...`);
+            this.log(DirectorLogLevel.WARN, `⚠️ MOB INVASION DETECTED! Spawning ${mobCount} entities... Duration: ${(duration / 60000).toFixed(1)}m`);
 
             this.io.emit('message', {
                 type: 'system',
-                content: `\n\n[WARNING] SYSTEM BREACH DETECTED. MASSIVE BIOLOGICAL SIGNATURES INBOUND.\n`
+                content: `\n\n[WARNING] SYSTEM BREACH DETECTED. MASSIVE BIOLOGICAL SIGNATURES INBOUND. THREAT LEVEL: HIGH.\n`
             });
 
             for (let i = 0; i < mobCount; i++) {
@@ -257,14 +322,16 @@ export class WorldDirector {
                         payload.tags = ['invasion_mob', 'aggressive'];
                         payload.behavior = 'aggressive';
 
+                        if (!proposal.flavor) proposal.flavor = {};
+                        proposal.flavor.rationale = `Spawned as part of a MOB_INVASION event. ${proposal.flavor.rationale || ''}`;
+
                         // Auto-publish/spawn
                         proposal.status = ProposalStatus.APPROVED;
                         await this.processProposalAssets(proposal);
                         await this.publisher.publish(proposal);
                         NPCRegistry.getInstance().reloadGeneratedNPCs();
-                        CompendiumService.updateCompendium();
 
-                        // Spawn in a random room (simplified logic: pick random coordinates)
+                        // Spawn in a random room
                         const x = 10 + Math.floor(Math.random() * 10) - 5;
                         const y = 10 + Math.floor(Math.random() * 10) - 5;
 
@@ -280,31 +347,102 @@ export class WorldDirector {
                                 pos.y = y;
                             }
 
-                            // 20% chance for rare loot on invasion mobs
-                            if (Math.random() < 0.2) {
-                                const itemProposal = await this.itemGen.generate(this.guardrails.getConfig(), this.llm, { subtype: 'RARE' });
-                                if (itemProposal && itemProposal.payload) {
-                                    itemProposal.status = ProposalStatus.APPROVED;
-                                    await this.publisher.publish(itemProposal);
-                                    ItemRegistry.getInstance().reloadGeneratedItems();
-                                    CompendiumService.updateCompendium();
-                                    const itemEntity = PrefabFactory.createItem(itemProposal.payload.id);
-                                    if (itemEntity) {
-                                        this.engine.addEntity(itemEntity);
-                                        npcEntity.addComponent(new Loot([itemEntity.id]));
-                                        this.log(DirectorLogLevel.SUCCESS, `Added RARE loot to invasion mob.`);
-                                    }
-                                }
-                            }
-
                             this.engine.addEntity(npcEntity);
-                            this.log(DirectorLogLevel.SUCCESS, `Spawned invasion mob at ${x},${y}`);
+                            entityIds.push(npcEntity.id);
                         }
                     }
                 } catch (err) {
                     Logger.error('Director', `Failed to spawn invasion mob: ${err}`);
                 }
             }
+        } else if (eventType === 'BOSS_SPAWN') {
+            duration = durationOverride || BOSS_EVENT_DURATION;
+            this.log(DirectorLogLevel.WARN, `⚠️ BOSS EVENT DETECTED! Duration: ${(duration / 60000).toFixed(1)}m`);
+
+            this.io.emit('message', {
+                type: 'system',
+                content: `\n\n[CRITICAL] OMEGA-CLASS THREAT DETECTED. A POWERFUL ENTITY HAS ENTERED THE SECTOR. EXTREME CAUTION ADVISED.\n`
+            });
+
+            try {
+                const proposal = await this.generateBoss({ generatedBy: 'Event:Boss' });
+                if (proposal && proposal.payload) {
+                    proposal.status = ProposalStatus.APPROVED;
+                    await this.processProposalAssets(proposal);
+                    await this.publisher.publish(proposal);
+                    NPCRegistry.getInstance().reloadGeneratedNPCs();
+                    await CompendiumService.updateCompendium();
+
+                    // Spawn Boss at Center (or random)
+                    const x = 10;
+                    const y = 10;
+
+                    const bossEntity = PrefabFactory.createNPC(proposal.payload.id);
+                    if (bossEntity) {
+                        let pos = bossEntity.getComponent(Position);
+                        if (!pos) {
+                            pos = new Position(x, y);
+                            bossEntity.addComponent(pos);
+                        } else {
+                            pos.x = x;
+                            pos.y = y;
+                        }
+                        this.engine.addEntity(bossEntity);
+                        entityIds.push(bossEntity.id);
+                        this.log(DirectorLogLevel.SUCCESS, `Spawned BOSS ${(proposal.payload as NPCPayload).name} at ${x},${y}`);
+                    }
+                }
+            } catch (err) {
+                Logger.error('Director', `Failed to spawn BOSS event: ${err}`);
+            }
+        }
+
+        // Register Active Event
+        if (entityIds.length > 0) {
+            this.activeEvents.push({
+                id: eventId,
+                type: eventType,
+                startTime: Date.now(),
+                duration,
+                entityIds
+            });
+            this.log(DirectorLogLevel.INFO, `Event ${eventType} (${eventId}) registered with ${entityIds.length} entities.`);
+        }
+    }
+
+    private checkActiveEvents() {
+        const now = Date.now();
+        const expiredEvents = this.activeEvents.filter(e => now > e.startTime + e.duration);
+
+        for (const event of expiredEvents) {
+            this.log(DirectorLogLevel.INFO, `Event ${event.type} (${event.id}) EXPIRED. Cleaning up...`);
+
+            let removedCount = 0;
+            for (const entityId of event.entityIds) {
+                if (this.engine.getEntity(entityId)) {
+                    this.engine.removeEntity(entityId);
+                    removedCount++;
+                }
+            }
+
+            this.log(DirectorLogLevel.SUCCESS, `Event Cleanup: Removed ${removedCount} entities.`);
+
+            if (event.type === 'MOB_INVASION') {
+                this.io.emit('message', {
+                    type: 'system',
+                    content: `\n\n[SYSTEM] INVASION CONTAINED. BIOLOGICAL SIGNATURES DISSIPATING.\n`
+                });
+            } else if (event.type === 'BOSS_SPAWN') {
+                this.io.emit('message', {
+                    type: 'system',
+                    content: `\n\n[SYSTEM] OMEGA THREAT SIGNAL LOST. ENTITY HAS DEPARTED THE SECTOR.\n`
+                });
+            }
+        }
+
+        // Remove expired from list
+        if (expiredEvents.length > 0) {
+            this.activeEvents = this.activeEvents.filter(e => now <= e.startTime + e.duration);
         }
     }
 
@@ -314,7 +452,8 @@ export class WorldDirector {
             personality: this.personality,
             glitchConfig: this.glitchConfig, // Expose config
             guardrails: this.guardrails.getSafeConfig(),
-            proposals: this.proposals
+            proposals: this.proposals,
+            innerThoughts: this.innerThoughts
         };
     }
 
@@ -325,8 +464,14 @@ export class WorldDirector {
                 const config = JSON.parse(data);
                 if (config.glitchConfig) {
                     this.glitchConfig = { ...this.glitchConfig, ...config.glitchConfig };
-                    Logger.info('Director', 'Loaded configuration from disk.');
                 }
+                if (config.personality) {
+                    this.personality = { ...this.personality, ...config.personality };
+                }
+                if (config.paused !== undefined) {
+                    this.isPaused = config.paused;
+                }
+                Logger.info('Director', 'Loaded configuration from disk.');
             }
         } catch (err) {
             Logger.error('Director', `Failed to load config: ${err}`);
@@ -336,7 +481,9 @@ export class WorldDirector {
     private saveConfig() {
         try {
             const config = {
-                glitchConfig: this.glitchConfig
+                glitchConfig: this.glitchConfig,
+                personality: this.personality,
+                paused: this.isPaused
             };
             fs.writeFileSync(this.configPath, JSON.stringify(config, null, 4));
             Logger.info('Director', 'Saved configuration to disk.');
@@ -345,15 +492,128 @@ export class WorldDirector {
         }
     }
 
+    private findAdjacentEmptySpot(): { x: number, y: number } | null {
+        // Query the engine for ALL entities with IsRoom component (includes static and generated rooms)
+        const roomEntities = this.engine.getEntitiesWithComponent(IsRoom);
+
+        if (roomEntities.length === 0) {
+            // If truly empty, start at a reasonable center
+            return { x: 10, y: 10 };
+        }
+
+        // Shuffle rooms to pick a random starting point for expansion
+        const shuffledRooms = [...roomEntities].sort(() => Math.random() - 0.5);
+
+        for (const roomEntity of shuffledRooms) {
+            const pos = roomEntity.getComponent(Position);
+            if (!pos) continue;
+
+            const { x, y } = pos;
+            const adjacents = [
+                { x: x + 1, y },
+                { x: x - 1, y },
+                { x, y: y + 1 },
+                { x, y: y - 1 }
+            ];
+
+            // Shuffle adjacents to avoid bias
+            for (const spot of adjacents.sort(() => Math.random() - 0.5)) {
+                // 1. Check if a room already exists at this spot in the engine
+                const existingRoom = roomEntities.find(r => {
+                    const rPos = r.getComponent(Position);
+                    return rPos && rPos.x === spot.x && rPos.y === spot.y;
+                });
+
+                if (!existingRoom) {
+                    // 2. Check if this spot is already in a pending proposal
+                    const isPending = this.proposals.some(p =>
+                        p.type === ProposalType.WORLD_EXPANSION &&
+                        p.payload.coordinates.x === spot.x &&
+                        p.payload.coordinates.y === spot.y
+                    );
+
+                    if (!isPending) return spot;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private startAutomationLoop() {
         if (this.automationInterval) clearInterval(this.automationInterval);
 
         this.automationInterval = setInterval(async () => {
-            if (this.isPaused) return;
+            if (this.isPaused) {
+                this.think("System paused. Standing by.");
+                return;
+            }
 
-            // Random Event Trigger (if Aggression is high)
-            if (this.personality.aggression.enabled && Math.random() < (this.personality.aggression.value * 0.01)) {
-                // await this.triggerWorldEvent('MOB_INVASION');
+            this.think("Evaluating world state for autonomous actions...");
+
+            // Check for expired events
+            this.checkActiveEvents();
+
+            // 1. Random Event Trigger (if Aggression is high)
+            const aggressionRoll = Math.random();
+            const aggressionThreshold = this.personality.aggression.value * this.guardrails.getConfig().budgets.aggressionProbability;
+
+            if (this.personality.aggression.enabled) {
+                if (aggressionRoll < aggressionThreshold) {
+                    this.think(`Aggression check PASSED (Roll: ${aggressionRoll.toFixed(4)} < Threshold: ${aggressionThreshold.toFixed(4)}). Triggering event...`);
+                    await this.triggerWorldEvent('MOB_INVASION');
+                } else {
+                    this.think(`Aggression check FAILED (Roll: ${aggressionRoll.toFixed(4)} >= Threshold: ${aggressionThreshold.toFixed(4)}). No hostile events triggered.`);
+                }
+            } else {
+                this.think("Aggression disabled. Skipping hostile event checks.");
+            }
+
+            // 2. Autonomous World Expansion
+            const expansionRoll = Math.random();
+            const expansionThreshold = this.personality.expansion.value * this.guardrails.getConfig().budgets.expansionProbability;
+
+            if (this.personality.expansion.enabled) {
+                if (expansionRoll < expansionThreshold) {
+                    this.think(`Expansion check PASSED (Roll: ${expansionRoll.toFixed(4)} < Threshold: ${expansionThreshold.toFixed(4)}). Searching for expansion spot...`);
+                    const spot = this.findAdjacentEmptySpot();
+                    if (spot) {
+                        this.think(`Found expansion spot at ${spot.x}, ${spot.y}. Generating proposal...`);
+                        this.log(DirectorLogLevel.INFO, `Autonomous expansion: Targeting spot at ${spot.x}, ${spot.y}`);
+                        try {
+                            const proposal = await this.roomGen.generate(this.guardrails.getConfig(), this.llm, {
+                                generatedBy: 'Autonomous',
+                                x: spot.x,
+                                y: spot.y,
+                                existingNames: RoomRegistry.getInstance().getAllRooms().map(r => r.name)
+                            });
+                            if (proposal) {
+                                if (!proposal.flavor) proposal.flavor = {};
+                                proposal.flavor.rationale = `Autonomous expansion triggered by Expansion personality (${(this.personality.expansion.value * 100).toFixed(0)}%). ${proposal.flavor.rationale || ''}`;
+                                this.proposals.push(proposal);
+                                this.adminNamespace.emit('director:proposals_update', this.proposals);
+                                this.log(DirectorLogLevel.SUCCESS, `Autonomous expansion proposal created for ${spot.x}, ${spot.y}`);
+                            }
+                        } catch (err) {
+                            this.think(`Expansion generation FAILED: ${err}`);
+                            this.log(DirectorLogLevel.ERROR, `Autonomous expansion failed: ${err}`);
+                        }
+                    } else {
+                        this.think("No suitable expansion spots found adjacent to existing rooms.");
+                    }
+                } else {
+                    this.think(`Expansion check FAILED (Roll: ${expansionRoll.toFixed(4)} >= Threshold: ${expansionThreshold.toFixed(4)}). No expansion triggered.`);
+                }
+            } else {
+                this.think("Expansion disabled. Skipping world growth checks.");
+            }
+
+            // 3. Chaos Check (just for thoughts)
+            if (this.personality.chaos.enabled) {
+                const chaosRoll = Math.random();
+                if (chaosRoll < this.personality.chaos.value * this.guardrails.getConfig().budgets.chaosProbability) {
+                    this.think(`Chaos roll high (${chaosRoll.toFixed(4)}). The Matrix feels unstable...`);
+                }
             }
 
         }, 10000); // Check every 10 seconds
@@ -416,6 +676,7 @@ export class WorldDirector {
                 if (update.expansion !== undefined) this.personality.expansion = { ...this.personality.expansion, ...update.expansion };
 
                 this.log(DirectorLogLevel.INFO, `Personality updated: ${JSON.stringify(this.personality)}`);
+                this.saveConfig();
                 this.adminNamespace.emit('director:status', this.getStatus());
             });
 
@@ -467,10 +728,13 @@ export class WorldDirector {
                             NPCRegistry.getInstance().reloadGeneratedNPCs();
                         } else if (proposal.type === ProposalType.WORLD_EXPANSION) {
                             RoomRegistry.getInstance().reloadGeneratedRooms();
+                        } else if (proposal.type === ProposalType.EVENT) {
+                            // Execute the event immediately upon approval
+                            await this.triggerWorldEvent(proposal.payload.type, true, proposal.payload.duration);
                         }
 
-                        // Update Compendium whenever an NPC or Item is published
-                        if (proposal.type === ProposalType.NPC || proposal.type === ProposalType.ITEM) {
+                        // Update Compendium whenever an NPC or Item is published (skip for mobs)
+                        if (proposal.type === ProposalType.ITEM || (proposal.type === ProposalType.NPC && proposal.payload.role !== 'mob')) {
                             await CompendiumService.updateCompendium();
                         }
 
@@ -557,8 +821,11 @@ export class WorldDirector {
                         proposal = await this.questGen.generate(config, this.llm, { generatedBy: 'Manual' });
                         break;
                     case 'WORLD_EXPANSION':
+                        const spot = this.findAdjacentEmptySpot();
                         proposal = await this.roomGen.generate(config, this.llm, {
                             generatedBy: 'Manual',
+                            x: spot?.x,
+                            y: spot?.y,
                             existingNames: RoomRegistry.getInstance().getAllRooms().map(r => r.name)
                         });
                         break;
@@ -684,7 +951,8 @@ export class WorldDirector {
                 const prompt = `A cyberpunk style portrait of ${npc.name}, ${npc.description}. Role: ${npc.role}, Faction: ${npc.faction}. High quality, detailed, digital art.`;
 
                 try {
-                    const imageUrl = await this.llm.generateImage(prompt);
+                    const imageRes = await this.llm.generateImage(prompt);
+                    const imageUrl = imageRes.url;
                     if (imageUrl) {
                         const filename = `${id}.jpg`;
                         const localPath = await ImageDownloader.downloadImage(imageUrl, filename);
@@ -973,7 +1241,6 @@ export class WorldDirector {
                     // Equipment
                     if (data.inventory.equipment) {
                         for (const [slot, itemId] of Object.entries(data.inventory.equipment)) {
-                            if (slot === 'back') continue;
                             const currentId = inv.equipment.get(slot) || null;
                             updateSlot(currentId, itemId as string, (id) => {
                                 if (id) inv.equipment.set(slot, id);
@@ -1047,7 +1314,6 @@ export class WorldDirector {
                     // Equipment
                     if (data.inventory.equipment) {
                         for (const [slot, itemId] of Object.entries(data.inventory.equipment)) {
-                            if (slot === 'back') continue;
                             const currentId = tempInv.equipment.get(slot) || null;
                             await updateOfflineSlot(currentId, itemId as string, (id) => {
                                 if (id) tempInv.equipment.set(slot, id);
@@ -1111,12 +1377,18 @@ export class WorldDirector {
                 const resolveItemName = async (id: string | null, persistence?: any): Promise<string | null> => {
                     if (!id) return null;
 
+                    const registry = ItemRegistry.getInstance();
+
                     // Try engine first
                     const entity = this.engine.getEntity(id);
                     if (entity) {
                         const item = entity.getComponent(Item);
-                        const result = item ? (item.shortName || item.name) : null;
-                        this.log(DirectorLogLevel.INFO, `Resolving item ${id} (Online): Found Item? ${!!item}, shortName: ${item?.shortName}, name: ${item?.name} -> Returning: ${result}`);
+                        if (!item) return null;
+
+                        const templateId = item.templateId || registry.getItem(item.name)?.id || registry.getItem(item.shortName)?.id;
+                        const result = templateId || item.shortName || item.name;
+
+                        this.log(DirectorLogLevel.INFO, `Resolving item ${id} (Online): Found Item? Yes, templateId: ${item.templateId}, registryMatch: ${!!templateId}, result: ${result}`);
                         return result ? result.toLowerCase() : null;
                     }
 
@@ -1125,8 +1397,10 @@ export class WorldDirector {
                         const data = await persistence.getEntity(id);
                         if (data && data.components && data.components.Item) {
                             const itemData = data.components.Item;
-                            const result = itemData.shortName || itemData.name;
-                            this.log(DirectorLogLevel.INFO, `Resolving item ${id} (Offline): Found Item Data? Yes, shortName: ${itemData.shortName}, name: ${itemData.name} -> Returning: ${result}`);
+                            const templateId = itemData.templateId || registry.getItem(itemData.name)?.id || registry.getItem(itemData.shortName)?.id;
+                            const result = templateId || itemData.shortName || itemData.name;
+
+                            this.log(DirectorLogLevel.INFO, `Resolving item ${id} (Offline): Found Item Data? Yes, templateId: ${itemData.templateId}, registryMatch: ${!!templateId}, result: ${result}`);
                             return result ? result.toLowerCase() : null;
                         } else {
                             this.log(DirectorLogLevel.WARN, `Resolving item ${id} (Offline): Entity or Item component not found.`);
@@ -1232,8 +1506,8 @@ export class WorldDirector {
         try {
             const proposal = await this.roomGen.generate(this.guardrails.getConfig(), this.llm, {
                 generatedBy: 'ChunkSystem',
-                forceX: x,
-                forceY: y
+                x: x,
+                y: y
             });
 
             if (proposal && proposal.payload) {

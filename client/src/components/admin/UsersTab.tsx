@@ -625,7 +625,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ socket, items }) => {
 
                         <h4 style={{ color: '#888', borderBottom: '1px solid #333', paddingBottom: '0.5rem' }}>Equipment</h4>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                            {['head', 'torso', 'waist', 'legs', 'feet', 'neural', 'hands'].map(slot => (
+                            {['head', 'torso', 'waist', 'legs', 'feet', 'neural', 'back'].map(slot => (
                                 <div key={slot}>
                                     <label style={{ display: 'block', color: '#888', marginBottom: '0.5rem' }}>{slot.charAt(0).toUpperCase() + slot.slice(1)}</label>
                                     {renderItemSelect(editingInventory.inventory.equipment[slot] || null, (val) => {

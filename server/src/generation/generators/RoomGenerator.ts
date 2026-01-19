@@ -19,6 +19,7 @@ export class RoomGenerator extends BaseGenerator<RoomPayload> {
         let name = roomType.names[Math.floor(Math.random() * roomType.names.length)];
         let description = `A ${roomType.type} area. The air is thick with the smell of ozone and rain.`;
         let rationale = `Expanding the world with a new ${roomType.type} block.`;
+        const models: Record<string, string> = {};
 
         if (llm) {
             try {
@@ -34,6 +35,7 @@ export class RoomGenerator extends BaseGenerator<RoomPayload> {
                 Return ONLY a JSON object with fields: name, description, rationale.`;
 
                 const response = await llm.chat(prompt, "You are the lead architect for the Zenith-9 sprawl. Your style is brutalist, neon-soaked, and claustrophobic. You describe spaces through light, sound, and decay.", LLMRole.CREATIVE);
+                models['Creative'] = response.model;
                 const data = LLMService.parseJson(response.text);
 
                 if (data.name) name = data.name;
@@ -47,28 +49,6 @@ export class RoomGenerator extends BaseGenerator<RoomPayload> {
         const x = context?.x ?? Math.floor(Math.random() * 100);
         const y = context?.y ?? Math.floor(Math.random() * 100);
 
-        // 2. Portrait Pass: AI Image Generation (via Pollinations.ai)
-        let portrait = "";
-        if (llm) {
-            try {
-                const portraitPrompt = `Create a highly detailed image generation prompt for a "realistic 3D environment render" of the following cyberpunk location:
-                Name: ${name}
-                Description: ${description}
-                Type: ${roomType.type}
-                
-                Requirements for the prompt:
-                - Style: Realistic 3D environment render, Unreal Engine 5, cinematic lighting, cyberpunk aesthetic.
-                - Composition: Wide-angle or atmospheric shot of the location.
-                - Details: Focus on architectural textures, neon lighting, weather effects (rain, fog), and environmental storytelling.
-                - Format: Return ONLY the prompt text. No preamble, no quotes.`;
-
-                const portraitRes = await llm.chat(portraitPrompt, "You are an expert AI image prompt engineer.", LLMRole.CREATIVE);
-                portrait = await llm.generateImage(portraitRes.text.trim());
-            } catch (err) {
-                console.error('Room Portrait Pass failed:', err);
-            }
-        }
-
         const payload: RoomPayload = {
             id: `room_${Math.random().toString(36).substring(7)}`,
             name,
@@ -78,10 +58,10 @@ export class RoomGenerator extends BaseGenerator<RoomPayload> {
             exits: {},
             features: [],
             spawns: [],
-            portrait
+            portrait: ""
         };
 
-        const proposal = this.generateBaseProposal(payload);
+        const proposal = this.generateBaseProposal(payload, context?.generatedBy || 'Director', models);
         proposal.flavor = { rationale };
 
         return proposal;

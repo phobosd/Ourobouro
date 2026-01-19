@@ -1,0 +1,23 @@
+{
+  "id": "item_3ln2sa",
+  "name": "Neuro-Syringe of the Void",
+  "shortName": "neuro-syringe-of-the-void",
+  "description": "A single dose of this experimental neural cocktail grants a brief but intense connection to the digital void. Visions and glitches bleed into reality.",
+  "type": "consumable",
+  "rarity": "legendary",
+  "cost": 700,
+  "weight": 0.4,
+  "attributes": {
+    "weight": 12
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "5f2b4185-0486-401e-abff-ad92b4158086",
+    "generatedAt": 1768784411477,
+    "publishedAt": 1768784411477,
+    "seed": "ywzq49",
+    "flavor": {
+      "rationale": "Developed by rogue netrunners attempting to push the boundaries of human-machine interface, Neuro-Syringe is highly sought after on the black market for its ability to provide temporary access to hidden data streams or induce altered states of consciousness."
+    }
+  }
+}

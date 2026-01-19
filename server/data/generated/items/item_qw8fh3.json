@@ -1,0 +1,25 @@
+{
+  "id": "item_qw8fh3",
+  "name": "Synaptic Resonance Amplifier",
+  "shortName": "amplifier",
+  "description": "A neural implant that allows the user to sense and manipulate electromagnetic frequencies, turning their mind into a living radio receiver.",
+  "type": "armor",
+  "rarity": "legendary",
+  "cost": 500,
+  "weight": 1.6,
+  "attributes": {
+    "slot": "chest",
+    "defense": 18,
+    "penalty": 10
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "0df8dca3-aa44-4d2d-9e8e-89e26301f231",
+    "generatedAt": 1768784786658,
+    "publishedAt": 1768784786658,
+    "seed": "jjqfx8",
+    "flavor": {
+      "rationale": "The Synaptic Resonance Amplifier was originally developed for military communications but found its way onto the black market when a rogue engineer sold them to independent contractors. Now it's used by hackers who want to eavesdrop on secure channels or amplify signals to overload systems."
+    }
+  }
+}

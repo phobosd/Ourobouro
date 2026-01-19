@@ -25,7 +25,6 @@ export class NPCCombatHandler {
                 combatStats.isHostile = true;
                 combatStats.targetId = playerId;
                 combatStats.engagementTier = EngagementTier.DISENGAGED;
-                console.log(`[NPC AI] ${npcComp.typeName} (${npc.id}) detected player ${playerId} moving into room`);
                 messageService.combat(playerId, `<enemy>${npcComp.typeName} notices you and prepares to attack!</enemy>`);
             }
         }
@@ -49,7 +48,6 @@ export class NPCCombatHandler {
             combatStats.isHostile = true;
             combatStats.targetId = target.id;
             combatStats.engagementTier = EngagementTier.DISENGAGED; // Start at disengaged
-            console.log(`[NPC AI] ${npcComp.typeName} (${npc.id}) immediately noticed player ${target.id} on spawn`);
             messageService.combat(target.id, `<enemy>${npcComp.typeName} notices you and prepares to attack!</enemy>`);
         }
     }
@@ -71,7 +69,6 @@ export class NPCCombatHandler {
                 combatStats.isHostile = true;
                 combatStats.targetId = target.id;
                 combatStats.engagementTier = EngagementTier.DISENGAGED; // Start at disengaged
-                console.log(`[NPC AI] ${npcComp.typeName} (${npc.id}) noticed player ${target.id}`);
                 messageService.combat(target.id, `<enemy>${npcComp.typeName} notices you and prepares to attack!</enemy>`);
             }
         }
@@ -82,7 +79,6 @@ export class NPCCombatHandler {
         const target = engine.getEntity(combatStats.targetId);
         const targetPos = target?.getComponent(Position);
         if (!target || !targetPos || targetPos.x !== pos.x || targetPos.y !== pos.y) {
-            console.log(`[NPC AI] ${npcComp.typeName} (${npc.id}) lost target ${combatStats.targetId}`);
             combatStats.isHostile = false;
             combatStats.targetId = null;
             combatStats.engagementTier = EngagementTier.DISENGAGED;
@@ -138,7 +134,6 @@ export class NPCCombatHandler {
                     const currentIndex = tiers.indexOf(combatStats.engagementTier);
                     if (currentIndex < tiers.length - 1) {
                         combatStats.engagementTier = tiers[currentIndex + 1];
-                        console.log(`[NPC AI] ${npcComp.typeName} advances on ${target.id}. New Range: ${combatStats.engagementTier}`);
 
                         // Send message to target
                         const targetMsg = `<advance>${npcComp.typeName} advances toward you! (Range: <range>${combatStats.engagementTier}</range>)</advance>`;

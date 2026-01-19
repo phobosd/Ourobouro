@@ -3,5 +3,20 @@
         "mobCount": 3,
         "itemCount": 5,
         "legendaryChance": 0.5
-    }
+    },
+    "personality": {
+        "chaos": {
+            "value": 1,
+            "enabled": true
+        },
+        "aggression": {
+            "value": 1,
+            "enabled": true
+        },
+        "expansion": {
+            "value": 0.96,
+            "enabled": false
+        }
+    },
+    "paused": true
 }

@@ -26,7 +26,6 @@ export class CombatCalculator {
         // Attacker_Power = (Skill * 0.6) + (Agility * 0.4) + (Current_Balance * 20)
         // Adjusting balance weight to make the mini-game (balance management) crucial for high power
         const power = (skill * 0.6) + (agi * 0.4) + (balance * 25); // Reduced from 30 to 25 to balance crit rate
-        console.log(`[CombatDebug] AttackerPower: Skill(${effectiveSkillName})=${skill}, AGI=${agi}, Bal=${balance} => Power=${power}`);
         return power;
     }
 

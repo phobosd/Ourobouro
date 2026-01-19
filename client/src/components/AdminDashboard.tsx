@@ -25,6 +25,8 @@ export interface Proposal {
     type: string;
     status: string;
     payload: any;
+    generatedBy: string;
+    models?: Record<string, string>;
     flavor?: { rationale?: string };
 }
 
@@ -38,7 +40,7 @@ export type LLMRole = 'CREATIVE' | 'LOGIC' | 'IMAGE' | 'DEFAULT';
 export interface LLMProfile {
     id: string;
     name: string;
-    provider: 'local' | 'gemini' | 'openai' | 'pollinations';
+    provider: 'local' | 'gemini' | 'openai' | 'pollinations' | 'stable-diffusion';
     baseUrl: string;
     apiKey?: string;
     model: string;
@@ -71,6 +73,7 @@ export interface DirectorStatus {
         itemCount: number;
         legendaryChance: number;
     };
+    innerThoughts?: { timestamp: number, thought: string }[];
 }
 
 const BUDGET_TOOLTIPS: Record<string, string> = {
@@ -81,7 +84,10 @@ const BUDGET_TOOLTIPS: Record<string, string> = {
     maxNPCHealth: "Maximum health points for any generated NPC.",
     maxNPCAttack: "Maximum base attack value for any generated NPC.",
     maxNPCDefense: "Maximum base defense value for any generated NPC.",
-    maxQuestXPReward: "Maximum experience points awarded for completing a generated quest."
+    maxQuestXPReward: "Maximum experience points awarded for completing a generated quest.",
+    expansionProbability: "Global multiplier for world growth. Higher values make expansion more frequent.",
+    aggressionProbability: "Global multiplier for hostile events. Higher values make invasions more frequent.",
+    chaosProbability: "Global multiplier for chaotic anomalies and glitchy thoughts."
 };
 
 type AdminTab = 'director' | 'approvals' | 'snapshots' | 'llm' | 'logs' | 'world' | 'items' | 'npcs' | 'glitch' | 'users';
@@ -129,6 +135,7 @@ export const AdminDashboard: React.FC = () => {
     const [mapDeleteMode, setMapDeleteMode] = useState(false);
     const [itemSearch, setItemSearch] = useState('');
     const [npcSearch, setNpcSearch] = useState('');
+    const [innerThoughts, setInnerThoughts] = useState<{ timestamp: number, thought: string }[]>([]);
 
     useEffect(() => {
         const token = localStorage.getItem('zenith_token');
@@ -185,6 +192,9 @@ export const AdminDashboard: React.FC = () => {
             if (status.glitchConfig) {
                 setGlitchConfig(status.glitchConfig);
             }
+            if (status.innerThoughts) {
+                setInnerThoughts(status.innerThoughts);
+            }
         });
 
         newSocket.on('director:proposals_update', (list: Proposal[]) => {
@@ -205,6 +215,10 @@ export const AdminDashboard: React.FC = () => {
 
         newSocket.on('director:npcs_update', (list: any[]) => {
             setNpcs(list);
+        });
+
+        newSocket.on('director:thoughts_update', (list: { timestamp: number, thought: string }[]) => {
+            setInnerThoughts(list);
         });
 
         setSocket(newSocket);
@@ -271,7 +285,7 @@ export const AdminDashboard: React.FC = () => {
     const editBudget = (key: string, current: number) => {
         const val = prompt(`Enter new value for ${key.replace('max', '')}:`, current.toString());
         if (val !== null) {
-            const num = parseInt(val);
+            const num = parseFloat(val);
             if (!isNaN(num)) {
                 updateGuardrail({ budgets: { [key]: num } });
             }
@@ -464,111 +478,114 @@ export const AdminDashboard: React.FC = () => {
                 <button className={`tab-btn ${activeTab === 'logs' ? 'tab-btn-active' : ''}`} onClick={() => setActiveTab('logs')}>LOGS</button>
             </div>
 
-            {/* Tab Content */}
-            {activeTab === 'director' && (
-                <DirectorTab
-                    paused={paused}
-                    togglePause={togglePause}
-                    chaos={chaos}
-                    aggression={aggression}
-                    expansion={expansion}
-                    updatePersonality={updatePersonality}
-                    triggerManualGen={triggerManualGen}
-                    enableNPCs={enableNPCs}
-                    enableItems={enableItems}
-                    enableQuests={enableQuests}
-                    enableExpansions={enableExpansions}
-                    restrictedToGlitchArea={restrictedToGlitchArea}
-                    updateGuardrail={updateGuardrail}
-                    requireApproval={requireApproval}
-                    autoSnapshot={autoSnapshot}
-                    budgets={budgets}
-                    editBudget={editBudget}
-                    BUDGET_TOOLTIPS={BUDGET_TOOLTIPS}
-                />
-            )}
+            {/* Tab Content Area */}
+            <div className="admin-content-area">
+                {activeTab === 'director' && (
+                    <DirectorTab
+                        paused={paused}
+                        togglePause={togglePause}
+                        chaos={chaos}
+                        aggression={aggression}
+                        expansion={expansion}
+                        updatePersonality={updatePersonality}
+                        triggerManualGen={triggerManualGen}
+                        enableNPCs={enableNPCs}
+                        enableItems={enableItems}
+                        enableQuests={enableQuests}
+                        enableExpansions={enableExpansions}
+                        restrictedToGlitchArea={restrictedToGlitchArea}
+                        updateGuardrail={updateGuardrail}
+                        requireApproval={requireApproval}
+                        autoSnapshot={autoSnapshot}
+                        budgets={budgets}
+                        editBudget={editBudget}
+                        BUDGET_TOOLTIPS={BUDGET_TOOLTIPS}
+                        innerThoughts={innerThoughts}
+                    />
+                )}
 
-            {activeTab === 'approvals' && (
-                <ApprovalsTab
-                    proposals={proposals}
-                    approveProposal={approveProposal}
-                    rejectProposal={rejectProposal}
-                />
-            )}
+                {activeTab === 'approvals' && (
+                    <ApprovalsTab
+                        proposals={proposals}
+                        approveProposal={approveProposal}
+                        rejectProposal={rejectProposal}
+                    />
+                )}
 
-            {activeTab === 'world' && (
-                <WorldTab
-                    mapDeleteMode={mapDeleteMode}
-                    setMapDeleteMode={setMapDeleteMode}
-                    generatedChunks={generatedChunks}
-                    generateChunk={generateChunk}
-                />
-            )}
+                {activeTab === 'world' && (
+                    <WorldTab
+                        mapDeleteMode={mapDeleteMode}
+                        setMapDeleteMode={setMapDeleteMode}
+                        generatedChunks={generatedChunks}
+                        generateChunk={generateChunk}
+                    />
+                )}
 
-            {activeTab === 'items' && (
-                <ItemsTab
-                    items={items}
-                    itemSearch={itemSearch}
-                    setItemSearch={setItemSearch}
-                    itemFilter={itemFilter}
-                    setItemFilter={setItemFilter}
-                    editingItem={editingItem}
-                    setEditingItem={setEditingItem}
-                    updateItem={updateItem}
-                    deleteItem={deleteItem}
-                />
-            )}
+                {activeTab === 'items' && (
+                    <ItemsTab
+                        items={items}
+                        itemSearch={itemSearch}
+                        setItemSearch={setItemSearch}
+                        itemFilter={itemFilter}
+                        setItemFilter={setItemFilter}
+                        editingItem={editingItem}
+                        setEditingItem={setEditingItem}
+                        updateItem={updateItem}
+                        deleteItem={deleteItem}
+                    />
+                )}
 
-            {activeTab === 'npcs' && (
-                <NPCsTab
-                    npcs={npcs}
-                    npcSearch={npcSearch}
-                    setNpcSearch={setNpcSearch}
-                    npcFilter={npcFilter}
-                    setNpcFilter={setNpcFilter}
-                    editingNPC={editingNPC}
-                    setEditingNPC={setEditingNPC}
-                    updateNPC={updateNPC}
-                    deleteNPC={deleteNPC}
-                    spawnRoamingNPC={spawnRoamingNPC}
-                    generatePortrait={generatePortrait}
-                />
-            )}
+                {activeTab === 'npcs' && (
+                    <NPCsTab
+                        npcs={npcs}
+                        npcSearch={npcSearch}
+                        setNpcSearch={setNpcSearch}
+                        npcFilter={npcFilter}
+                        setNpcFilter={setNpcFilter}
+                        editingNPC={editingNPC}
+                        setEditingNPC={setEditingNPC}
+                        updateNPC={updateNPC}
+                        deleteNPC={deleteNPC}
+                        spawnRoamingNPC={spawnRoamingNPC}
+                        generatePortrait={generatePortrait}
+                    />
+                )}
 
-            {activeTab === 'users' && (
-                <UsersTab socket={socket} items={items} />
-            )}
+                {activeTab === 'users' && (
+                    <UsersTab socket={socket} items={items} />
+                )}
 
-            {activeTab === 'glitch' && (
-                <GlitchTab
-                    glitchConfig={glitchConfig}
-                    setGlitchConfig={setGlitchConfig}
-                    updateGlitchConfig={updateGlitchConfig}
-                />
-            )}
+                {activeTab === 'glitch' && (
+                    <GlitchTab
+                        glitchConfig={glitchConfig}
+                        setGlitchConfig={setGlitchConfig}
+                        updateGlitchConfig={updateGlitchConfig}
+                    />
+                )}
 
-            {activeTab === 'snapshots' && (
-                <SnapshotsTab
-                    snapshots={snapshots}
-                    createSnapshot={createSnapshot}
-                    handleSnapshotAction={handleSnapshotAction}
-                    confirmAction={confirmAction}
-                />
-            )}
+                {activeTab === 'snapshots' && (
+                    <SnapshotsTab
+                        snapshots={snapshots}
+                        createSnapshot={createSnapshot}
+                        handleSnapshotAction={handleSnapshotAction}
+                        confirmAction={confirmAction}
+                    />
+                )}
 
-            {activeTab === 'llm' && (
-                <LLMTab
-                    llmProfiles={llmProfiles}
-                    addLlmProfile={addLlmProfile}
-                    updateLlmProfile={updateLlmProfile}
-                    toggleRole={toggleRole}
-                    removeLlmProfile={removeLlmProfile}
-                />
-            )}
+                {activeTab === 'llm' && (
+                    <LLMTab
+                        llmProfiles={llmProfiles}
+                        addLlmProfile={addLlmProfile}
+                        updateLlmProfile={updateLlmProfile}
+                        toggleRole={toggleRole}
+                        removeLlmProfile={removeLlmProfile}
+                    />
+                )}
 
-            {activeTab === 'logs' && (
-                <LogsTab logs={logs} />
-            )}
+                {activeTab === 'logs' && (
+                    <LogsTab logs={logs} />
+                )}
+            </div>
         </div>
     );
 };

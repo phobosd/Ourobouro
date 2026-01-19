@@ -20,6 +20,7 @@ export class QuestGenerator extends BaseGenerator<QuestPayload> {
         let description = template.desc;
         let rationale = `Generated a ${template.type} quest.`;
 
+        const models: Record<string, string> = {};
         // 1. Creative Pass
         if (llm) {
             try {
@@ -34,6 +35,7 @@ export class QuestGenerator extends BaseGenerator<QuestPayload> {
                 Return ONLY a JSON object with fields: title, description, rationale.`;
 
                 const creativeRes = await llm.chat(creativePrompt, "You are a Fixer in the world of Zenith-9.", LLMRole.CREATIVE);
+                models['Creative'] = creativeRes.model;
                 const creativeData = LLMService.parseJson(creativeRes.text);
 
                 if (creativeData.title) title = creativeData.title;
@@ -66,6 +68,7 @@ export class QuestGenerator extends BaseGenerator<QuestPayload> {
                 Ensure the rewards reflect the difficulty and stakes described in the quest.`;
 
                 const logicRes = await llm.chat(logicPrompt, "You are a game balance engineer for Zenith-9.", LLMRole.LOGIC);
+                models['Logic'] = logicRes.model;
                 const logicData = LLMService.parseJson(logicRes.text);
 
                 if (logicData.gold !== undefined) rewards.gold = Math.min(budgets.maxGoldDrop, logicData.gold);
@@ -94,7 +97,7 @@ export class QuestGenerator extends BaseGenerator<QuestPayload> {
             rewards
         };
 
-        const proposal = this.generateBaseProposal(payload);
+        const proposal = this.generateBaseProposal(payload, context?.generatedBy || 'Director', models);
         proposal.flavor = { rationale };
 
         return proposal;

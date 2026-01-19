@@ -1,0 +1,27 @@
+{
+  "id": "item_t6saac",
+  "name": "Neurokinetic Blaster",
+  "shortName": "neuro blaster",
+  "description": "This sleek pistol is linked directly to the user's nervous system, allowing for incredibly precise and powerful shots fired with thought alone.",
+  "type": "weapon",
+  "rarity": "legendary",
+  "cost": 1000,
+  "weight": 4.7,
+  "attributes": {
+    "damage": 25,
+    "range": 5,
+    "ammoType": "energy",
+    "magSize": 10,
+    "weight": 25
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "e1660ccb-7165-4888-ac7e-906adc23c7e5",
+    "generatedAt": 1768782766480,
+    "publishedAt": 1768782766480,
+    "seed": "bk7pq",
+    "flavor": {
+      "rationale": "A weapon developed by a shadowy corporation specializing in advanced neural interfaces. It was designed as an elite personal defense tool but has fallen into criminal hands after a security breach at their research facility."
+    }
+  }
+}

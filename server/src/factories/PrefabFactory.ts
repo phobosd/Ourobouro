@@ -123,7 +123,7 @@ export class PrefabFactory {
             const itemSlot = def.slot || def.extraData?.slot || null;
 
             // Use name as the display name, and shortName as the internal slug/alias
-            entity.addComponent(new Item(def.name, def.description, def.weight, 1, def.size, def.legality, def.attributes, def.shortName, itemSlot, def.rarity || 'common'));
+            entity.addComponent(new Item(def.name, def.description, def.weight, 1, def.size, def.legality, def.attributes, def.shortName, itemSlot, def.rarity || 'common', def.id));
 
             if (def.type === 'container') {
                 const capacity = def.extraData.capacity || 10;

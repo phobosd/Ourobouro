@@ -2,6 +2,7 @@ import { BaseGenerator } from './BaseGenerator';
 import { Proposal, ProposalType, NPCPayload } from '../proposals/schemas';
 import { GuardrailConfig, LLMRole } from '../../services/GuardrailService';
 import { LLMService } from '../llm/LLMService';
+import { Logger } from '../../utils/Logger';
 
 const FIRST_NAMES = ['Jax', 'Kira', 'Vex', 'Zero', 'Nyx', 'Cipher', 'Echo', 'Raze', 'Sloane', 'Mako'];
 const LAST_NAMES = ['Vance', 'Korp', 'Steel', 'Neon', 'Shadow', 'Flux', 'Void', 'Chrome', 'Glitch', 'Matrix'];
@@ -72,6 +73,7 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
             defense: Math.floor(config.budgets.maxNPCDefense * archetype.defenseMult * (0.8 + Math.random() * 0.4) * 0.2)
         };
 
+        const models: Record<string, string> = {};
         // 1. Combined Creative & Logic Pass
         if (llm) {
             try {
@@ -99,6 +101,7 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
                 Return ONLY a JSON object with fields: name, description, behavior, role, rationale, stats: { health, attack, defense }.`;
 
                 const res = await llm.chat(combinedPrompt, "You are a lead game designer for Zenith-9.", LLMRole.CREATIVE);
+                models['Creative'] = res.model;
                 const data = LLMService.parseJson(res.text);
 
                 if (data.name) name = data.name;
@@ -116,7 +119,7 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
                     behavior = 'aggressive';
                 }
             } catch (err) {
-                console.error('NPC Generation Pass failed:', err);
+                Logger.error('NPCGenerator', `NPC Generation Pass failed: ${err}`);
             }
         }
 
@@ -124,20 +127,29 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
         let portrait = "";
         if (llm) {
             try {
+                const lighting = ['neon-noir', 'harsh industrial', 'soft bioluminescent', 'shadowy and mysterious', 'volumetric fog', 'holographic glow', 'chiaroscuro'][Math.floor(Math.random() * 7)];
+                const angle = ['close-up', 'low angle', 'dramatic profile', 'front facing', 'Dutch angle'][Math.floor(Math.random() * 5)];
+                const palette = ['cyan and magenta', 'green and black', 'orange and teal', 'monochrome with red accents', 'rusty brown and steel grey', 'iridescent chrome'][Math.floor(Math.random() * 6)];
+
                 const portraitPrompt = `Create a highly detailed image generation prompt for a "realistic 3D digital art" portrait of the following cyberpunk NPC:
                 Name: ${name}
                 Description: ${description}
                 
                 Requirements for the prompt:
                 - Style: Realistic 3D render, Unreal Engine 5, cinematic lighting, cyberpunk aesthetic.
-                - Composition: Close-up portrait (head and shoulders).
-                - Details: Focus on skin textures, cybernetic implants, clothing materials, and atmospheric lighting (neon, grit).
+                - Lighting: ${lighting}.
+                - Camera: ${angle}.
+                - Color Palette: ${palette}.
+                - Composition: Head and shoulders portrait.
+                - Details: Focus on unique facial features, specific cybernetic implants, clothing textures, and the specified lighting/color mood.
                 - Format: Return ONLY the prompt text. No preamble, no quotes.`;
 
                 const portraitRes = await llm.chat(portraitPrompt, "You are an expert AI image prompt engineer.", LLMRole.CREATIVE);
-                portrait = await llm.generateImage(portraitRes.text.trim());
+                const imageRes = await llm.generateImage(portraitRes.text.trim());
+                portrait = imageRes.url;
+                models['Image'] = imageRes.model;
             } catch (err) {
-                console.error('NPC Portrait Pass failed:', err);
+                Logger.error('NPCGenerator', `NPC Portrait Pass failed: ${err}`);
             }
         }
 
@@ -154,7 +166,7 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
             portrait // Add portrait to payload
         };
 
-        const proposal = this.generateBaseProposal(payload);
+        const proposal = this.generateBaseProposal(payload, context?.generatedBy || 'Director', models);
         proposal.flavor = { rationale };
 
         return proposal;

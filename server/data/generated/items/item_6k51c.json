@@ -1,0 +1,23 @@
+{
+  "id": "item_6k51c",
+  "name": "Neural Resonance Harmonizer",
+  "shortName": "neural_harmonizer",
+  "description": "A sleek chrome implant that synchronizes neural patterns across multiple minds. Wearers can seamlessly share sensory input and thoughts.",
+  "type": "item",
+  "rarity": "legendary",
+  "cost": 500,
+  "weight": 0.9,
+  "attributes": {
+    "slot": "neural"
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "2579e3d6-93cc-44ce-8674-87766a914a30",
+    "generatedAt": 1768784631077,
+    "publishedAt": 1768784631077,
+    "seed": "rr4i4",
+    "flavor": {
+      "rationale": "In a world where data is power, the ability to directly link minds with others has become incredibly valuable for both corporate espionage and underground resistance movements."
+    }
+  }
+}

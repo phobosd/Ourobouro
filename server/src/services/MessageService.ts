@@ -35,8 +35,6 @@ export class MessageService {
     }
 
     combat(targetId: string, content: string, payload?: any) {
-        console.log(`[MessageService] Sending COMBAT message to socket ${targetId}`);
-        console.log(`[MessageService] Message content: ${content.substring(0, 150)}`);
         this.send(targetId, MessageType.COMBAT, content, payload);
     }
 

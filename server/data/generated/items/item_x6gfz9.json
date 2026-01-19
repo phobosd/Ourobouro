@@ -1,0 +1,27 @@
+{
+  "id": "item_x6gfz9",
+  "name": "The Data Fist",
+  "shortName": "data fist",
+  "description": "A brutal weapon that allows its user to manipulate digital systems with each punch. The knuckles are lined with tiny projectors and data emitters.",
+  "type": "weapon",
+  "rarity": "legendary",
+  "cost": 1000,
+  "weight": 4.1,
+  "attributes": {
+    "damage": 40,
+    "range": 15,
+    "ammoType": "energy",
+    "magSize": 5,
+    "weight": 35.72
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "8976704c-c914-42ae-a52d-5d1396b6c747",
+    "generatedAt": 1768784804535,
+    "publishedAt": 1768784804535,
+    "seed": "00k53y9",
+    "flavor": {
+      "rationale": "In a world where information is power, the ability to physically control networks and devices through brute force would be invaluable for hackers or security specialists."
+    }
+  }
+}

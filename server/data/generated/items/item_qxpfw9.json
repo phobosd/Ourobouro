@@ -1,0 +1,23 @@
+{
+  "id": "item_qxpfw9",
+  "name": "Neural Lace of the Void",
+  "shortName": "void",
+  "description": "A shimmering web of nanites woven into a complex neural interface, granting access to vast troves of data and bypassing conventional security measures.",
+  "type": "item",
+  "rarity": "legendary",
+  "cost": 500,
+  "weight": 0.6,
+  "attributes": {
+    "slot": "neural"
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "255bbd4b-046e-41bc-b89a-e14a7898367a",
+    "generatedAt": 1768782818813,
+    "publishedAt": 1768782818813,
+    "seed": "a35ah",
+    "flavor": {
+      "rationale": "Developed by an eccentric AI researcher for personal use, this cybernetic implant is rumored to have been stolen during a corporate raid. It offers unprecedented network intrusion capabilities while also acting as a powerful firewall."
+    }
+  }
+}

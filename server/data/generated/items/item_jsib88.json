@@ -1,0 +1,23 @@
+{
+  "id": "item_jsib88",
+  "name": "Neon Armor",
+  "shortName": "armor",
+  "description": "A rare grade armor.",
+  "type": "armor",
+  "rarity": "rare",
+  "cost": 300,
+  "weight": 0.1,
+  "attributes": {
+    "defense": 9
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "656a7f2d-56bf-4297-b4a7-13659bcce32e",
+    "generatedAt": 1768775513623,
+    "publishedAt": 1768775513623,
+    "seed": "p8u91",
+    "flavor": {
+      "rationale": "Generated a rare armor for the world."
+    }
+  }
+}

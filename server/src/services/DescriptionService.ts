@@ -61,7 +61,15 @@ export class DescriptionService {
             .filter(p => p.id !== viewerId)
             .map(p => {
                 const desc = p.getComponent(Description);
-                return `<player id="${p.id}">${desc?.title || "Someone"} is standing here.</player>`;
+                const combatStats = p.getComponent(CombatStats);
+                const isHostile = combatStats && (combatStats.isHostile || !!combatStats.targetId);
+                const name = desc?.title || "Someone";
+
+                if (isHostile) {
+                    return `<enemy id="${p.id}">${name} is standing here.</enemy>`;
+                } else {
+                    return `<player id="${p.id}">${name} is standing here.</player>`;
+                }
             }).join('\n');
 
         // Find Terminals in the room

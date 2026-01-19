@@ -1,0 +1,24 @@
+{
+  "id": "item_1cmmn",
+  "name": "Chrome Consumable",
+  "shortName": "consumable",
+  "description": "A rare grade consumable.",
+  "type": "consumable",
+  "rarity": "rare",
+  "cost": 350,
+  "weight": 1.1,
+  "attributes": {
+    "effect": "Heals 25 HP",
+    "charges": 5
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "12a7854e-6457-40f1-a9f1-940f81971966",
+    "generatedAt": 1768775024160,
+    "publishedAt": 1768775024160,
+    "seed": "tgugxb",
+    "flavor": {
+      "rationale": "Generated a rare consumable for the world."
+    }
+  }
+}

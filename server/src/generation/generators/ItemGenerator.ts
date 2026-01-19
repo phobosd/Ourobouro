@@ -2,6 +2,7 @@ import { BaseGenerator } from './BaseGenerator';
 import { Proposal, ProposalType, ItemPayload } from '../proposals/schemas';
 import { GuardrailConfig, LLMRole } from '../../services/GuardrailService';
 import { LLMService } from '../llm/LLMService';
+import { Logger } from '../../utils/Logger';
 
 const ITEM_TYPES = ['weapon', 'armor', 'consumable', 'item'];
 const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
@@ -26,6 +27,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
         let attributes: Record<string, any> = {};
         let shortName = name.split(' ').pop()?.toLowerCase() || 'item';
 
+        const models: Record<string, string> = {};
         // 1. Creative Pass
         if (llm) {
             try {
@@ -45,6 +47,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
                 Return ONLY a JSON object with fields: name, type, description, rationale, slot (optional).`;
 
                 const creativeRes = await llm.chat(creativePrompt, "You are a master item crafter for Zenith-9.", LLMRole.CREATIVE);
+                models['Creative'] = creativeRes.model;
                 const creativeData = LLMService.parseJson(creativeRes.text);
 
                 if (creativeData.name) name = creativeData.name;
@@ -54,7 +57,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
                 if (creativeData.slot) attributes.slot = creativeData.slot;
                 shortName = name.split(' ').pop()?.toLowerCase() || 'item';
             } catch (err) {
-                console.error('Item Creative Pass failed:', err);
+                Logger.error('ItemGenerator', `Item Creative Pass failed: ${err}`);
             }
         }
 
@@ -109,6 +112,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
                 Return ONLY a JSON object with the allowed fields for the item type.`;
 
                 const logicRes = await llm.chat(logicPrompt, "You are a game balance engineer for Zenith-9.", LLMRole.LOGIC);
+                models['Logic'] = logicRes.model;
                 const logicData = LLMService.parseJson(logicRes.text);
 
                 if (itemType === 'weapon') {
@@ -131,7 +135,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
                 if (logicData.shortName) shortName = logicData.shortName.toLowerCase();
                 if (logicData.weight) attributes.weight = logicData.weight; // Allow LLM to suggest weight
             } catch (err) {
-                console.error('Item Logic Pass failed:', err);
+                Logger.error('ItemGenerator', `Item Logic Pass failed: ${err}`);
             }
         }
 
@@ -156,9 +160,11 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
                 - Format: Return ONLY the prompt text. No preamble, no quotes.`;
 
                 const portraitRes = await llm.chat(portraitPrompt, "You are an expert AI image prompt engineer.", LLMRole.CREATIVE);
-                portrait = await llm.generateImage(portraitRes.text.trim());
+                const imageRes = await llm.generateImage(portraitRes.text.trim());
+                portrait = imageRes.url;
+                models['Image'] = imageRes.model;
             } catch (err) {
-                console.error('Item Portrait Pass failed:', err);
+                Logger.error('ItemGenerator', `Item Portrait Pass failed: ${err}`);
             }
         }
         */
@@ -176,7 +182,7 @@ export class ItemGenerator extends BaseGenerator<ItemPayload> {
             portrait
         };
 
-        const proposal = this.generateBaseProposal(payload);
+        const proposal = this.generateBaseProposal(payload, context?.generatedBy || 'Director', models);
         proposal.flavor = { rationale };
 
         return proposal;

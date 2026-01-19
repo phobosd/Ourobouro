@@ -134,6 +134,7 @@ export const ProposalSchema = z.object({
     // Metadata
     seed: z.string(), // For reproducibility
     generatedBy: z.string(), // "Director" or "Manual"
+    models: z.record(z.string(), z.string()).optional(), // Role -> Model Name
     createdAt: z.number(),
 
     // Flavor text (from LLM)

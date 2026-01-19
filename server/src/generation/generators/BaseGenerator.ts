@@ -10,7 +10,7 @@ import { LLMService } from '../llm/LLMService';
 export abstract class BaseGenerator<T> {
     abstract type: ProposalType;
 
-    protected generateBaseProposal(payload: any, generatedBy: string = 'Director'): Proposal {
+    protected generateBaseProposal(payload: any, generatedBy: string = 'Director', models?: Record<string, string>): Proposal {
         return {
             id: uuidv4(),
             type: this.type,
@@ -18,6 +18,7 @@ export abstract class BaseGenerator<T> {
             payload,
             seed: Math.random().toString(36).substring(7),
             generatedBy,
+            models,
             createdAt: Date.now(),
             tags: []
         };

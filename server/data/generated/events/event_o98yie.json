@@ -1,0 +1,15 @@
+{
+  "id": "event_o98yie",
+  "type": "MOB_INVASION",
+  "description": "A massive MOB_INVASION is about to occur.",
+  "duration": 0,
+  "_metadata": {
+    "proposalId": "d2c22ec3-0da9-4c69-b805-9507d359eca5",
+    "generatedAt": 1768774499986,
+    "publishedAt": 1768774847505,
+    "seed": "0.8439118907514146",
+    "flavor": {
+      "rationale": "High aggression levels (98%) triggered a hostile world event."
+    }
+  }
+}

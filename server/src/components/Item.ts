@@ -13,7 +13,8 @@ export class Item extends Component {
         public attributes: string = "",
         public shortName: string = "",
         public slot: string | null = null, // Body slot: head, torso, legs, waist, back, feet, hands, etc.
-        public rarity: string = "common"
+        public rarity: string = "common",
+        public templateId: string | null = null
     ) {
         super();
         if (!this.shortName && this.name) {

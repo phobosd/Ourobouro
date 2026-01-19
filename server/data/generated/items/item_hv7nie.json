@@ -1,0 +1,24 @@
+{
+  "id": "item_hv7nie",
+  "name": "Chronoshell",
+  "shortName": "chronoshell",
+  "description": "A shimmering weave of chronal fiber and hardened ceramic, the Chronoshell subtly shifts in color as time itself seems to ripple across its surface. It appears both ancient and utterly futuristic.",
+  "type": "armor",
+  "rarity": "legendary",
+  "cost": 500,
+  "weight": 1.9,
+  "attributes": {
+    "slot": "torso",
+    "defense": 15
+  },
+  "portrait": "",
+  "_metadata": {
+    "proposalId": "ecae511e-fba1-4af7-9394-23f0a327d893",
+    "generatedAt": 1768784175881,
+    "publishedAt": 1768784175881,
+    "seed": "5lfyww",
+    "flavor": {
+      "rationale": "Developed by a now-defunct temporal research corporation, this armor manipulates localized spacetime around the wearer, granting resistance to kinetic energy and slowing down incoming projectiles. Its creation was halted due to unforeseen consequences involving temporal distortions in the surrounding area."
+    }
+  }
+}

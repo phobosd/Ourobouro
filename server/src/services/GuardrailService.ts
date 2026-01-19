@@ -14,7 +14,7 @@ export enum LLMRole {
 export interface LLMProfile {
     id: string;
     name: string;
-    provider: 'local' | 'gemini' | 'openai' | 'pollinations';
+    provider: 'local' | 'gemini' | 'openai' | 'pollinations' | 'stable-diffusion';
     baseUrl: string;
     apiKey?: string;
     model: string;
@@ -31,6 +31,9 @@ export interface GuardrailConfig {
         maxNPCAttack: number;
         maxNPCDefense: number;
         maxQuestXPReward: number;
+        expansionProbability: number;
+        aggressionProbability: number;
+        chaosProbability: number;
     };
     throttles: {
         maxGenerationsPerMinute: number;
@@ -114,7 +117,10 @@ export class GuardrailService {
                 maxNPCHealth: 1000,
                 maxNPCAttack: 100,
                 maxNPCDefense: 50,
-                maxQuestXPReward: 5000
+                maxQuestXPReward: 5000,
+                expansionProbability: 0.05,
+                aggressionProbability: 0.01,
+                chaosProbability: 0.1
             },
             throttles: {
                 maxGenerationsPerMinute: 10,

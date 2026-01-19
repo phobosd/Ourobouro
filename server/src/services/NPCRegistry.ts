@@ -18,6 +18,7 @@ export interface NPCDefinition {
     tags?: string[];
     canMove?: boolean;
     portrait?: string;
+    generatedBy?: string;
 }
 
 export class NPCRegistry {
@@ -86,7 +87,8 @@ export class NPCRegistry {
                         role: npc.role,
                         tags: npc.tags,
                         canMove: npc.canMove ?? true,
-                        portrait: npc.portrait
+                        portrait: npc.portrait,
+                        generatedBy: npc.generatedBy
                     };
 
                     this.npcs.set(def.id.toString().trim(), def);

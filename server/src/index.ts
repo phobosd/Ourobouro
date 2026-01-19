@@ -833,7 +833,42 @@ app.get('/api/llm/balance/:profileId', async (req, res) => {
         res.json(balanceInfo);
     } catch (error) {
         Logger.error('API', `Failed to fetch balance: ${error}`);
-        res.status(500).json({ error: 'Failed to fetch balance' });
+    }
+});
+
+app.get('/api/llm/models/:profileId', async (req, res) => {
+    try {
+        const profileId = req.params.profileId;
+        const config = director.guardrails.getConfig();
+        const profile = Object.values(config.llmProfiles).find(p => p.id === profileId);
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        const models = await director.llm.getAvailableModels(profile);
+        res.json({ models });
+    } catch (error) {
+        Logger.error('API', `Failed to fetch models: ${error}`);
+        res.status(500).json({ error: 'Failed to fetch models' });
+    }
+});
+
+app.get('/api/llm/samplers/:profileId', async (req, res) => {
+    try {
+        const profileId = req.params.profileId;
+        const config = director.guardrails.getConfig();
+        const profile = Object.values(config.llmProfiles).find(p => p.id === profileId);
+
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        const samplers = await director.llm.getAvailableSamplers(profile);
+        res.json({ samplers });
+    } catch (error) {
+        Logger.error('API', `Failed to fetch samplers: ${error}`);
+        res.status(500).json({ error: 'Failed to fetch samplers' });
     }
 });
 
