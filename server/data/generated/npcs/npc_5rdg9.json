@@ -1,0 +1,37 @@
+{
+  "id": "npc_5rdg9",
+  "name": "Crystallis",
+  "description": "A hunched figure draped in layers of patched-together fabric and chrome plating. Her skin shimmers with a faint crystalline sheen, particularly around her shoulders where sharp spines protrude through the cloth. A single glowing blue crystal rests between her eyebrows.",
+  "stats": {
+    "health": 200,
+    "attack": 50,
+    "defense": 15
+  },
+  "behavior": "cautious",
+  "faction": "Corporate",
+  "role": "vendor",
+  "tags": [
+    "street doc"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_5rdg9.jpg",
+  "personality": {
+    "traits": [
+      "stoic",
+      "practical",
+      "secretive"
+    ],
+    "voice": "soft and raspy with a hint of static",
+    "agenda": "to survive and find a cure for her crystalline condition, while helping others who are afflicted.",
+    "background": "Crystallis was once a lab assistant at BioNexus Pharmaceuticals. During an experiment gone wrong, she became infected with a crystalline virus that altered her physiology. She fled before they could contain her, now using her knowledge to help those in need and hoping for a way out."
+  },
+  "_metadata": {
+    "proposalId": "7cd011ba-9510-422b-9caf-17a5d2b9bfdc",
+    "generatedAt": 1768924261104,
+    "publishedAt": 1768924294244,
+    "seed": "yxbt1s",
+    "flavor": {
+      "rationale": "She's here to sell augmentations and medical supplies, but only to those she deems trustworthy. She doesn't like dealing with the gangs or corporate types."
+    }
+  }
+}

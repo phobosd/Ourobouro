@@ -12,13 +12,36 @@ import { DescriptionService } from '../services/DescriptionService';
 import { MessageService } from '../services/MessageService';
 import { AutocompleteAggregator } from '../services/AutocompleteAggregator';
 import { ParserUtils } from '../utils/ParserUtils';
+import { GameEventBus, GameEventType } from '../utils/GameEventBus';
 
 export class ObservationSystem extends System {
     private messageService: MessageService;
 
-    constructor(private io: Server) {
+    constructor(private io: Server, private engine: IEngine) {
         super();
         this.messageService = new MessageService(io);
+
+        // Subscribe to events that should trigger autocomplete refreshes
+        GameEventBus.getInstance().subscribe(GameEventType.NPC_MOVED, (payload) => {
+            this.refreshRoomAutocomplete(payload.fromX, payload.fromY, this.engine);
+            this.refreshRoomAutocomplete(payload.toX, payload.toY, this.engine);
+        });
+
+        GameEventBus.getInstance().subscribe(GameEventType.ENTITY_SPAWNED, (payload) => {
+            // Wait a tick for components to be fully added if necessary, 
+            // but addEntity emits after components are indexed.
+            const entity = WorldQuery.getEntityById(this.engine, payload.entityId);
+            const pos = entity?.getComponent(Position);
+            if (pos) {
+                this.refreshRoomAutocomplete(pos.x, pos.y, this.engine);
+            }
+        });
+
+        GameEventBus.getInstance().subscribe(GameEventType.ENTITY_DESTROYED, (payload) => {
+            if (payload.x !== undefined && payload.y !== undefined) {
+                this.refreshRoomAutocomplete(payload.x, payload.y, this.engine);
+            }
+        });
     }
 
     update(engine: IEngine, deltaTime: number): void {
@@ -160,5 +183,12 @@ export class ObservationSystem extends System {
 
         const autocompleteData = AutocompleteAggregator.getRoomAutocomplete(playerPos, engine);
         this.io.to(entityId).emit('autocomplete-update', autocompleteData);
+    }
+
+    public refreshRoomAutocomplete(x: number, y: number, engine: IEngine) {
+        const players = WorldQuery.findPlayersAt(engine, x, y);
+        for (const player of players) {
+            this.refreshAutocomplete(player.id, engine);
+        }
     }
 }

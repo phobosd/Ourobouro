@@ -4,6 +4,9 @@ import { IEngine } from './IEngine';
 import { Logger } from '../utils/Logger';
 import { SpatialIndex } from '../utils/SpatialIndex';
 import { Position } from '../components/Position';
+import { GameEventBus, GameEventType } from '../utils/GameEventBus';
+import { NPC } from '../components/NPC';
+import { Item } from '../components/Item';
 
 export class Engine implements IEngine {
     private entities: Map<string, Entity>;
@@ -46,6 +49,12 @@ export class Engine implements IEngine {
             // Note: We can't easily remove from spatial index here without knowing the old position
             // But reindexSpatial will clean it up on next tick
         });
+
+        // Emit spawn event
+        GameEventBus.getInstance().emit(GameEventType.ENTITY_SPAWNED, {
+            entityId: entity.id,
+            type: entity.getComponent(NPC) ? 'npc' : entity.getComponent(Item) ? 'item' : 'other'
+        });
     }
 
     removeEntity(entityId: string): void {
@@ -63,6 +72,13 @@ export class Engine implements IEngine {
             // Remove listeners
             entity.removeAllListeners('componentAdded');
             entity.removeAllListeners('componentRemoved');
+
+            // Emit destroy event with last known position
+            GameEventBus.getInstance().emit(GameEventType.ENTITY_DESTROYED, {
+                entityId,
+                x: pos?.x,
+                y: pos?.y
+            });
         }
         this.entities.delete(entityId);
     }

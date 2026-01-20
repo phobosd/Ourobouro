@@ -45,7 +45,8 @@ export const NPCPayloadSchema = z.object({
         voice: z.string(),
         agenda: z.string(),
         background: z.string().optional()
-    }).optional()
+    }).optional(),
+    generatedBy: z.string().optional()
 });
 
 // 2. Item Schema
@@ -64,7 +65,8 @@ export const ItemPayloadSchema = z.object({
         value: z.number(),
         duration: z.number().optional()
     })).optional(),
-    portrait: z.string().optional()
+    portrait: z.string().optional(),
+    generatedBy: z.string().optional()
 });
 
 // 3. Quest Schema

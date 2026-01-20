@@ -235,7 +235,8 @@ export class PrefabFactory {
                 def.description,
                 def.canMove ?? true,
                 def.tags?.[0] || '',
-                def.behavior === 'aggressive'
+                def.behavior === 'aggressive',
+                (def.behavior as any) || 'neutral'
             ));
             entity.addComponent(new CombatStats(def.stats.health, def.stats.attack, def.stats.defense, def.behavior === 'aggressive'));
 
@@ -254,6 +255,18 @@ export class PrefabFactory {
                 entity.addComponent(new IsICE(def.name));
             }
 
+            // Add Personality and Social Components if defined
+            if (def.personality) {
+                entity.addComponent(new Personality(
+                    def.personality.traits,
+                    def.personality.voice,
+                    def.personality.agenda,
+                    def.personality.background
+                ));
+                entity.addComponent(new Memory());
+                entity.addComponent(new Relationship());
+            }
+
             return entity;
         }
 
@@ -265,7 +278,8 @@ export class PrefabFactory {
                     "A massive, mutated rodent the size of a large dog. Its fur is matted and greasy, patchy in places where scarred, pink skin shows through. Its eyes glow with a sickly, radioactive green luminescence, twitching erratically. You can hear its heavy, wheezing breath and smell the acrid stench of decay and sewage that clings to it.",
                     false,
                     '',
-                    false // isAggressive
+                    false, // isAggressive
+                    'cautious'
                 ));
                 entity.addComponent(new CombatStats(30, 8, 2, false));
                 entity.addComponent(new Stats());
@@ -280,7 +294,8 @@ export class PrefabFactory {
                     "A lean, dangerous figure leaning with practiced nonchalance. They wear a patchwork of scavenged leather and matte-black synthetic plates. A glowing red cybernetic implant replaces their left eye, scanning you with mechanical precision, while their right hand hovers near a holster. A low hum emanates from their enhanced limbs, and they smell of ozone and cheap tobacco.",
                     true,
                     '',
-                    false // isAggressive
+                    false, // isAggressive
+                    'cautious'
                 ));
                 entity.addComponent(new CombatStats(60, 12, 6));
                 entity.addComponent(new Stats());
@@ -293,7 +308,10 @@ export class PrefabFactory {
                     "Dancer",
                     ["Keep the rhythm.", "Want a drink?", "Too loud? Never."],
                     "A holographic dancer shimmering in the strobe lights.",
-                    false
+                    false,
+                    '',
+                    false,
+                    'friendly'
                 ));
                 entity.addComponent(new CombatStats(30, 5, 2));
                 entity.addComponent(new Stats());
@@ -306,7 +324,10 @@ export class PrefabFactory {
                     "Ripperdoc",
                     ["Need a fix?", "I can replace that arm.", "Clean credits only."],
                     "A surgeon with multi-tool fingers and a blood-stained apron.",
-                    false
+                    false,
+                    '',
+                    false,
+                    'neutral'
                 ));
                 entity.addComponent(new CombatStats(40, 8, 3));
                 entity.addComponent(new Stats());
@@ -319,7 +340,10 @@ export class PrefabFactory {
                     "Street Vendor",
                     ["Fresh noodles!", "Best synthetic meat!", "Buy something!"],
                     "An old man hunched over a steaming cart.",
-                    false
+                    false,
+                    '',
+                    false,
+                    'friendly'
                 ));
                 entity.addComponent(new CombatStats(30, 5, 1));
                 entity.addComponent(new Stats());
@@ -334,7 +358,8 @@ export class PrefabFactory {
                     "A razor-edged warrior with chrome-plated limbs and retractable mono-filament claws. Their eyes are replaced by a multi-spectrum sensor array, and they move with a fluid, predatory grace that suggests heavy synaptic acceleration.",
                     true,
                     '',
-                    false // isAggressive
+                    false, // isAggressive
+                    'neutral'
                 ));
                 entity.addComponent(new CombatStats(80, 12, 8));
                 const samuraiStats = new Stats();
@@ -349,7 +374,10 @@ export class PrefabFactory {
                     "The Fixer",
                     ["I have a job for you.", "Information is the only real currency.", "Don't ask where I got it."],
                     "A well-dressed individual sitting in the shadows, surrounded by multiple encrypted data-slates. They have a calm, calculating demeanor and a neural-link that never seems to stop blinking.",
-                    false
+                    false,
+                    '',
+                    false,
+                    'neutral'
                 ));
                 entity.addComponent(new CombatStats(60, 10, 5));
                 entity.addComponent(new Visuals('F', 'cyan', 0, '/assets/portraits/fixer.jpg'));
@@ -360,7 +388,9 @@ export class PrefabFactory {
                     ["AI breakthrough detected.", "Cease and desist.", "By order of the Turing Registry."],
                     "A stern agent in a grey polycarbon suit, wearing a badge that signifies their authority over artificial intelligences. They carry a heavy taser-prod and a specialized scanner for detecting rogue code.",
                     true, // canMove
-                    'turing' // tag
+                    'turing', // tag
+                    false,
+                    'neutral'
                 ));
                 entity.addComponent(new CombatStats(100, 16, 10));
                 // Loadout is handled in WorldGenerator based on 'turing' tag.
@@ -381,7 +411,10 @@ export class PrefabFactory {
                     "White ICE",
                     ["[SYSTEM] ACCESS DENIED", "[SYSTEM] INTRUSION DETECTED", "[SYSTEM] TRACE INITIATED"],
                     "A shimmering wall of crystalline code, pulsing with a cold, white light. It is a passive but formidable defense system designed to block unauthorized access.",
-                    false
+                    false,
+                    '',
+                    false,
+                    'neutral'
                 ));
                 entity.addComponent(new IsICE('White ICE'));
                 entity.addComponent(new CombatStats(100, 0, 20)); // Passive defense
@@ -393,7 +426,8 @@ export class PrefabFactory {
                     "A dark, swirling vortex of malevolent code. It is an aggressive intrusion countermeasure designed to physically damage the brain of any hacker it encounters.",
                     false,
                     '',
-                    false // isAggressive
+                    false, // isAggressive
+                    'neutral'
                 ));
                 entity.addComponent(new IsICE('Black ICE'));
                 entity.addComponent(new CombatStats(140, 22, 12, false)); // Lethal
@@ -433,6 +467,12 @@ export class PrefabFactory {
                     traits = ["Professional", "Cynical", "Steady-handed"];
                     voice = "Clinical, detached";
                     agenda = "Keep the city's chrome running";
+                } else {
+                    // Generate random personality for other NPCs
+                    const randomP = PrefabFactory.generateRandomPersonality(npc.typeName, npc.tag);
+                    traits = randomP.traits;
+                    voice = randomP.voice;
+                    agenda = randomP.agenda;
                 }
 
                 entity.addComponent(new Personality(traits, voice, agenda));
@@ -459,5 +499,59 @@ export class PrefabFactory {
         const hardcoded = ['giant rat', 'cyber thug', 'dancer', 'ripperdoc', 'street vendor', 'street samurai', 'fixer', 'turing police', 'white ice', 'black ice'];
         const registryNPCs = NPCRegistry.getInstance().getAllNPCs().map(n => n.name.toLowerCase());
         return Array.from(new Set([...hardcoded, ...registryNPCs]));
+    }
+
+    private static generateRandomPersonality(name: string, tag: string): { traits: string[], voice: string, agenda: string } {
+        const traitsList = [
+            "Paranoid", "Friendly", "Aggressive", "Stoic", "Nervous", "Arrogant", "Humble", "Curious", "Greedy", "Altruistic",
+            "Cynical", "Optimistic", "Pessimistic", "Mysterious", "Talkative", "Silent", "Observant", "Clumsy", "Graceful", "Rough"
+        ];
+
+        const voices = [
+            "Deep and gravelly", "High-pitched and squeaky", "Smooth and melodic", "Raspy and harsh", "Monotone and robotic",
+            "Whispery and soft", "Loud and booming", "Stuttering and nervous", "Fast and energetic", "Slow and deliberate"
+        ];
+
+        const agendas = [
+            "Survive another day", "Get rich quick", "Find a lost friend", "Escape the city", "Protect their turf",
+            "Learn the secrets of the Matrix", "Get revenge on a rival", "Find the best noodles", "Upgrade their cyberware", "Cause chaos"
+        ];
+
+        // Pick 2-3 random traits
+        const numTraits = 2 + Math.floor(Math.random() * 2);
+        const traits: string[] = [];
+        for (let i = 0; i < numTraits; i++) {
+            const trait = traitsList[Math.floor(Math.random() * traitsList.length)];
+            if (!traits.includes(trait)) {
+                traits.push(trait);
+            }
+        }
+
+        const voice = voices[Math.floor(Math.random() * voices.length)];
+        const agenda = agendas[Math.floor(Math.random() * agendas.length)];
+
+        return { traits, voice, agenda };
+    }
+
+    static stockVendor(npc: Entity, engine: IEngine, itemNames: string[]) {
+        let inventory = npc.getComponent(Inventory);
+        if (!inventory) {
+            inventory = new Inventory();
+            npc.addComponent(inventory);
+        }
+
+        let container = npc.getComponent(Container);
+        if (!container) {
+            container = new Container(100); // 100kg capacity for vendors
+            npc.addComponent(container);
+        }
+
+        for (const itemName of itemNames) {
+            const item = PrefabFactory.createItem(itemName);
+            if (item) {
+                engine.addEntity(item);
+                container.items.push(item.id);
+            }
+        }
     }
 }

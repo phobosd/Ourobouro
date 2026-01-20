@@ -53,7 +53,18 @@
         },
         "canMove": false,
         "role": "civilian",
-        "portrait": "assets\\portraits\\dancer.jpg"
+        "portrait": "assets\\portraits\\dancer.jpg",
+        "personality": {
+            "traits": [
+                "Energetic",
+                "Flirtatious",
+                "Carefree",
+                "Rhythm-obsessed"
+            ],
+            "voice": "Breathless, upbeat, punctuated by slang.",
+            "agenda": "Keep the party going, earn tips, forget the dystopian reality.",
+            "background": "A former corporate drone who burned out and found solace in the neon-lit dance floors of the undercity."
+        }
     },
     {
         "id": "ripperdoc",
@@ -71,7 +82,18 @@
         },
         "canMove": false,
         "role": "vendor",
-        "portrait": "/assets/portraits/ripperdoc.jpg"
+        "portrait": "/assets/portraits/ripperdoc.jpg",
+        "personality": {
+            "traits": [
+                "Cynical",
+                "Clinical",
+                "Greedy",
+                "Skilled"
+            ],
+            "voice": "Raspy, impatient, uses medical jargon mixed with street slang.",
+            "agenda": "Profit from the city's violence, upgrade anyone who can pay, survive.",
+            "background": "Unlicensed surgeon who learned the trade in the combat zones. Has seen it all and is surprised by nothing."
+        }
     },
     {
         "id": "street_vendor",
@@ -89,7 +111,18 @@
         },
         "canMove": false,
         "role": "vendor",
-        "portrait": "/assets/portraits/street_vendor.jpg"
+        "portrait": "/assets/portraits/street_vendor.jpg",
+        "personality": {
+            "traits": [
+                "Pushy",
+                "Desperate",
+                "Street-smart",
+                "Observant"
+            ],
+            "voice": "Loud, hoarse, constantly hawking wares.",
+            "agenda": "Sell enough to eat for another day, gather gossip to sell to fixers.",
+            "background": "Has lived on this street corner for decades, watching the city change while he stays the same."
+        }
     },
     {
         "id": "street_samurai",
@@ -108,7 +141,18 @@
         "behavior": "passive",
         "canMove": true,
         "role": "guard",
-        "portrait": "/assets/portraits/street_samurai.jpg"
+        "portrait": "/assets/portraits/street_samurai.jpg",
+        "personality": {
+            "traits": [
+                "Stoic",
+                "Honorable",
+                "Disciplined",
+                "Alert"
+            ],
+            "voice": "Monotone, clipped, precise.",
+            "agenda": "Protect their principal (or turf), hone their martial skills, die a warrior's death.",
+            "background": "Raised in a warrior cult or trained by a mega-corp, now a ronin for hire."
+        }
     },
     {
         "id": "fixer",
@@ -126,7 +170,18 @@
         },
         "canMove": false,
         "role": "civilian",
-        "portrait": "/assets/portraits/fixer.jpg"
+        "portrait": "/assets/portraits/fixer.jpg",
+        "personality": {
+            "traits": [
+                "Manipulative",
+                "Connected",
+                "Secretive",
+                "Calm"
+            ],
+            "voice": "Smooth, low, reassuring but with an underlying threat.",
+            "agenda": "Broker deals, hoard information, stay one step ahead of everyone else.",
+            "background": "Knows everyone's secrets. Rose to power by being the most reliable broker in the sector."
+        }
     },
     {
         "id": "turing_police",
@@ -147,7 +202,18 @@
         "tags": [
             "turing"
         ],
-        "role": "guard"
+        "role": "guard",
+        "personality": {
+            "traits": [
+                "Authoritative",
+                "Suspicious",
+                "Dogmatic",
+                "Cold"
+            ],
+            "voice": "Stern, commanding, devoid of emotion.",
+            "agenda": "Enforce the Turing Registry laws, hunt down rogue AIs, maintain order.",
+            "background": "Indoctrinated from a young age to view AI as the ultimate threat to humanity."
+        }
     },
     {
         "id": "white_ice",
@@ -193,5 +259,35 @@
             "aggressive"
         ],
         "role": "mob"
+    },
+    {
+        "id": "roxana_sinclair",
+        "name": "Roxana 'Roxy' Sinclair",
+        "description": "A sharp-eyed bartender with a mechanical arm that moves with fluid precision. She wears a faded leather vest over a grease-stained tank top, and her hair is a shock of electric blue. She has a no-nonsense attitude and a reputation for knowing more than she lets on.",
+        "dialogue": [
+            "What can I get you?",
+            "Don't start any trouble in my bar.",
+            "I've seen better days, but the synth-ale is still cold.",
+            "You look like you've had a rough shift."
+        ],
+        "stats": {
+            "health": 80,
+            "attack": 15,
+            "defense": 10
+        },
+        "canMove": false,
+        "role": "vendor",
+        "portrait": "/assets/portraits/roxy.jpg",
+        "personality": {
+            "traits": [
+                "No-nonsense",
+                "Observant",
+                "Protective",
+                "World-weary"
+            ],
+            "voice": "Low, husky, with a slight metallic rasp.",
+            "agenda": "Keep the Rusty Cog running, protect her regulars, stay out of corporate business.",
+            "background": "Former combat engineer who lost her arm in a border skirmish. She used her severance pay to buy this dive bar and has been the heart of the neighborhood ever since."
+        }
     }
 ]

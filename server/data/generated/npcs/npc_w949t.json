@@ -1,0 +1,38 @@
+{
+  "id": "npc_w949t",
+  "name": "Reiko Sato",
+  "description": "A striking figure behind the bar of 'The Neon Veil', Reiko's cybernetic eye glows a soft teal. Her dark hair is cropped short and she wears sleek black attire that hugs her athletic frame, emphasizing her strength. She has a warm smile but keeps a watchful gaze on everyone in the establishment.",
+  "stats": {
+    "health": 250,
+    "attack": 75,
+    "defense": 18
+  },
+  "behavior": "friendly",
+  "faction": "Street",
+  "role": "civilian",
+  "tags": [
+    "bartender"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_w949t.jpg",
+  "personality": {
+    "traits": [
+      "Approachable",
+      "Helpful",
+      "Observant",
+      "Resourceful"
+    ],
+    "voice": "Soft and calming with a slight Japanese accent.",
+    "agenda": "To provide a safe space for people to relax and unwind, while discreetly gathering information about Zenith-9's criminal underworld.",
+    "background": "Born in Kyoto, Reiko moved to Zenith-9 after her family fell on hard times. She learned the bartending trade from an old mentor who taught her more than just mixing drinks - he instilled a strong sense of responsibility and street smarts."
+  },
+  "_metadata": {
+    "proposalId": "577a4a46-85c8-434f-89cd-d041f5b63fb3",
+    "generatedAt": 1768924208620,
+    "publishedAt": 1768924285711,
+    "seed": "9nx3di",
+    "flavor": {
+      "rationale": "Reiko runs 'The Neon Veil', one of the more popular bars in Zenith-9's neon district, catering to both locals and offworlders. She prides herself on maintaining a safe and welcoming atmosphere for all."
+    }
+  }
+}

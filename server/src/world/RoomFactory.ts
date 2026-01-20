@@ -192,6 +192,17 @@ export class RoomFactory {
             }
         }
 
+        // Special handling for Bar (Type 9) - Spawn Roxy
+        if (type === 9) {
+            const roxy = PrefabFactory.createNPC('roxana_sinclair', 'npc_roxy');
+            if (roxy) {
+                roxy.addComponent(new Position(x, y));
+                roxy.addComponent(new Shop("The Rusty Cog", "A dive bar with cold synth-ale and warm memories."));
+                PrefabFactory.stockVendor(roxy, this.engine, ['synth_ale', 'synth_ale', 'synth_ale', 'rusty_cog_special']);
+                this.engine.addEntity(roxy);
+            }
+        }
+
         // Random NPC Spawning
         this.spawnNPCs(x, y, type);
 
@@ -200,7 +211,7 @@ export class RoomFactory {
     }
 
     private spawnNPCs(x: number, y: number, type: number) {
-        const spawn = (name: string) => {
+        const spawn = (name: string, id?: string) => {
             if (name === 'street vendor') {
                 const currentVendors = this.engine.getEntitiesWithComponent(NPC).filter(e => {
                     const n = e.getComponent(NPC);
@@ -215,7 +226,7 @@ export class RoomFactory {
                 return;
             }
 
-            const npc = PrefabFactory.createNPC(name);
+            const npc = PrefabFactory.createNPC(name, id);
             if (npc) {
                 npc.addComponent(new Position(x, y));
                 this.engine.addEntity(npc);
@@ -236,7 +247,7 @@ export class RoomFactory {
                 if (roll < 0.60) spawn('dancer');
                 break;
             case 4: // Clinic
-                spawn('ripperdoc');
+                spawn('ripperdoc', 'npc_ripperdoc');
                 break;
         }
     }
@@ -298,6 +309,11 @@ export class RoomFactory {
                 return {
                     title: "Reality Breach Chamber",
                     desc: "The center of the city. Reality seems thin here, as if the fabric of space itself is fraying. Strange energies pulse through the air."
+                };
+            case 9: // Bar
+                return {
+                    title: "The Rusty Cog",
+                    desc: "The air is thick with the smell of stale synth-ale and ozone. Dim, flickering amber lights illuminate a long, scarred metal bar. A collection of mismatched stools are bolted to the floor, and a jukebox in the corner plays a low, distorted bassline. This is a place for those who want to disappear for a while."
                 };
             default:
                 return {

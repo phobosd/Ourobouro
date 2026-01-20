@@ -1,0 +1,17 @@
+{
+    "id": "synth_ale",
+    "name": "Synth-Ale",
+    "shortName": "synth_ale",
+    "description": "A cold, bubbling glass of synthetic ale. It has a slight metallic aftertaste but goes down smooth.",
+    "weight": 0.5,
+    "cost": 15,
+    "type": "item",
+    "rarity": "Common",
+    "attributes": {
+        "isConsumable": true,
+        "effects": {
+            "fatigue": -5,
+            "balance": -2
+        }
+    }
+}

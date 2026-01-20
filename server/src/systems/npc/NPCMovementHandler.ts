@@ -7,6 +7,7 @@ import { EngagementTier } from '../../types/CombatTypes';
 import { WorldQuery } from '../../utils/WorldQuery';
 import { MessageService } from '../../services/MessageService';
 import { NPCUtils } from './NPCUtils';
+import { Conversation } from '../../components/Conversation';
 
 export class NPCMovementHandler {
     static moveRandomly(npc: Entity, pos: Position, engine: IEngine, messageService: MessageService) {
@@ -14,6 +15,11 @@ export class NPCMovementHandler {
 
         // Check if NPC is allowed to move
         if (npcComp && !npcComp.canMove) {
+            return;
+        }
+
+        // Check if NPC is in a conversation
+        if (npc.hasComponent(Conversation)) {
             return;
         }
 

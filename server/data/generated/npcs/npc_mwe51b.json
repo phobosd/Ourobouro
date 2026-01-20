@@ -1,0 +1,37 @@
+{
+  "id": "npc_mwe51b",
+  "name": "Ironclad Kestrel",
+  "description": "Kestrel is a hulking figure with reinforced arms and legs. Their armored limbs are grafted onto their body like metal vines, covered in intricate circuits that glow faintly under neon lights. A single, crimson eye stares out from beneath a cowl.",
+  "stats": {
+    "health": 240,
+    "attack": 75,
+    "defense": 15
+  },
+  "behavior": "cautious",
+  "faction": "Corporate",
+  "role": "vendor",
+  "tags": [
+    "hacker"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_mwe51b.jpg",
+  "personality": {
+    "traits": [
+      "stoic",
+      "calculating",
+      "protective"
+    ],
+    "voice": "Deep and metallic with a hint of distortion.",
+    "agenda": "Protecting their clientele from corporate espionage while profiting off the sale of cybernetic enhancements.",
+    "background": "Kestrel was once a street brawler, augmented by black market upgrades. After being betrayed by a rival gang, they swore to only serve those who could pay well and stay out of trouble."
+  },
+  "_metadata": {
+    "proposalId": "982c652b-eaf2-483b-b886-5138316bfc57",
+    "generatedAt": 1768924256766,
+    "publishedAt": 1768924293680,
+    "seed": "4rfa9p",
+    "flavor": {
+      "rationale": "Kestrel is here to sell experimental cybernetic upgrades and modifications, catering mainly to those who value physical strength over hacking prowess."
+    }
+  }
+}

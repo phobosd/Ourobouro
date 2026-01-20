@@ -20,6 +20,7 @@ import { NPC } from '../../components/NPC';
 import { Personality } from '../../components/Personality';
 import { Memory } from '../../components/Memory';
 import { Relationship } from '../../components/Relationship';
+import { Item } from '../../components/Item';
 import { Entity } from '../../ecs/Entity';
 
 export class DirectorManagementService {
@@ -37,6 +38,13 @@ export class DirectorManagementService {
         itemCount: 5,
         legendaryChance: 0.05
     };
+    public aiConfig = {
+        ambientDialogueFrequency: 30, // % chance
+        llmContextWindow: 10,
+        relationshipDecayRate: 5, // % per day
+        maxConversationTurns: 6,
+        npcMovementInterval: 30000 // ms
+    };
 
     constructor(director: WorldDirector) {
         this.director = director;
@@ -50,6 +58,7 @@ export class DirectorManagementService {
 
                 if (config.glitchConfig) this.glitchConfig = config.glitchConfig;
                 if (config.personality) this.personality = config.personality;
+                if (config.aiConfig) this.aiConfig = config.aiConfig;
                 if (config.paused !== undefined) this.isPaused = config.paused;
 
                 Logger.info('Director', 'Loaded configuration from disk.');
@@ -64,6 +73,7 @@ export class DirectorManagementService {
             const config = {
                 glitchConfig: this.glitchConfig,
                 personality: this.personality,
+                aiConfig: this.aiConfig,
                 paused: this.isPaused
             };
             fs.writeFileSync(this.configPath, JSON.stringify(config, null, 4));
@@ -94,14 +104,30 @@ export class DirectorManagementService {
 
         this.director.log(DirectorLogLevel.INFO, `Personality updated: ${JSON.stringify(this.personality)}`);
         this.saveConfig();
-        this.director.adminNamespace.emit('director:status', this.director.getStatus());
+        // Emit granular update
+        this.director.adminNamespace.emit('director:personality_update', this.personality);
+        // Keep status update for now to ensure consistency until client is fully migrated, or remove if client handles granular.
+        // The user requested "reducing reliance on full director:status".
+        // We will emit both for safety, or just granular if we update client.
+        // Let's emit granular.
     }
 
     public updateGlitchConfig(config: any) {
         this.glitchConfig = { ...this.glitchConfig, ...config };
         this.saveConfig();
         this.director.log(DirectorLogLevel.INFO, 'Glitch Door configuration updated.');
-        this.director.adminNamespace.emit('director:status', this.director.getStatus());
+        this.director.adminNamespace.emit('director:glitch_config_update', this.glitchConfig);
+    }
+
+    public updateAIConfig(config: any) {
+        this.aiConfig = { ...this.aiConfig, ...config };
+        this.saveConfig();
+        this.director.log(DirectorLogLevel.INFO, 'AI Configuration updated.');
+        this.director.adminNamespace.emit('director:ai_config_update', this.aiConfig);
+
+        // Emit event for systems to pick up changes
+        const { GameEventBus, GameEventType } = require('../../utils/GameEventBus');
+        GameEventBus.getInstance().emit(GameEventType.CONFIG_UPDATED, { aiConfig: this.aiConfig });
     }
 
     // --- User Management ---
@@ -345,6 +371,68 @@ export class DirectorManagementService {
         }
     }
 
+    public getCharacterInventory(charId: number) {
+        const charService = CharacterService.getInstance();
+        const engine = (this.director as any).engine;
+        const activeEntity = charService.getActiveEntityByCharId(charId, engine);
+
+        if (activeEntity) {
+            const inv = activeEntity.getComponent(Inventory);
+            if (inv) {
+                // Resolve backpack items
+                let backpackItems: string[] = [];
+                const backpackId = inv.equipment.get('back');
+                if (backpackId) {
+                    const backpack = engine.getEntity(backpackId);
+                    if (backpack) {
+                        const container = backpack.getComponent(Container);
+                        if (container) {
+                            backpackItems = container.items.map((id: string) => {
+                                const item = engine.getEntity(id);
+                                return item ? (item.getComponent(Item)?.templateId || item.name) : 'Unknown';
+                            });
+                        }
+                    }
+                }
+
+                return {
+                    rightHand: inv.rightHand ? (engine.getEntity(inv.rightHand)?.getComponent(Item)?.templateId || 'Unknown') : null,
+                    leftHand: inv.leftHand ? (engine.getEntity(inv.leftHand)?.getComponent(Item)?.templateId || 'Unknown') : null,
+                    equipment: Object.fromEntries(Array.from(inv.equipment.entries()).map(([slot, id]) => [
+                        slot,
+                        engine.getEntity(id)?.getComponent(Item)?.templateId || 'Unknown'
+                    ])),
+                    backpack: backpackItems
+                };
+            }
+        } else {
+            const char = charService.getCharacterById(charId);
+            if (char) {
+                const jsonData = JSON.parse(char.data);
+                if (jsonData.components && jsonData.components.Inventory) {
+                    const invData = jsonData.components.Inventory;
+
+                    let equipment: any = {};
+                    if (invData.equipment) {
+                        if (invData.equipment.__type === 'Map' && Array.isArray(invData.equipment.data)) {
+                            invData.equipment.data.forEach(([k, v]: [string, any]) => equipment[k] = v);
+                        } else {
+                            equipment = invData.equipment;
+                        }
+                    }
+
+                    return {
+                        rightHand: invData.rightHand,
+                        leftHand: invData.leftHand,
+                        equipment: equipment,
+                        backpack: []
+                    };
+                }
+            }
+        }
+        return null;
+    }
+
     // --- Item Management ---
 
     public getItems() {
@@ -499,13 +587,86 @@ export class DirectorManagementService {
             const memory = e.getComponent(Memory);
             const relationship = e.getComponent(Relationship);
 
-            const relationships = relationship ? Array.from(relationship.relationships.entries()).map(([playerName, data]) => {
-                return [playerName, data];
+            const relationships = relationship ? Array.from(relationship.relationships.entries()).map(([targetKey, data]) => {
+                // Resolve name from targetKey (which could be a UUID, a Player Name, or an NPC TypeName)
+                let resolvedName = targetKey;
+                const charService = CharacterService.getInstance();
+
+                // 1. Check if it's an active entity in the engine
+                const activeEntity = engine.getEntity(targetKey);
+                if (activeEntity) {
+                    const activeNpc = activeEntity.getComponent(NPC);
+                    if (activeNpc) {
+                        resolvedName = `NPC: ${activeNpc.typeName}`;
+                    } else {
+                        // Likely a player
+                        const char = charService.getAllCharacters().find(c => {
+                            const active = charService.getActiveEntityByCharId(c.id, engine);
+                            return active && active.id === targetKey;
+                        });
+                        if (char) resolvedName = `Player: ${char.name}`;
+                        else resolvedName = `Active Entity: ${targetKey.substring(0, 8)}`;
+                    }
+                } else {
+                    // 2. Check NPC Registry (for offline NPCs or persistent typeNames)
+                    const npcDef = NPCRegistry.getInstance().getNPC(targetKey);
+                    if (npcDef) {
+                        resolvedName = `NPC: ${npcDef.name}`;
+                    } else {
+                        // 3. Check Character Service (for offline players or persistent names)
+                        // Check if targetKey is a Character ID (number)
+                        const charId = parseInt(targetKey);
+                        if (!isNaN(charId)) {
+                            const char = charService.getCharacterById(charId);
+                            if (char) resolvedName = `Player: ${char.name}`;
+                        } else {
+                            // Check if targetKey matches a Character Name
+                            const allChars = charService.getAllCharacters();
+                            const matchingChar = allChars.find(c => c.name.toLowerCase() === targetKey.toLowerCase());
+                            if (matchingChar) {
+                                resolvedName = `Player: ${matchingChar.name}`;
+                            } else {
+                                // 4. Final Fallbacks
+                                if (targetKey.length === 20) {
+                                    resolvedName = `Player (Offline)`;
+                                } else if (targetKey.includes('-') && targetKey.length > 30) {
+                                    resolvedName = `Unknown Entity (${targetKey.substring(0, 8)})`;
+                                } else {
+                                    // If it's a short string, it might be a name we just can't find
+                                    resolvedName = `${targetKey}`;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return [resolvedName, data];
+            }).filter((entry: any) => {
+                const [name, data] = entry;
+                // Filter out stale/empty relationships to keep the UI clean
+                if (typeof name === 'string') {
+                    if (name.startsWith('Unknown Entity')) {
+                        if (data.status === 'Neutral' && data.trust === 50 && (!data.history || data.history.length === 0)) {
+                            return false;
+                        }
+                    }
+                    // Filter out non-sentient objects that might have slipped in
+                    const lowerName = name.toLowerCase();
+                    if (lowerName.includes('door') || lowerName.includes('terminal') || lowerName.includes('sign') || lowerName.includes('locker')) {
+                        return false;
+                    }
+                }
+                return true;
             }) : [];
+
+            // Fetch role from registry
+            const npcDef = NPCRegistry.getInstance().getNPC(npc?.typeName || '');
+            const role = npcDef ? npcDef.role : 'civilian'; // Default to civilian if not found
 
             return {
                 id: e.id,
                 name: npc?.typeName || "Unknown",
+                role: role,
                 x: pos?.x,
                 y: pos?.y,
                 personality: personality ? {
@@ -520,5 +681,31 @@ export class DirectorManagementService {
                 relationships
             };
         });
+    }
+    public deleteNPCMemory(npcId: string, memoryIndex: number, type: 'short' | 'long') {
+        const engine = (this.director as any).engine;
+        const npcEntity = engine.getEntity(npcId);
+
+        if (npcEntity) {
+            const memory = npcEntity.getComponent(Memory);
+            if (memory) {
+                if (type === 'short') {
+                    if (memoryIndex >= 0 && memoryIndex < memory.shortTerm.length) {
+                        memory.shortTerm.splice(memoryIndex, 1);
+                        this.director.log(DirectorLogLevel.SUCCESS, `Deleted short-term memory from NPC ${npcId}`);
+                    }
+                } else if (type === 'long') {
+                    if (memoryIndex >= 0 && memoryIndex < memory.longTerm.length) {
+                        memory.longTerm.splice(memoryIndex, 1);
+                        this.director.log(DirectorLogLevel.SUCCESS, `Deleted long-term memory from NPC ${npcId}`);
+                    }
+                }
+                this.director.adminNamespace.emit('director:npc_status_update', this.getNPCStatus());
+            } else {
+                this.director.log(DirectorLogLevel.ERROR, `NPC ${npcId} has no Memory component.`);
+            }
+        } else {
+            this.director.log(DirectorLogLevel.ERROR, `NPC ${npcId} not found (must be active).`);
+        }
     }
 }

@@ -64,4 +64,12 @@ export class MessageService {
         };
         this.io.to(`room:${x}:${y}`).emit('message', message);
     }
+
+    broadcastGlobal(sender: string, message: string) {
+        this.io.emit('message', {
+            type: 'global',
+            sender: 'Neural Link',
+            content: `<span style="color: #00ffff; font-weight: bold; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;">⟨⟨ NEURAL-LINK ⟩⟩</span> <span style="color: #ffffff; font-weight: bold;">${sender}:</span> <span style="color: #ccffff;">${message}</span>`
+        });
+    }
 }

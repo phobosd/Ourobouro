@@ -84,7 +84,7 @@ export class DirectorContentService {
         this.director.log(DirectorLogLevel.INFO, `Generating BOSS proposal... (LLM: ${enableLLM})`);
         try {
             const proposal = await this.director.npcGen.generate(this.director.guardrails.getConfig(), this.director.llm, {
-                generatedBy: 'Manual',
+                generatedBy: 'Manual:Boss',
                 subtype: 'BOSS',
                 enableLLM
             });

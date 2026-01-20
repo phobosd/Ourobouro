@@ -1,0 +1,18 @@
+{
+    "id": "rusty_cog_special",
+    "name": "Rusty Cog Special",
+    "shortName": "rusty_cog_special",
+    "description": "Roxy's signature cocktail. A glowing green concoction that smells like ozone and citrus. It packs a serious punch.",
+    "weight": 0.3,
+    "cost": 45,
+    "type": "item",
+    "rarity": "Uncommon",
+    "attributes": {
+        "isConsumable": true,
+        "effects": {
+            "fatigue": -15,
+            "balance": -10,
+            "health": 5
+        }
+    }
+}

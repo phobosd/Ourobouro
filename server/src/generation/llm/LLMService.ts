@@ -1,8 +1,10 @@
 import { LLMProfile, LLMRole } from '../../services/GuardrailService';
 import { Logger } from '../../utils/Logger';
+import { FinOpsService } from '../../services/FinOpsService';
 
 export interface LLMResponse {
     text: string;
+    reasoning?: string;
     model: string;
     usage?: {
         promptTokens: number;
@@ -50,6 +52,14 @@ export class LLMService {
 
         Logger.info('LLMService', `Response from ${profile.model}: ${response.text.substring(0, 100)}...`);
         return response;
+    }
+
+    /**
+     * Convenience method for simple text generation using the DEFAULT role.
+     */
+    public async generateText(prompt: string, systemPrompt: string = "You are a helpful assistant."): Promise<string> {
+        const response = await this.chat(prompt, systemPrompt, LLMRole.DEFAULT);
+        return response.text;
     }
 
     /**
@@ -138,13 +148,21 @@ export class LLMService {
             if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
                 throw new Error(`OpenAI response missing choices or message content. Response: ${JSON.stringify(data)}`);
             }
+
+            const message = data.choices[0].message;
+            const usage = {
+                promptTokens: data.usage?.prompt_tokens || 0,
+                completionTokens: data.usage?.completion_tokens || 0
+            };
+
+            // Record usage for FinOps
+            FinOpsService.getInstance().recordUsage(usage.promptTokens, usage.completionTokens);
+
             return {
-                text: data.choices[0].message.content,
+                text: message.content,
+                reasoning: message.reasoning_content || null,
                 model: profile.model,
-                usage: {
-                    promptTokens: data.usage?.prompt_tokens || 0,
-                    completionTokens: data.usage?.completion_tokens || 0
-                }
+                usage
             };
         } catch (err) {
             Logger.error('LLMService', `OpenAI call failed: ${err}`);
@@ -182,13 +200,18 @@ export class LLMService {
             }
 
             const data = await response.json();
+            const usage = {
+                promptTokens: data.usageMetadata?.promptTokenCount || 0,
+                completionTokens: data.usageMetadata?.candidatesTokenCount || 0
+            };
+
+            // Record usage for FinOps
+            FinOpsService.getInstance().recordUsage(usage.promptTokens, usage.completionTokens);
+
             return {
                 text: data.candidates[0].content.parts[0].text,
                 model: profile.model,
-                usage: {
-                    promptTokens: data.usageMetadata?.promptTokenCount || 0,
-                    completionTokens: data.usageMetadata?.candidatesTokenCount || 0
-                }
+                usage
             };
         } catch (err) {
             Logger.error('LLMService', `Gemini call failed: ${err}`);
@@ -220,6 +243,7 @@ export class LLMService {
 
             const data = await response.json();
             if (data.data && data.data[0] && data.data[0].url) {
+                FinOpsService.getInstance().recordImageGen();
                 return data.data[0].url;
             } else {
                 Logger.error('LLMService', `OpenAI Image response missing data.data[0].url. Response: ${JSON.stringify(data)}`);
@@ -251,6 +275,7 @@ export class LLMService {
             const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=${model}&nologo=true`;
 
             Logger.info('LLMService', `Generated Pollinations URL: ${imageUrl}`);
+            FinOpsService.getInstance().recordImageGen();
             return imageUrl;
         } catch (err) {
             Logger.error('LLMService', `Pollinations image generation failed: ${err}`);
@@ -307,6 +332,7 @@ export class LLMService {
                         const base64 = pred.bytesBase64Encoded || pred.imageRawBase64 || (typeof pred === 'string' ? pred : null);
                         if (base64) {
                             Logger.info('LLMService', `Successfully generated image via ${method} (predictions)`);
+                            FinOpsService.getInstance().recordImageGen();
                             return `data:image/png;base64,${base64}`;
                         }
                     }
@@ -361,6 +387,7 @@ export class LLMService {
 
             if (data.images && data.images.length > 0) {
                 Logger.info('LLMService', `Successfully generated image via Stable Diffusion`);
+                FinOpsService.getInstance().recordImageGen();
                 // A1111 returns base64 strings in the images array
                 return `data:image/png;base64,${data.images[0]}`;
             } else {
@@ -384,12 +411,23 @@ export class LLMService {
             // 2. Strip markdown code blocks
             clean = clean.replace(/```json|```/g, '');
 
-            // 3. Find the first '{' and last '}' to extract the JSON object
-            const start = clean.indexOf('{');
-            const end = clean.lastIndexOf('}');
+            // 3. Find the first '{' or '[' and last '}' or ']' to extract the JSON object/array
+            const startObj = clean.indexOf('{');
+            const startArr = clean.indexOf('[');
+
+            let start = -1;
+            let end = -1;
+
+            if (startObj !== -1 && (startArr === -1 || startObj < startArr)) {
+                start = startObj;
+                end = clean.lastIndexOf('}');
+            } else if (startArr !== -1) {
+                start = startArr;
+                end = clean.lastIndexOf(']');
+            }
 
             if (start === -1 || end === -1) {
-                throw new Error('No JSON object found in response');
+                throw new Error('No JSON object or array found in response');
             }
 
             clean = clean.substring(start, end + 1);

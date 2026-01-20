@@ -9,19 +9,23 @@ export enum GameEventType {
     ITEM_PICKED_UP = 'ITEM_PICKED_UP',
     ITEM_DROPPED = 'ITEM_DROPPED',
     PLAYER_CONNECTED = 'PLAYER_CONNECTED',
-    PLAYER_DISCONNECTED = 'PLAYER_DISCONNECTED'
+    PLAYER_DISCONNECTED = 'PLAYER_DISCONNECTED',
+    CONFIG_UPDATED = 'CONFIG_UPDATED',
+    NPC_MOVED = 'NPC_MOVED'
 }
 
 export interface GameEventPayloads {
     [GameEventType.PLAYER_MOVED]: { playerId: string, fromX: number, fromY: number, toX: number, toY: number };
     [GameEventType.ENTITY_SPAWNED]: { entityId: string, type: string };
-    [GameEventType.ENTITY_DESTROYED]: { entityId: string };
+    [GameEventType.ENTITY_DESTROYED]: { entityId: string, x?: number, y?: number };
     [GameEventType.COMBAT_START]: { attackerId: string, targetId: string };
     [GameEventType.COMBAT_END]: { attackerId: string, targetId: string, winnerId?: string };
     [GameEventType.ITEM_PICKED_UP]: { entityId: string, itemId: string };
     [GameEventType.ITEM_DROPPED]: { entityId: string, itemId: string };
     [GameEventType.PLAYER_CONNECTED]: { playerId: string, characterId: number, username: string };
     [GameEventType.PLAYER_DISCONNECTED]: { playerId: string };
+    [GameEventType.CONFIG_UPDATED]: { aiConfig?: any, glitchConfig?: any };
+    [GameEventType.NPC_MOVED]: { npcId: string, fromX: number, fromY: number, toX: number, toY: number };
 }
 
 export class GameEventBus {

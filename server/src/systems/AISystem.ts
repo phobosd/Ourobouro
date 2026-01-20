@@ -6,6 +6,7 @@ import { Position } from '../components/Position';
 import { Needs } from '../components/Needs';
 import { TimeSystem } from './TimeSystem';
 import { Logger } from '../utils/Logger';
+import { GameEventBus, GameEventType } from '../utils/GameEventBus';
 
 export class AISystem extends System {
     private timeSystem: TimeSystem;
@@ -48,7 +49,7 @@ export class AISystem extends System {
                 if (entry) {
                     if (pos.x !== entry.location.x || pos.y !== entry.location.y) {
                         Logger.info('AI', `NPC ${npc.typeName} (${entity.id}) moving to ${entry.location.x},${entry.location.y} for activity: ${entry.activity}`);
-                        this.moveTowards(pos, entry.location);
+                        this.moveTowards(pos, entry.location, entity.id);
                     }
                 }
             }
@@ -73,12 +74,25 @@ export class AISystem extends System {
         });
     }
 
-    private moveTowards(currentPos: Position, target: { x: number, y: number }) {
+    private moveTowards(currentPos: Position, target: { x: number, y: number }, npcId: string) {
+        const fromX = currentPos.x;
+        const fromY = currentPos.y;
+
         // Move one step at a time towards target
         if (currentPos.x < target.x) currentPos.x++;
         else if (currentPos.x > target.x) currentPos.x--;
 
         if (currentPos.y < target.y) currentPos.y++;
         else if (currentPos.y > target.y) currentPos.y--;
+
+        if (fromX !== currentPos.x || fromY !== currentPos.y) {
+            GameEventBus.getInstance().emit(GameEventType.NPC_MOVED, {
+                npcId,
+                fromX,
+                fromY,
+                toX: currentPos.x,
+                toY: currentPos.y
+            });
+        }
     }
 }

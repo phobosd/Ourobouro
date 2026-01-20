@@ -1,0 +1,38 @@
+{
+  "id": "npc_gg4o9o",
+  "name": "Nox",
+  "description": "A hulking figure hunched over a makeshift operating table in the back of his shop. Nox's limbs are warped and swollen with fungal growths that pulse with sickly light. His skin is mottled grey-green, covered in patches of fungus that seem to feed on moisture from the air.",
+  "stats": {
+    "health": 250,
+    "attack": 75,
+    "defense": 10
+  },
+  "behavior": "cautious",
+  "faction": "Corporate",
+  "role": "vendor",
+  "tags": [
+    "street doc"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_gg4o9o.jpg",
+  "personality": {
+    "traits": [
+      "aloof",
+      "analytical",
+      "detached",
+      "morbidly curious"
+    ],
+    "voice": "Deep, raspy and slow. Speaks in a monotone with long pauses.",
+    "agenda": "To further his research into fungal mutations and their potential for cybernetic enhancements.",
+    "background": "Nox was once a corporate researcher who became obsessed with the possibility of harnessing fungal biology to create advanced prosthetics and augmentations. After being fired for unethical practices, he went rogue and now operates as an underground black market doc."
+  },
+  "_metadata": {
+    "proposalId": "04d08857-8895-460c-866d-077484130192",
+    "generatedAt": 1768924570959,
+    "publishedAt": 1768924578020,
+    "seed": "hzysv",
+    "flavor": {
+      "rationale": "Nox operates a black market medical clinic and lab for cybernetic enhancements and biological experimentation. He's primarily interested in his own research, but will sell services to those who can afford them."
+    }
+  }
+}

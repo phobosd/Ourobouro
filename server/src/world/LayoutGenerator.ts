@@ -57,6 +57,9 @@ export class LayoutGenerator {
         // Portal Room (Glitch Door at center plaza 10, 10 for easy access)
         layout[cy][cx] = 8; // Portal Room with Glitch Door
 
+        // The Rusty Cog Bar
+        layout[9][5] = 9;
+
         return layout;
     }
 }

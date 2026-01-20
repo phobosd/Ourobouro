@@ -1,0 +1,37 @@
+{
+  "id": "npc_zwyqcc",
+  "name": "Kai Sato",
+  "description": "Kai is the owner and barkeep of 'The Circuit', a popular synth-skin hangout in Neo-Tokyo's Lower Ward. His smooth face and flawless skin are accented by intricate cybernetic tattoos that shift color depending on his mood, adding to his alluring charm. He always has a warm smile and welcoming attitude for everyone who walks through his door.",
+  "stats": {
+    "health": 250,
+    "attack": 75,
+    "defense": 20
+  },
+  "behavior": "friendly",
+  "faction": "Street",
+  "role": "civilian",
+  "tags": [
+    "bartender"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_zwyqcc.jpg",
+  "personality": {
+    "traits": [
+      "charming",
+      "optimistic",
+      "helpful"
+    ],
+    "voice": "Calm and soothing with a slight accent.",
+    "agenda": "To create a safe space for synth-skins to gather, socialize, and feel accepted in the hostile cityscape of Neo-Tokyo.",
+    "background": "Kai was one of the first people to receive synth-skin technology as part of an experimental program. After experiencing firsthand the prejudice faced by those with enhanced bodies, he opened 'The Circuit' to provide a refuge for others like him."
+  },
+  "_metadata": {
+    "proposalId": "3b1269cb-3772-4308-8999-56b5cabb7874",
+    "generatedAt": 1768924239949,
+    "publishedAt": 1768924290704,
+    "seed": "0zwgmd",
+    "flavor": {
+      "rationale": "Kai runs The Circuit because it is a place where synth-skins can relax and be themselves without fear of judgment or violence from humans who view them as abominations. He wants to foster community and build bridges between the two groups, despite the ongoing conflict."
+    }
+  }
+}

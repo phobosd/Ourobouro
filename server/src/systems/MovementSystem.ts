@@ -176,6 +176,8 @@ export class MovementSystem extends System {
                 // Trigger look
                 if (this.observationSystem) {
                     this.observationSystem.handleLook(entityId, engine);
+                    this.observationSystem.refreshRoomAutocomplete(fromX, fromY, engine);
+                    this.observationSystem.refreshRoomAutocomplete(targetX, targetY, engine);
                 }
 
                 // Emit position update for mini-map refresh

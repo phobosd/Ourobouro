@@ -1,0 +1,39 @@
+{
+  "id": "npc_milfj",
+  "name": "Kai Sato",
+  "description": "A slim man in his late twenties with close-cropped dark hair and a calm demeanor. Kai projects an ever-changing series of holographic tattoos over his skin - swirling geometric patterns one moment, intricate floral designs the next. His eyes are kind but observant, always scanning for signs of trouble.",
+  "stats": {
+    "health": 175,
+    "attack": 60,
+    "defense": 15
+  },
+  "behavior": "friendly",
+  "faction": "Street",
+  "role": "vendor",
+  "tags": [
+    "monk"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_milfj.jpg",
+  "personality": {
+    "traits": [
+      "calm",
+      "knowledgeable",
+      "helpful",
+      "peaceful",
+      "observant"
+    ],
+    "voice": "soft-spoken and soothing, with a subtle Japanese accent.",
+    "agenda": "To share his passion for holo-projection technology and help others express themselves through it.",
+    "background": "Kai was born into a family of traditional artisans in Neo-Tokyo. He learned the art of woodworking from his father, but always felt drawn to more modern forms of expression. After discovering holo-projection, he dedicated himself to mastering its intricacies."
+  },
+  "_metadata": {
+    "proposalId": "01fd7b27-9b0c-41bf-9cc6-9f14750fb2ff",
+    "generatedAt": 1768924244175,
+    "publishedAt": 1768924291692,
+    "seed": "ibld5c",
+    "flavor": {
+      "rationale": "Kai sells handcrafted holo-projector accessories and modifications at a small stall in the market district, catering to both professionals and hobbyists."
+    }
+  }
+}

@@ -12,9 +12,11 @@ import { Entity } from './ecs/Entity';
 import { Position } from './components/Position';
 import { Description } from './components/Description';
 import { WorldGenerator } from './world/WorldGenerator';
+import { RoomFactory } from './world/RoomFactory';
 import { MovementSystem } from './systems/MovementSystem';
 import { InteractionSystem } from './systems/InteractionSystem';
 import { NPCSystem } from './systems/NPCSystem';
+import { SocialSystem } from './systems/SocialSystem';
 import { NPC } from './components/NPC';
 import { WorldQuery } from './utils/WorldQuery';
 import { CombatSystem } from './systems/CombatSystem';
@@ -38,6 +40,7 @@ import { Stats } from './components/Stats';
 import { CombatStats } from './components/CombatStats';
 import { Weapon } from './components/Weapon';
 import { Magazine } from './components/Magazine';
+import { Shop } from './components/Shop';
 import { PersistenceManager } from './persistence/PersistenceManager';
 import { CommandRegistry } from './commands/CommandRegistry';
 import { Stance, StanceType } from './components/Stance';
@@ -185,7 +188,7 @@ const npcSystem = new NPCSystem(io, messageService, director.getLLM());
 const combatSystem = new CombatSystem(engine, io, messageService);
 const cyberspaceSystem = new CyberspaceSystem(io, messageService);
 const atmosphereSystem = new AtmosphereSystem(messageService);
-const observationSystem = new ObservationSystem(io);
+const observationSystem = new ObservationSystem(io, engine);
 const portalSystem = new PortalSystem(io, director);
 const stanceSystem = new StanceSystem(io);
 const characterSystem = new CharacterSystem(io, worldState);
@@ -199,6 +202,9 @@ engine.addSystem(movementSystem);
 engine.addSystem(interactionSystem);
 engine.addSystem(inventorySystem);
 engine.addSystem(npcSystem);
+engine.addSystem(npcSystem);
+const socialSystem = new SocialSystem(messageService, director.getLLM());
+engine.addSystem(socialSystem);
 engine.addSystem(combatSystem);
 engine.addSystem(cyberspaceSystem);
 engine.addSystem(atmosphereSystem);
@@ -357,6 +363,29 @@ async function startServer() {
         worldGen.generate();
     }
     engine.update(0); // Force spatial reindex so we can detect existing rooms
+
+    // Ensure "The Rusty Cog" bar exists (Type 9)
+    const barX = 5;
+    const barY = 9;
+    const existingBar = WorldQuery.findRoomAt(engine, barX, barY);
+    if (!existingBar) {
+        Logger.info('Startup', 'Spawning "The Rusty Cog" bar at (5, 9)...');
+        const roomFactory = new RoomFactory(engine);
+        roomFactory.createRoom(barX, barY, 9);
+    } else {
+        // Ensure Roxy is there even if the room already existed
+        const roxy = engine.getEntity('npc_roxy');
+        if (!roxy) {
+            Logger.info('Startup', 'Roxy missing from bar, re-spawning...');
+            const newRoxy = PrefabFactory.createNPC('roxana_sinclair', 'npc_roxy');
+            if (newRoxy) {
+                newRoxy.addComponent(new Position(barX, barY));
+                newRoxy.addComponent(new Shop("The Rusty Cog", "A dive bar with cold synth-ale and warm memories."));
+                PrefabFactory.stockVendor(newRoxy, engine, ['synth_ale', 'synth_ale', 'synth_ale', 'rusty_cog_special']);
+                engine.addEntity(newRoxy);
+            }
+        }
+    }
 
     // Load and Spawn Generated Expansions
     const roomRegistry = RoomRegistry.getInstance();

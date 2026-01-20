@@ -1,0 +1,38 @@
+{
+  "id": "npc_b4gizb",
+  "name": "Raze",
+  "description": "Raze is a hulking figure of chrome and steel. His cybernetic limbs are heavily armored with thick plating that seems to hum softly as he moves. A pair of retractable fangs protrude from his lower jaw, hinting at the savage nature beneath his mechanical exterior.",
+  "stats": {
+    "health": 250,
+    "attack": 75,
+    "defense": 20
+  },
+  "behavior": "cautious",
+  "faction": "Corporate",
+  "role": "vendor",
+  "tags": [
+    "hacker"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_b4gizb.jpg",
+  "personality": {
+    "traits": [
+      "calculating",
+      "stoic",
+      "detached",
+      "impatient"
+    ],
+    "voice": "a deep, synthesized monotone with a slight metallic rasp",
+    "agenda": "To acquire rare and valuable data for his clients.",
+    "background": "Raze was once an enforcer in the corporate security sector. After experiencing firsthand the brutality of their tactics, he defected and now works as a freelance hacker and information broker."
+  },
+  "_metadata": {
+    "proposalId": "aa0bb01c-b84b-42ec-90bf-fc226ae12b24",
+    "generatedAt": 1768924248362,
+    "publishedAt": 1768924292287,
+    "seed": "p9aub6",
+    "flavor": {
+      "rationale": "He sets up shop near Nexus Point 3, catering to those who need secure data transmission or require access to restricted networks. He's wary of law enforcement but is willing to deal with anyone who can pay his price."
+    }
+  }
+}

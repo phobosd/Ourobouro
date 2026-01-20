@@ -3,10 +3,12 @@ import { Entity } from '../ecs/Entity';
 import { Position } from '../components/Position';
 import { NPC } from '../components/NPC';
 import { Personality } from '../components/Personality';
+import { Conversation } from '../components/Conversation';
 import { Server } from 'socket.io';
 import { IEngine } from '../ecs/IEngine';
 import { MessageService } from '../services/MessageService';
 import { GameEventBus, GameEventType } from '../utils/GameEventBus';
+import { Logger } from '../utils/Logger';
 
 import { LLMService } from '../generation/llm/LLMService';
 import { NPCMovementHandler } from './npc/NPCMovementHandler';
@@ -21,6 +23,7 @@ export class NPCSystem extends System {
     private combatSystem: any;
     private engine?: IEngine;
     private llm?: LLMService;
+    private movementInterval: number = 30000; // Default 30s
 
     constructor(io: Server, messageService: MessageService, llm?: LLMService) {
         super();
@@ -32,6 +35,14 @@ export class NPCSystem extends System {
         GameEventBus.getInstance().subscribe(GameEventType.PLAYER_MOVED, (payload) => {
             if (this.engine) {
                 this.onPlayerMoved(payload.playerId, payload.toX, payload.toY, this.engine);
+            }
+        });
+
+        // Subscribe to config updates
+        GameEventBus.getInstance().subscribe(GameEventType.CONFIG_UPDATED, (payload) => {
+            if (payload.aiConfig && payload.aiConfig.npcMovementInterval !== undefined) {
+                this.movementInterval = payload.aiConfig.npcMovementInterval;
+                Logger.info('NPCSystem', `Updated movement interval to ${this.movementInterval}ms`);
             }
         });
     }
@@ -65,9 +76,15 @@ export class NPCSystem extends System {
 
         if (!npcComp || !pos) return;
 
-        // 1. Random Movement (every 15-30 seconds)
+
+
+        // 1. Random Movement (every 30-60 seconds)
         if (!this.lastMoveTime.has(npc.id)) this.lastMoveTime.set(npc.id, now);
-        if (now - this.lastMoveTime.get(npc.id)! > 15000 + Math.random() * 15000) {
+
+        // Skip movement if in conversation
+        if (npc.hasComponent(Conversation)) {
+            this.lastMoveTime.set(npc.id, now); // Reset timer so they don't move immediately after convo
+        } else if (now - this.lastMoveTime.get(npc.id)! > this.movementInterval + Math.random() * this.movementInterval) {
             NPCMovementHandler.moveRandomly(npc, pos, engine, this.messageService);
             this.lastMoveTime.set(npc.id, now);
         }

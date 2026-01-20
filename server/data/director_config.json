@@ -18,5 +18,12 @@
             "enabled": false
         }
     },
+    "aiConfig": {
+        "ambientDialogueFrequency": 70,
+        "llmContextWindow": 24,
+        "relationshipDecayRate": 1,
+        "maxConversationTurns": 12,
+        "npcMovementInterval": 30000
+    },
     "paused": true
 }

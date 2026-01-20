@@ -87,34 +87,15 @@ export class DirectorSocketHandler {
             socket.on('director:resume', () => this.director.management.resume());
 
             socket.on('director:update_personality', (update: any) => {
-                // We need to access personality. I should probably add a method to Director to update personality.
-                // Or since I have the instance, I can access public props.
-                // Director's personality is private. I should add a public setter or method.
-                // For now, I'll cast to any to get it working, then refine the Director interface.
-                const dir = this.director as any;
-                if (update.chaos !== undefined) dir.management.personality.chaos = { ...dir.management.personality.chaos, ...update.chaos };
-                if (update.aggression !== undefined) dir.management.personality.aggression = { ...dir.management.personality.aggression, ...update.aggression };
-                if (update.expansion !== undefined) dir.management.personality.expansion = { ...dir.management.personality.expansion, ...update.expansion };
-
-                // this.log is private in Director. I need a public log method.
-                // Director has log() but it's private. I should make it public or use a new method.
-                // I'll assume I'll make log() public or add publicLog().
-                // For now, I'll use a temporary workaround or plan to update Director.ts immediately after.
-
-                // Actually, I should update Director.ts first to expose what I need, OR just do the extraction and fix errors.
-                // I'll write this file assuming Director.ts will be updated to expose necessary methods.
-
-                dir.log(DirectorLogLevel.INFO, `Personality updated: ${JSON.stringify(dir.management.personality)}`);
-                dir.management.saveConfig();
-                this.adminNamespace.emit('director:status', this.director.getStatus());
+                this.director.management.updatePersonality(update);
             });
 
             socket.on('director:update_glitch_config', (config: any) => {
-                const dir = this.director as any;
-                dir.management.glitchConfig = { ...dir.management.glitchConfig, ...config };
-                dir.management.saveConfig();
-                dir.log(DirectorLogLevel.INFO, 'Glitch Door configuration updated.');
-                this.adminNamespace.emit('director:status', this.director.getStatus());
+                this.director.management.updateGlitchConfig(config);
+            });
+
+            socket.on('director:update_ai_config', (config: any) => {
+                this.director.management.updateAIConfig(config);
             });
 
             socket.on('director:update_guardrail', (update: any) => {
@@ -155,6 +136,12 @@ export class DirectorSocketHandler {
                             NPCRegistry.getInstance().reloadGeneratedNPCs();
                             this.adminNamespace.emit('director:npcs_update', this.director.management.getNPCs());
                             dir.log(DirectorLogLevel.SUCCESS, `NPC registry reloaded. NPC ${proposal.payload.name} is now available.`);
+                        }
+
+                        if (proposal.type === ProposalType.ITEM) {
+                            ItemRegistry.getInstance().reloadGeneratedItems();
+                            this.adminNamespace.emit('director:items_update', this.director.management.getItems());
+                            dir.log(DirectorLogLevel.SUCCESS, `Item registry reloaded. Item ${proposal.payload.name} is now available.`);
                         }
 
                         if (proposal.type === ProposalType.WORLD_EXPANSION) {
@@ -231,6 +218,14 @@ export class DirectorSocketHandler {
                         proposal = await dir.npcGen.generate(config, dir.llm, {
                             generatedBy: 'Manual',
                             subtype: 'MOB',
+                            enableLLM: data.enableLLM,
+                            existingNames: NPCRegistry.getInstance().getAllNPCs().map(n => n.name)
+                        });
+                        break;
+                    case 'FRIENDLY':
+                        proposal = await dir.npcGen.generate(config, dir.llm, {
+                            generatedBy: 'Manual',
+                            subtype: 'FRIENDLY',
                             enableLLM: data.enableLLM,
                             existingNames: NPCRegistry.getInstance().getAllNPCs().map(n => n.name)
                         });
@@ -389,8 +384,17 @@ export class DirectorSocketHandler {
                 this.director.management.updateCharacterStats(data.charId, data.stats, data.skills, data.reputation);
             });
 
+            socket.on('director:get_character_inventory', (charId: number) => {
+                const inventory = this.director.management.getCharacterInventory(charId);
+                socket.emit('director:character_inventory', { charId, inventory });
+            });
+
             socket.on('director:update_character_inventory', async (data: { charId: number, inventory: any }) => {
                 this.director.management.updateCharacterInventory(data.charId, data.inventory);
+            });
+
+            socket.on('director:delete_npc_memory', (data: { npcId: string, index: number, type: 'short' | 'long' }) => {
+                this.director.management.deleteNPCMemory(data.npcId, data.index, data.type);
             });
         });
     }

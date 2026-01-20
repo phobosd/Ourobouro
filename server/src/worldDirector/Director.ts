@@ -28,6 +28,7 @@ import { ImageDownloader } from '../utils/ImageDownloader';
 import { v4 as uuidv4 } from 'uuid';
 import { DirectorSocketHandler } from './services/DirectorSocketHandler';
 import { DirectorManagementService } from './services/DirectorManagementService';
+import { FinOpsService } from '../services/FinOpsService';
 import { DirectorContentService } from './services/DirectorContentService';
 import { DirectorAutomationService } from './services/DirectorAutomationService';
 import { DirectorActivityService } from './services/DirectorActivityService';
@@ -162,10 +163,12 @@ export class WorldDirector {
             paused: this.management.isPaused,
             personality: this.management.personality,
             glitchConfig: this.management.glitchConfig, // Expose config
+            aiConfig: this.management.aiConfig, // Expose AI config
             guardrails: this.guardrails.getSafeConfig(),
             proposals: this.proposals,
             activeEvents: this.content.activeEvents, // Expose active events
-            innerThoughts: this.innerThoughts
+            innerThoughts: this.innerThoughts,
+            finops: FinOpsService.getInstance().getStats()
         };
     }
 }

@@ -1,0 +1,37 @@
+{
+  "id": "npc_9pb7cg",
+  "name": "Krag the Tentacled",
+  "description": "A hulking figure draped in patchwork cybernetics and stained silks, Krag moves with unsettling grace despite his bulk. A mass of pulsating tentacles sprout from his back, twitching erratically as if they have a mind of their own – or perhaps he does.",
+  "stats": {
+    "health": 250,
+    "attack": 70,
+    "defense": 15
+  },
+  "behavior": "cautious",
+  "faction": "Corporate",
+  "role": "vendor",
+  "tags": [
+    "merchant"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_9pb7cg.jpg",
+  "personality": {
+    "traits": [
+      "Paranoid",
+      "Greedy",
+      "Melancholic"
+    ],
+    "voice": "Deep and guttural with a hint of static.",
+    "agenda": "Survive long enough to find a permanent cure for his volatile mutation.",
+    "background": "Krag was once an enforcer in the corporate sector, until a botched augmentation caused him to become Volatile. He escaped Zenith-9, but returned after years scavenging the Undercity, seeking advanced tech and hoping to find a solution."
+  },
+  "_metadata": {
+    "proposalId": "1fb46635-7d33-46ef-8072-c29a76aa1be9",
+    "generatedAt": 1768924265434,
+    "publishedAt": 1768924294813,
+    "seed": "m5n1zq",
+    "flavor": {
+      "rationale": "Krag is an anomaly among the vendors in Zenith-9. Driven by volatile surges and needing constant doses of suppressants, he's tolerated due to his unique offerings – rare cybernetics scavenged from the Undercity."
+    }
+  }
+}

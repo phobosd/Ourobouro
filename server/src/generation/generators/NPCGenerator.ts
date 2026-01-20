@@ -15,12 +15,22 @@ const ARCHETYPES = [
     { name: 'Hacker', behavior: 'elusive', healthMult: 0.7, attackMult: 1.5, defenseMult: 0.4 }
 ];
 
+const FRIENDLY_ARCHETYPES = [
+    { name: 'Citizen', behavior: 'friendly', healthMult: 0.5, attackMult: 0.1, defenseMult: 0.1 },
+    { name: 'Dancer', behavior: 'friendly', healthMult: 0.6, attackMult: 0.2, defenseMult: 0.2 },
+    { name: 'Artist', behavior: 'friendly', healthMult: 0.4, attackMult: 0.1, defenseMult: 0.1 },
+    { name: 'Monk', behavior: 'friendly', healthMult: 0.8, attackMult: 0.5, defenseMult: 0.5 },
+    { name: 'Bartender', behavior: 'friendly', healthMult: 1.0, attackMult: 0.8, defenseMult: 0.8 },
+    { name: 'Techie', behavior: 'friendly', healthMult: 0.6, attackMult: 0.2, defenseMult: 0.3 }
+];
+
 export class NPCGenerator extends BaseGenerator<NPCPayload> {
     type = ProposalType.NPC;
 
     async generate(config: GuardrailConfig, llm?: LLMService, context?: any): Promise<Proposal> {
         const isMob = context?.subtype === 'MOB';
         const isBoss = context?.subtype === 'BOSS';
+        const isFriendly = context?.subtype === 'FRIENDLY';
 
         const MOB_ARCHETYPES = [
             { name: 'Vermin', behavior: 'cautious', healthMult: 0.4, attackMult: 0.8, defenseMult: 0.2 },
@@ -40,7 +50,9 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
             ? BOSS_ARCHETYPES[Math.floor(Math.random() * BOSS_ARCHETYPES.length)]
             : isMob
                 ? MOB_ARCHETYPES[Math.floor(Math.random() * MOB_ARCHETYPES.length)]
-                : ARCHETYPES[Math.floor(Math.random() * ARCHETYPES.length)];
+                : isFriendly
+                    ? FRIENDLY_ARCHETYPES[Math.floor(Math.random() * FRIENDLY_ARCHETYPES.length)]
+                    : ARCHETYPES[Math.floor(Math.random() * ARCHETYPES.length)];
 
         // If restricted to glitch area, force aggressive behavior
         if (config.features.restrictedToGlitchArea) {
@@ -55,17 +67,21 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
             ? `[BOSS] ${['Omega', 'Titan', 'Apex', 'Void', 'Prime'][Math.floor(Math.random() * 5)]} ${['Stalker', 'Reaper', 'Colossus', 'Executioner', 'Entity'][Math.floor(Math.random() * 5)]}`
             : isMob
                 ? `${['Giant', 'Mutated', 'Cyber', 'Neon', 'Toxic'][Math.floor(Math.random() * 5)]} ${['Rat', 'Roach', 'Sludge', 'Hound', 'Spider'][Math.floor(Math.random() * 5)]}`
-                : `${FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)]} ${LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)]}`;
+                : isFriendly
+                    ? `${FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)]} ${LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)]}`
+                    : `${FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)]} ${LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)]}`;
 
         let description = isBoss
             ? `A towering, nightmare-inducing ${archetype.name.toLowerCase()} that radiates pure malice.`
             : isMob
                 ? `A repulsive ${archetype.name.toLowerCase()} lurking in the shadows.`
-                : `A ${archetype.name.toLowerCase()} seen wandering the neon-lit streets.`;
+                : isFriendly
+                    ? `A friendly ${archetype.name.toLowerCase()} looking for conversation.`
+                    : `A ${archetype.name.toLowerCase()} seen wandering the neon-lit streets.`;
 
         let rationale = `Generated a ${archetype.name} to populate the area.`;
         let behavior = archetype.behavior;
-        let role = isBoss ? 'boss' : isMob ? 'mob' : 'civilian'; // Default role
+        let role = isBoss ? 'boss' : isMob ? 'mob' : isFriendly ? 'civilian' : 'civilian'; // Default role
 
         let stats = {
             health: Math.floor(config.budgets.maxNPCHealth * archetype.healthMult * (0.8 + Math.random() * 0.4)),
@@ -79,12 +95,17 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
         // 1. Combined Creative & Logic Pass
         if (llm) {
             try {
-                const mutation = ['Toxic', 'Radioactive', 'Crystalline', 'Shadow', 'Neon', 'Rust', 'Fungal', 'Digital', 'Volatile', 'Armored'][Math.floor(Math.random() * 10)];
-                const bodyPart = ['Claws', 'Fangs', 'Spines', 'Tentacles', 'Wires', 'Optics', 'Limbs', 'Maw'][Math.floor(Math.random() * 8)];
+                const mutation = isFriendly
+                    ? ['Cyber-Eye', 'Neon Tattoo', 'Data-Jack', 'Synth-Skin', 'Holo-Projector', 'Smart-Glasses'][Math.floor(Math.random() * 6)]
+                    : ['Toxic', 'Radioactive', 'Crystalline', 'Shadow', 'Neon', 'Rust', 'Fungal', 'Digital', 'Volatile', 'Armored'][Math.floor(Math.random() * 10)];
 
-                const combinedPrompt = `Generate a unique cyberpunk ${isBoss ? 'BOSS' : isMob ? 'creature' : 'NPC'}.
+                const bodyPart = isFriendly
+                    ? ['Smile', 'Style', 'Voice', 'Aura', 'Gaze'][Math.floor(Math.random() * 5)]
+                    : ['Claws', 'Fangs', 'Spines', 'Tentacles', 'Wires', 'Optics', 'Limbs', 'Maw'][Math.floor(Math.random() * 8)];
+
+                const combinedPrompt = `Generate a unique cyberpunk ${isBoss ? 'BOSS' : isMob ? 'creature' : isFriendly ? 'friendly civilian' : 'NPC'}.
                 Archetype: ${archetype.name}
-                Mutation/Trait: ${mutation}
+                ${isFriendly ? 'Style/Vibe' : 'Mutation/Trait'}: ${mutation}
                 Feature: ${bodyPart}
                 
                 System Constraints (MAX STATS):
@@ -93,16 +114,16 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
                 - Max Defense: ${config.budgets.maxNPCDefense}
                 
                 Requirements:
-                - Name: A gritty, unique name.
-                - Description: 2-3 sentences focusing on their appearance and ${mutation} traits.
-                - Behavior: [neutral, cautious, friendly, elusive, aggressive]. ${config.features.restrictedToGlitchArea || isMob || isBoss ? "MUST be 'aggressive'." : ""}
+                - Name: ${isFriendly ? 'A normal, cool cyberpunk name.' : 'A gritty, unique name.'}
+                - Description: 2-3 sentences focusing on their appearance and ${mutation} traits. ${isFriendly ? 'Make them sound approachable and interesting.' : ''}
+                - Behavior: [neutral, cautious, friendly, elusive, aggressive]. ${config.features.restrictedToGlitchArea || isMob || isBoss ? "MUST be 'aggressive'." : isFriendly ? "MUST be 'friendly'." : ""}
                 - Role: ['vendor', 'guard', 'civilian', 'mob', 'boss'].
                 - Stats: Provide health, attack, and defense within the limits.
                 - Rationale: Why are they here?
-                ${context?.enableLLM ? `
-                - Personality: Provide traits (array of strings), voice (string), agenda (string), and background (string).` : ''}
+                ${!isMob && !isBoss ? `
+                - Personality: Provide traits (array of strings), voice (string), agenda (string), and background (string). ${isFriendly ? 'Traits should be positive/social.' : ''}` : ''}
                 
-                Return ONLY a JSON object with fields: name, description, behavior, role, rationale, stats: { health, attack, defense }${context?.enableLLM ? ', personality: { traits, voice, agenda, background }' : ''}.`;
+                Return ONLY a JSON object with fields: name, description, behavior, role, rationale, stats: { health, attack, defense }${!isMob && !isBoss ? ', personality: { traits, voice, agenda, background }' : ''}.`;
 
                 const res = await llm.chat(combinedPrompt, "You are a lead game designer for Zenith-9.", LLMRole.CREATIVE);
                 models['Creative'] = res.model;
@@ -124,6 +145,8 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
 
                 if (config.features.restrictedToGlitchArea || isMob || isBoss) {
                     behavior = 'aggressive';
+                } else if (isFriendly) {
+                    behavior = 'friendly';
                 }
             } catch (err) {
                 Logger.error('NPCGenerator', `NPC Generation Pass failed: ${err}`);
@@ -171,7 +194,8 @@ export class NPCGenerator extends BaseGenerator<NPCPayload> {
             tags: [archetype.name.toLowerCase()],
             canMove: true,
             portrait, // Add portrait to payload
-            personality
+            personality,
+            generatedBy: context?.generatedBy || 'Director'
         };
 
         const proposal = this.generateBaseProposal(payload, context?.generatedBy || 'Director', models);

@@ -1,0 +1,38 @@
+{
+  "id": "npc_7x6cw4",
+  "name": "Klaw",
+  "description": "A hulking figure wrapped in thick plates of scavenged armor and layered with reinforced plating. Klaw's most striking feature are the sharp metallic claws that extend from his armored hands. The metal glints menacingly under neon lights, hinting at a violent past.",
+  "stats": {
+    "health": 250,
+    "attack": 75,
+    "defense": 20
+  },
+  "behavior": "cautious",
+  "faction": "Corporate",
+  "role": "vendor",
+  "tags": [
+    "merchant"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_7x6cw4.jpg",
+  "personality": {
+    "traits": [
+      "gruff",
+      "calculating",
+      "protective",
+      "suspicious"
+    ],
+    "voice": "A deep rumble with a metallic echo.",
+    "agenda": "To maintain his independence and ensure the safety of his family in this dangerous city. He'll trade with anyone who doesn't threaten that goal.",
+    "background": "Klaw was once a street enforcer for one of Zenith-9's more notorious gangs, but after witnessing the brutal murder of his wife, he abandoned that life and found solace in scavenging and trading."
+  },
+  "_metadata": {
+    "proposalId": "67290f3c-0e81-4185-8579-7b2933c2207f",
+    "generatedAt": 1768924252572,
+    "publishedAt": 1768924293095,
+    "seed": "2z9zqd",
+    "flavor": {
+      "rationale": "Klaw ekes out a living selling scavenged parts and cybernetic upgrades in the back alleys of Zenith-9's industrial district. He knows his clientele are desperate for anything to improve their edge, so he offers only quality goods at fair prices."
+    }
+  }
+}

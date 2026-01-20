@@ -1,0 +1,38 @@
+{
+  "id": "npc_whve7p",
+  "name": "Roxana 'Roxy' Sinclair",
+  "description": "Roxy Sinclair runs the Neon Shaker, a dive bar in Zenith-9’s industrial district. Her bright green hair is often tied back to showcase her cybernetic left eye, which glows with shifting patterns of neon light. She has a warm smile and an easygoing demeanor that makes regulars feel right at home.",
+  "stats": {
+    "health": 250,
+    "attack": 60,
+    "defense": 15
+  },
+  "behavior": "friendly",
+  "faction": "Corporate",
+  "role": "civilian",
+  "tags": [
+    "bartender"
+  ],
+  "canMove": true,
+  "portrait": "/assets/portraits/npc_whve7p.jpg",
+  "personality": {
+    "traits": [
+      "sociable",
+      "empathetic",
+      "approachable",
+      "optimistic"
+    ],
+    "voice": "Warm and inviting with a slight rasp from years of talking over loud music.",
+    "agenda": "To maintain the Neon Shaker as a safe space for her regulars, no matter what happens outside its walls.",
+    "background": "Roxy was raised in one of Zenith-9’s sprawling slums. She worked odd jobs to pay for her cybernetic eye after losing her own in an accident.  She opened the Neon Shaker with some savings and a loan from a local fixer, determined to create a community where people could feel welcome."
+  },
+  "_metadata": {
+    "proposalId": "8c9ef915-1fb6-45e5-b58b-bbdd52ab7173",
+    "generatedAt": 1768924219099,
+    "publishedAt": 1768924288602,
+    "seed": "aqow1a",
+    "flavor": {
+      "rationale": "Roxy runs the Neon Shaker to provide respite from Zenith-9’s harsh realities, offering drinks and conversation to those who need it. She doesn't take sides in corporate conflicts but is generally sympathetic towards individuals struggling against powerful entities."
+    }
+  }
+}

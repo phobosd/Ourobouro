@@ -17,6 +17,7 @@ export interface ItemDefinition {
     slot?: string | null;
     rarity?: string;
     extraData: any;
+    generatedBy?: string;
 }
 
 export class ItemRegistry {
@@ -108,7 +109,8 @@ export class ItemRegistry {
                         cost: item.cost || 0,
                         type: item.type === 'junk' ? 'item' : item.type,
                         rarity: item.rarity || 'Common',
-                        extraData: item.attributes || {}
+                        extraData: item.attributes || {},
+                        generatedBy: item.generatedBy
                     };
 
                     this.items.set(def.id.toString().trim(), def);
